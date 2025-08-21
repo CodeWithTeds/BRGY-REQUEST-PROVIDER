@@ -1,18 +1,14 @@
 <template>
     <div class="min-h-screen relative overflow-hidden bg-[#2C4854]">
-
-
         <!-- Content -->
         <div class="relative z-10 grid min-h-[600px] grid-cols-1 items-center gap-8 px-10 py-14 md:grid-cols-2 md:px-16 lg:px-24">
             <div class="text-[#efeeed]">
                 <p class="mb-8 text-sm font-semibold tracking-widest text-[#efeeed]/80">Web <span class="font-normal">Apps</span></p>
                 <h1 class="leading-none">
-                    <span class="block text-[13vw] font-extrabold leading-[0.9] md:text-[7rem] lg:text-[8rem]">BRGY REQUEST</span>
-                    <span class="block text-[13vw] font-extrabold leading-[0.9] md:text-[7rem] lg:text-[8rem]">PROVIDER</span>
+                    <span class="block text-[13vw] font-extrabold leading-[0.9] md:text-[7rem] lg:text-[8rem] animate__animated animate__fadeIn transition-all duration-1000 ease-in-out">BRGY REQUEST</span>
+                     <span class="block text-[13vw] font-extrabold leading-[0.9] md:text-[7rem] lg:text-[8rem] animate__animated animate__fadeIn transition-all duration-1000 ease-in-out">PROVIDER</span>
                 </h1>
-                <p class="mt-10 max-w-xl text-base leading-relaxed text-[#efeeed]/90">
-                    CityConnect — Your all‑in‑one mobile hub for city services, real‑time alerts, local updates, and community engagement—right at your fingertips.
-                </p>
+                <TypingText text="CityConnect — Your all‑in‑one mobile hub for city services, real‑time alerts, local updates, and community engagement—right at your fingertips." />
                 <div class="mt-8">
                     <button class="group inline-flex items-center gap-3 rounded-full border-2 border-[#efeeed]/80 bg-[#efeeed] text-[#2C4854] transition hover:bg-transparent hover:text-[#efeeed]">
                         <span class="px-6 py-3 text-sm font-semibold tracking-wide">LEARN MORE</span>
@@ -26,7 +22,7 @@
             </div>
 
             <!-- Phone Mockup -->
-            <div class="relative mx-auto hidden md:block md:mx-0 md:ml-auto md:h-[600px] md:w-[320px] lg:h-[660px] lg:w-[340px]">
+            <div class="relative mx-auto hidden md:block md:mx-0 md:ml-auto md:h-[600px] md:w-[320px] lg:h-[660px] lg:w-[340px] animate__animated animate__fadeInRight transition-all duration-1000 ease-in-out">
                 <!-- Glow circle -->
                 
                 <!-- Device -->
@@ -46,3 +42,8 @@
         </div>
     </div>
 </template>
+
+<script setup>
+import { Head, Link } from '@inertiajs/vue3';
+import TypingText from '@/components/TypingText.vue';
+</script>

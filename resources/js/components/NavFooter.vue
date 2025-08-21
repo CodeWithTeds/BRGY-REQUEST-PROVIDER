@@ -11,7 +11,7 @@ defineProps<Props>();
 </script>
 
 <template>
-    <SidebarGroup :class="`group-data-[collapsible=icon]:p-0 ${$props.class || ''}`">
+    <SidebarGroup :class="`group-data-[collapsible=icon]:p-0 ${$props.class || ''} animate__animated animate__fadeIn`">
         <SidebarGroupContent>
             <SidebarMenu>
                 <SidebarMenuItem v-for="item in items" :key="item.title">

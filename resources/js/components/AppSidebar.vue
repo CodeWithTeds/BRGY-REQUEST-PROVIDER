@@ -31,7 +31,7 @@ const footerNavItems: NavItem[] = [
 </script>
 
 <template>
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon" variant="inset" class="animate__animated animate__slideInLeft transition-all duration-500 ease-in-out">
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
