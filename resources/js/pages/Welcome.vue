@@ -58,7 +58,6 @@
     </div>
 </template>
 
-<script setup>
-import { Head, Link } from '@inertiajs/vue3';
+<script setup lang="ts">
 import TypingText from '@/components/TypingText.vue';
 </script>

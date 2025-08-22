@@ -1,10 +1,4 @@
-<template>
-  <p class="mt-10 max-w-xl text-base leading-relaxed text-[#efeeed]/90">
-    {{ displayedText }}
-  </p>
-</template>
-
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 
 const props = defineProps({
