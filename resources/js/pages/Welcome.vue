@@ -19,16 +19,15 @@
                 <div class="mt-8">
                     <Link href="/login"
                         class="group inline-flex items-center gap-3 rounded-full border-2 border-[#efeeed]/80 bg-[#efeeed] text-[#2C4854] transition hover:bg-transparent hover:text-[#efeeed]">
-                        <span class="px-6 py-3 text-sm font-semibold tracking-wide">LEARN MORE</span>
-                        <span
-                            class="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#2C4854] text-[#efeeed] group-hover:bg-[#efeeed] group-hover:text-[#2C4854]">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                                class="h-4 w-4">
-                                <path fill-rule="evenodd"
-                                    d="M3.75 12a.75.75 0 0 1 .75-.75h12.69l-3.22-3.22a.75.75 0 1 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06l3.22-3.22H4.5A.75.75 0 0 1 3.75 12Z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </span>
+                    <span class="px-6 py-3 text-sm font-semibold tracking-wide">LEARN MORE</span>
+                    <span
+                        class="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#2C4854] text-[#efeeed] group-hover:bg-[#efeeed] group-hover:text-[#2C4854]">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
+                            <path fill-rule="evenodd"
+                                d="M3.75 12a.75.75 0 0 1 .75-.75h12.69l-3.22-3.22a.75.75 0 1 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06l3.22-3.22H4.5A.75.75 0 0 1 3.75 12Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </span>
                     </Link>
                 </div>
             </div>
