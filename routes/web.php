@@ -8,13 +8,13 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('resident/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return Inertia::render('Resident/Home');
+})->middleware(['auth'])->name('resident.dashboard');
 
 Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('admin/dashboard', function () {
-        return Inertia::render('Admin/Dashboard');
-    })->name('admin.dashboard');
+        Route::get('admin/home', function () {
+        return Inertia::render('Admin/Home');
+    })->name('admin.home');
 });
 
 require __DIR__.'/settings.php';

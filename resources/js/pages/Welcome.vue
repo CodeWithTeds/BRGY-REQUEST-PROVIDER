@@ -1,5 +1,6 @@
 <template>
     <div class="min-h-screen relative overflow-hidden bg-[#2C4854]">
+        <ResidentHeader />
         <!-- Content -->
         <div
             class="relative z-10 grid min-h-[600px] grid-cols-1 items-center gap-8 px-10 py-14 md:grid-cols-2 md:px-16 lg:px-24">
@@ -61,4 +62,5 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import TypingText from '@/components/TypingText.vue';
+import ResidentHeader from '@/components/ResidentHeader.vue';
 </script>
