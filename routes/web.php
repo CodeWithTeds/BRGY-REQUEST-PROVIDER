@@ -11,6 +11,12 @@ Route::get('resident/dashboard', function () {
     return Inertia::render('Resident/Home');
 })->middleware(['auth'])->name('resident.dashboard');
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        return redirect()->route('resident.dashboard');
+    })->name('dashboard');
+});
+
 Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('admin/home', function () {
         return Inertia::render('Admin/Home');
