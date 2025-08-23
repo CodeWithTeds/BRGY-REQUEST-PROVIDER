@@ -52,8 +52,6 @@
                                 In</button>
                         </div>
                     </div>
-
-                    <TypingText text="CityConnect — Your all‑in‑one mobile hub for city services, real‑time alerts, local updates, and community engagement—right at your fingertips." />
                 </div>
             </div>
         </div>
