@@ -1,12 +1,23 @@
 <script setup lang="ts">
-import ResidentHeader from '@/components/ResidentHeader.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import type { BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/vue3';
+
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Resident Dashboard',
+        href: '/resident/dashboard',
+    },
+];
 </script>
 
 <template>
-    <ResidentHeader />
-    <div class="min-h-screen flex items-center justify-center">
-        <h1 class="text-3xl font-bold">
-            Resident Home Page
-        </h1>
-    </div>
+    <Head title="Resident Dashboard" />
+
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto animate__animated animate__fadeIn transition-all duration-500 ease-in-out">
+            <ResidentHomeUI />
+        </div>
+    </AppLayout>
 </template>
