@@ -45,7 +45,22 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-}
+    }
+
+    public function applicantProfile()
+    {
+        return $this->hasOne(ApplicantProfile::class);
+    }
+
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    public function supportingDocuments()
+    {
+        return $this->hasMany(SupportingDocument::class);
+    }
 
     public function isAdmin(): bool
     {
