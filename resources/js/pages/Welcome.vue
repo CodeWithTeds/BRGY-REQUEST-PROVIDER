@@ -15,18 +15,14 @@
                         class="block text-[13vw] font-extrabold leading-[0.9] md:text-[7rem] lg:text-[8rem] animate__animated animate__fadeIn transition-all duration-1000 ease-in-out">PROVIDER</span>
                 </h1>
                 <TypingText
-                    text="CityConnect — Your all‑in‑one mobile hub for city services, real‑time alerts, local updates, and community engagement—right at your fingertips." />
+                    text="BRGY Request Provider A web-based system that simplifies barangay service requests and document processing. Residents can easily submit requests online, while barangay officials can track, manage, and process applications more efficiently." />
                 <div class="mt-8">
                     <Link href="#features-section"
                         class="group inline-flex items-center gap-3 rounded-full border-2 border-[#efeeed]/80 bg-[#efeeed] text-[#2C4854] transition hover:bg-transparent hover:text-[#efeeed]">
                     <span class="px-6 py-3 text-sm font-semibold tracking-wide">LEARN MORE</span>
                     <span
                         class="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#2C4854] text-[#efeeed] group-hover:bg-[#efeeed] group-hover:text-[#2C4854]">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
-                            <path fill-rule="evenodd"
-                                d="M3.75 12a.75.75 0 0 1 .75-.75h12.69l-3.22-3.22a.75.75 0 1 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06l3.22-3.22H4.5A.75.75 0 0 1 3.75 12Z"
-                                clip-rule="evenodd" />
-                        </svg>
+                        <i class="pi pi-arrow-right" style="font-size: 1rem"></i>
                     </span>
                     </Link>
                 </div>
@@ -65,4 +61,6 @@ import { Link } from '@inertiajs/vue3';
 import TypingText from '@/components/TypingText.vue';
 import ResidentHeader from '@/components/ResidentHeader.vue';
 import FeaturesSection from '@/components/resident/FeaturesSection.vue';
+import 'primeicons/primeicons.css';
+
 </script>
