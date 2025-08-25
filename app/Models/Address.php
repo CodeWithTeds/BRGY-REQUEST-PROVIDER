@@ -15,7 +15,10 @@ class Address extends Model
         'house_no',
         'street',
         'purok',
-        'barangay_id',
+        'barangay_code',
+        'city_code',
+        'province_code',
+        'region_code',
         'zip_code',
     ];
 
@@ -26,6 +29,21 @@ class Address extends Model
 
     public function barangay()
     {
-        return $this->belongsTo(Barangay::class);
+        return $this->belongsTo(Barangay::class, 'barangay_code', 'code');
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class, 'city_code', 'code');
+    }
+
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_code', 'code');
+    }
+
+    public function region()
+    {
+        return $this->belongsTo(Region::class, 'region_code', 'code');
     }
 }

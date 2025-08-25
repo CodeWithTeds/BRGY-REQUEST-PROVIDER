@@ -66,4 +66,24 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
+
+  
+
+    public function city()
+    {
+        return $this->hasOneThrough(City::class, Address::class, 'user_id', 'code', 'id', 'city_code')
+            ->where('addresses.type', 'present');
+    }
+
+    public function province()
+    {
+        return $this->hasOneThrough(Province::class, Address::class, 'user_id', 'code', 'id', 'province_code')
+            ->where('addresses.type', 'present');
+    }
+
+    public function region()
+    {
+        return $this->hasOneThrough(Region::class, Address::class, 'user_id', 'code', 'id', 'region_code')
+            ->where('addresses.type', 'present');
+    }
 }

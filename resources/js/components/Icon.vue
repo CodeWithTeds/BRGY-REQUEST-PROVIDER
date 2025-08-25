@@ -19,9 +19,19 @@ const props = withDefaults(defineProps<Props>(), {
 
 const className = computed(() => cn('h-4 w-4', props.class));
 
+// Convert names like "chevron-down" or "chevron_down" to "ChevronDown"
+function toPascalCase(input: string) {
+    return input
+        .split(/[-_\s]+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join('');
+}
+
 const icon = computed(() => {
-    const iconName = props.name.charAt(0).toUpperCase() + props.name.slice(1);
-    return (icons as Record<string, any>)[iconName];
+    const pascal = toPascalCase(props.name);
+    // Prefer PascalCase lookup (e.g., ChevronDown). Fallback to exact name.
+    return (icons as Record<string, any>)[pascal] ?? (icons as Record<string, any>)[props.name];
 });
 </script>
 

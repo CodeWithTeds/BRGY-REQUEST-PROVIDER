@@ -9,21 +9,15 @@ class Barangay extends Model
 {
     use HasFactory;
 
-    protected $table = 'psgc_barangays';
+    protected $table = 'barangays';
+
+    protected $primaryKey = 'code';
+
+    public $incrementing = false;
+
+    protected $keyType = 'string';
 
     protected $fillable = [
-        'brgy_code',
-        'brgy_name',
-        'city_code',
-        'city_name',
-        'province_code',
-        'province_name',
-        'region_code',
-        'region_name',
+        'code', 'name', 'city_code',
     ];
-
-    public function addresses()
-    {
-        return $this->hasMany(Address::class, 'barangay_id');
-    }
 }
