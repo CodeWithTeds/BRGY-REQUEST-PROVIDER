@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Requests\Resident;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreBarangayPermitRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'suffix' => 'nullable|string|max:255',
+            'date_of_birth' => 'required|date',
+            'place_of_birth' => 'required|string|max:255',
+            'civil_status' => 'required|in:single,married,widowed,separated',
+            'gender' => 'required|in:male,female,other',
+            'citizenship' => 'required|string|max:255',
+            'contact_number' => 'required|string|max:255',
+
+            'address_type' => 'required|in:present,permanent',
+            'house_no' => 'nullable|string|max:255',
+            'street' => 'nullable|string|max:255',
+            'purok' => 'nullable|string|max:255',
+            'barangay_code' => ['nullable', 'exists:barangays,code'],
+            'city_code' => ['nullable', 'exists:cities,code'],
+            'province_code' => ['nullable', 'exists:provinces,code'],
+            'region_code' => ['nullable', 'exists:regions,code'],
+            'zip_code' => 'nullable|string|max:255',
+
+            'document_type' => 'required|in:certificate_of_residency,lease_contract,utility_bill',
+            'document' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ];
+    }
+}
