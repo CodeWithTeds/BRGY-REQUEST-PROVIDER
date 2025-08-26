@@ -12,6 +12,8 @@
                 Home</Link>
                 <Link :href="route('home') + '#features-section'" @click="scrollToFeatures"
                     class="text-sm leading-6 font-semibold text-gray-900 hover:text-gray-700">Features</Link>
+                <Link :href="route('home') + '#about-section'" @click="scrollToAbout"
+                    class="text-sm leading-6 font-semibold text-gray-900 hover:text-gray-700">About</Link>
             </div>
         </nav>
     </header>
@@ -20,13 +22,13 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 
-const scrollToFeatures = () => {
-    const featuresSection = document.getElementById('features-section');
-    if (featuresSection) {
+const smoothScroll = (elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (element) {
         const startPosition = window.pageYOffset;
-        const targetPosition = featuresSection.getBoundingClientRect().top + window.pageYOffset;
+        const targetPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const distance = targetPosition - startPosition;
-        const duration =  100; // milliseconds
+        const duration = 100; // milliseconds
         let start: number | null = null;
 
         window.requestAnimationFrame(function step(timestamp) {
@@ -41,4 +43,7 @@ const scrollToFeatures = () => {
         });
     }
 };
+
+const scrollToFeatures = () => smoothScroll('features-section');
+const scrollToAbout = () => smoothScroll('about-section');
 </script>

@@ -53,6 +53,7 @@
         </div>
     </div>
     <FeaturesSection id="features-section" />
+    <AboutSection id="about-section" />
 </template>
 
 
@@ -61,6 +62,7 @@ import { Link } from '@inertiajs/vue3';
 import TypingText from '@/components/TypingText.vue';
 import ResidentHeader from '@/components/ResidentHeader.vue';
 import FeaturesSection from '@/components/resident/FeaturesSection.vue';
+import AboutSection from '@/components/resident/AboutSection.vue';
 import 'primeicons/primeicons.css';
 
 </script>
