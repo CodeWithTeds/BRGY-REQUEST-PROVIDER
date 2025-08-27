@@ -54,6 +54,7 @@
     </div>
     <FeaturesSection id="features-section" />
     <AboutSection id="about-section" />
+      <ThemeSongFeatures />
 </template>
 
 
@@ -63,6 +64,7 @@ import TypingText from '@/components/TypingText.vue';
 import ResidentHeader from '@/components/ResidentHeader.vue';
 import FeaturesSection from '@/components/resident/FeaturesSection.vue';
 import AboutSection from '@/components/resident/AboutSection.vue';
+import ThemeSongFeatures from '@/components/resident/ThemeSongFeatures.vue';
 import 'primeicons/primeicons.css';
 
 </script>
