@@ -16,7 +16,7 @@ return new class extends Migration
         });
 
         try {
-            DB::statement("UPDATE addresses a\n                LEFT JOIN psgc_barangays b ON b.id = a.barangay_id\n                SET a.barangay_code = b.code");
+            DB::statement("UPDATE addresses a\n LEFT JOIN psgc_barangays b ON b.id = a.barangay_id\n                SET a.barangay_code = b.code");
         } catch (\Throwable $e) {
             // ignore if tables/columns absent
         }
