@@ -16,6 +16,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
+
     <Head title="Barangay Business Permit" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
@@ -35,23 +36,22 @@ const breadcrumbs: BreadcrumbItem[] = [
                             <AlertCircle class="size-5 text-warning flex-shrink-0 mt-0.5" />
                             <div>
                                 <p class="font-medium text-warning mb-1">Important Note:</p>
-                                <p class="text-muted-foreground text-sm">
-                                    The Barangay Business Clearance is a mandatory requirement as directed by the Mayor's
-                                    Office. It must be presented when applying for the Mayor's/Business Permit at the City
-                                    or Municipal Hall.
+                                <p class="text-muted-foreground text-sm text-justify">
+                                    The Barangay Business Clearance must bear the official seal or stamp of the Barangay
+                                    to be considered valid.
                                 </p>
                             </div>
                         </div>
                     </div>
                     <div class="mt-12">
-                    <svg viewBox="0 0 500 50" class="mx-auto w-full text-[#2C4854]/50">
-                        <path d="M0,25 C150,50 350,0 500,25" fill="none" stroke="currentColor" stroke-width="2" />
-                    </svg>
-                </div>
+                        <svg viewBox="0 0 500 50" class="mx-auto w-full text-[#2C4854]/50">
+                            <path d="M0,25 C150,50 350,0 500,25" fill="none" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                    </div>
 
                 </div>
                 <div class="flex justify-center">
-                    <img src="/images/major.png" alt="3D Paper Folder" class="w-full max-w-md" />
+                    <img src="/images/business.png" alt="3D Paper Folder" class="w-full max-w-md" />
                 </div>
             </div>
 
@@ -67,7 +67,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </CardHeader>
                     <CardContent>
                         <CardDescription class="text-[#2C4854]/80">
-                            Basic details including full name, contact information, and business details for proper identification and communication.
+                            Basic details including full name, contact information, and business details for proper
+                            identification and communication.
                         </CardDescription>
                     </CardContent>
                 </Card>
@@ -82,7 +83,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </CardHeader>
                     <CardContent>
                         <CardDescription class="text-[#2C4854]/80">
-                            Recent utility bill or lease contract to verify your business location within the barangay's jurisdiction.
+                            Recent utility bill or lease contract to verify your business location within the barangay's
+                            jurisdiction.
                         </CardDescription>
                     </CardContent>
                 </Card>
@@ -97,20 +99,21 @@ const breadcrumbs: BreadcrumbItem[] = [
                     </CardHeader>
                     <CardContent>
                         <CardDescription class="text-[#2C4854]/80">
-                            Additional requirements such as valid ID, business registration, and other relevant permits or certificates.
+                            Additional requirements such as valid ID, business registration, and other relevant permits
+                            or certificates.
                         </CardDescription>
                     </CardContent>
                 </Card>
-                
+
             </div>
 
             <!-- CTA Section -->
             <div class="flex justify-end">
                 <Link :href="route('barangay-permit.create')">
-                    <Button size="lg" class="gap-2 px-8">
-                        Start Application
-                        <ArrowRight class="size-4" />
-                    </Button>
+                <Button size="lg" class="gap-2 px-8">
+                    Start Application
+                    <ArrowRight class="size-4" />
+                </Button>
                 </Link>
             </div>
         </div>
