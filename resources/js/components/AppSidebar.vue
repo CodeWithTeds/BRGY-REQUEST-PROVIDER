@@ -21,7 +21,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Barangay Clearance',
-        href: '/barangay-clearance',
+        href: route('resident.barangay-clearance'),
         icon: FileCheck,
     },
     {
