@@ -40,8 +40,7 @@ class PSGCRepository extends Repository
 
     public function getProvincesByRegion(string $code)
     {
-        return (new Repository(new Province()))
-            ->query()
+        return Province::query()
             ->select('code', 'name')
             ->where('region_code', $code)
             ->orderBy('name')
@@ -50,8 +49,7 @@ class PSGCRepository extends Repository
 
     public function getCitiesByProvince(string $code)
     {
-        return (new Repository(new City()))
-            ->query()
+        return City::query()
             ->select('code', 'name')
             ->where('province_code', $code)
             ->orderBy('name')
@@ -60,8 +58,7 @@ class PSGCRepository extends Repository
 
     public function getCitiesByRegion(string $code)
     {
-        return (new Repository(new City()))
-            ->query()
+        return City::query()
             ->select('code', 'name')
             ->where('region_code', $code)
             ->orderBy('name')
@@ -71,7 +68,7 @@ class PSGCRepository extends Repository
     public function getBarangayById(string $code)
     {
         return DB::table('psgc_barangays')
-            ->where('brgy_code', $code)
+            ->where('code', $code)
             ->value('id');
     }
 }

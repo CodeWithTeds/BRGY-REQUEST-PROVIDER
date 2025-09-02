@@ -22,7 +22,7 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
     Route::get('/barangay-permit/create', [BarangayPermitController::class, 'create'])->name('barangay-permit.create');
     Route::post('/barangay-permit', [BarangayPermitController::class, 'store'])->name('barangay-permit.store');
     Route::get('/psgc/island-groups/{code}/barangays', [BarangayPermitController::class, 'barangaysByIslandGroup'])->name('psgc.barangays.by-island-group');
-    Route::get('/psgc/cities/{code}/barangays-min', [\App\Http\Controllers\Resident\BarangayPermitController::class, 'barangaysByCity'])->name('psgc.barangays.min');
+
 
     // New PSGC endpoints
     Route::get('/psgc/regions', [BarangayPermitController::class, 'regions'])->name('psgc.regions');

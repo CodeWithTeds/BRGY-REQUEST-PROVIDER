@@ -7,11 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class ApplicantProfile extends Model
 {
-    public function barangayPermit()
-    {
-        return $this->belongsTo(BarangayPermit::class);
-    }
-
     use HasFactory;
 
     protected $fillable = [
@@ -27,6 +22,7 @@ class ApplicantProfile extends Model
         'citizenship',
         'contact_number',
         'barangay_permit_id',
+        'barangay_clearance_id'
     ];
 
     protected $casts = [
@@ -36,5 +32,15 @@ class ApplicantProfile extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function barangayPermit()
+    {
+        return $this->belongsTo(BarangayPermit::class);
+    }
+
+    public function barangayClearance()
+    {
+        return $this->belongsTo(BarangayClearance::class);
     }
 }

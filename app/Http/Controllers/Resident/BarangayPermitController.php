@@ -30,14 +30,6 @@ class BarangayPermitController extends Controller
             $validated = $request->validated();
             $user = Auth::user();
 
-            // Resolve PSGC barangay id if available
-            if (!empty($validated['barangay_code'])) {
-                $barangayId = $this->psgcRepository->getBarangayById($validated['barangay_code']);
-                if ($barangayId) {
-                    $validated['barangay_id'] = $barangayId;
-                }
-            }
-
             $this->bussinessPermitRepository->createPermitApplication($validated, $user->id);
 
             return redirect()->route('resident.dashboard')

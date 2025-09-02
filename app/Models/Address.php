@@ -7,11 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Address extends Model
 {
-    public function barangayPermit()
-    {
-        return $this->belongsTo(BarangayPermit::class);
-    }
-
     use HasFactory;
 
     protected $fillable = [
@@ -27,11 +22,22 @@ class Address extends Model
         'region_code',
         'zip_code',
         'barangay_permit_id',
+        'barangay_clearance_id'
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function barangayPermit()
+    {
+        return $this->belongsTo(BarangayPermit::class);
+    }
+
+    public function barangayClearance()
+    {
+        return $this->belongsTo(BarangayClearance::class);
     }
 
     public function barangay()

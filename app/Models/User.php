@@ -62,12 +62,15 @@ class User extends Authenticatable
         return $this->hasMany(SupportingDocument::class);
     }
 
+    public function barangayClearances()
+    {
+        return $this->hasMany(BarangayClearance::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
-
-  
 
     public function city()
     {

@@ -7,11 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class SupportingDocument extends Model
 {
-    public function barangayPermit()
-    {
-        return $this->belongsTo(BarangayPermit::class);
-    }
-
     use HasFactory;
 
     protected $fillable = [
@@ -20,6 +15,7 @@ class SupportingDocument extends Model
         'file_path',
         'verified',
         'barangay_permit_id',
+        'barangay_clearance_id'
     ];
 
     protected $casts = [
@@ -29,5 +25,15 @@ class SupportingDocument extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function barangayPermit()
+    {
+        return $this->belongsTo(BarangayPermit::class);
+    }
+
+    public function barangayClearance()
+    {
+        return $this->belongsTo(BarangayClearance::class);
     }
 }
