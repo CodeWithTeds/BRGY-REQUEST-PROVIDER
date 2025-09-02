@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Resident\BarangayPermitController;
+use App\Http\Controllers\Resident\BarangayClearanceController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -19,8 +20,16 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
         return Inertia::render('Resident/BarangayBusinessPermit');
     })->name('resident.barangay-business-permit');
 
+    Route::get('/barangay-clearance', function () {
+        return Inertia::render('Resident/BarangayClearance');
+    })->name('resident.barangay-clearance');
+
     Route::get('/barangay-permit/create', [BarangayPermitController::class, 'create'])->name('barangay-permit.create');
     Route::post('/barangay-permit', [BarangayPermitController::class, 'store'])->name('barangay-permit.store');
+
+    Route::get('/barangay-clearance/create', [BarangayClearanceController::class, 'create'])->name('barangay-clearance.create');
+    Route::post('/barangay-clearance', [BarangayClearanceController::class, 'store'])->name('barangay-clearance.store');
+    Route::get('/barangay-clearance/{id}', [BarangayClearanceController::class, 'show'])->name('barangay-clearance.show');
     Route::get('/psgc/island-groups/{code}/barangays', [BarangayPermitController::class, 'barangaysByIslandGroup'])->name('psgc.barangays.by-island-group');
 
 
