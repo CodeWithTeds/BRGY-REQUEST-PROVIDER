@@ -24,26 +24,32 @@ class BussinessPermitRepository extends Repository {
     protected function createPermitWithRelations(array $data, int $userId, array $models = []): BarangayPermit
     {
         return $this->transaction(function () use ($data, $userId, $models) {
+            // First create the permit
+            $permit = $this->create([
+                'user_id' => $userId,
+                'status' => 'pending',
+                'application_date' => now()->toDateString() // Ensure application_date is set
+            ]);
+            
+            // Then create the related models with the permit ID
             foreach ($models as $modelKey => $modelData) {
                 if (isset($modelData['model']) && $modelData['model'] instanceof Model) {
-                    $attributes = array_merge(['user_id' => $userId], $modelData['attributes'] ?? []);
-                    $values = array_merge(
-                        $modelData['only'] ? Arr::only($data, $modelData['only']) : [],
-                        $modelData['extra'] ?? []
-                    );
+                    $attributes = array_merge(['user_id' => $userId, 'barangay_permit_id' => $permit->id], $modelData['attributes'] ?? []);
 
-                    if (isset($modelData['file']) && isset($data[$modelData['file']]) && $data[$modelData['file']]->isValid()) {
-                        $values['file_path'] = $data[$modelData['file']]->store($modelData['storage_path'], 'public');
+                    $onlyKeys = $modelData['only'] ?? [];
+                    $baseValues = !empty($onlyKeys) ? Arr::only($data, $onlyKeys) : [];
+                    $extraValues = $modelData['extra'] ?? [];
+                    $values = array_merge($baseValues, $extraValues);
+
+                    if (isset($modelData['file']) && isset($data[$modelData['file']]) && $data[$modelData['file']] && $data[$modelData['file']]->isValid()) {
+                        $values['file_path'] = $data[$modelData['file']]->store($modelData['storage_path'] ?? 'uploads', 'public');
                     }
 
                     $modelData['model']->updateOrCreate($attributes, $values);
                 }
             }
 
-            return $this->create(array_merge(
-                ['user_id' => $userId],
-                $data['permit_data'] ?? []
-            ));
+            return $permit;
         });
     }
 
@@ -80,8 +86,8 @@ class BussinessPermitRepository extends Repository {
                 'province_code',
                 'region_code',
                 'zip_code'
-            ],
-            'extra' => ['barangay_id' => $data['barangay_id'] ?? null]
+            ]
+            // Removed legacy barangay_id usage in favor of PSGC codes
         ];
     }
 

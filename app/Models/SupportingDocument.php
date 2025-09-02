@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class SupportingDocument extends Model
 {
+    public function barangayPermit()
+    {
+        return $this->belongsTo(BarangayPermit::class);
+    }
+
     use HasFactory;
 
     protected $fillable = [
@@ -14,6 +19,7 @@ class SupportingDocument extends Model
         'document_type',
         'file_path',
         'verified',
+        'barangay_permit_id',
     ];
 
     protected $casts = [

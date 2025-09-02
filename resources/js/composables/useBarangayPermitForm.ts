@@ -3,7 +3,30 @@ import { useForm } from '@inertiajs/vue3'
 import { makeMapLabel } from '@/composables/useLabels'
 
 export function useBarangayPermitForm() {
-    const form = useForm({
+    const form = useForm<{
+        first_name: string;
+        middle_name: string;
+        last_name: string;
+        suffix: string;
+        date_of_birth: string;
+        place_of_birth: string;
+        civil_status: string;
+        gender: string;
+        citizenship: string;
+        contact_number: string;
+        address_type: string;
+        house_no: string;
+        street: string;
+        purok: string;
+        region_code: string | null;
+        province_code: string | null;
+        city_code: string | null;
+        barangay_code: string | null;
+        zip_code: string;
+        document_type: string;
+        document: File | null;
+        errors: Record<string, string>;
+    }>({
         first_name: '',
         middle_name: '',
         last_name: '',
@@ -18,15 +41,14 @@ export function useBarangayPermitForm() {
         house_no: '',
         street: '',
         purok: '',
-
-        // PSGC codes
-        region_code: null as string | null,
-        province_code: null as string | null,
-        city_code: null as string | null,
-        barangay_code: null as string | null,
+        region_code: null,
+        province_code: null,
+        city_code: null,
+        barangay_code: null,
         zip_code: '',
         document_type: 'certificate_of_residency',
-        document: null as File | null,
+        document: null,
+        errors: {}
     })
 
     // Centralized labels

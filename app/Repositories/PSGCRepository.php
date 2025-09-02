@@ -33,8 +33,7 @@ class PSGCRepository extends Repository
 
     public function getRegions()
     {
-        return (new Repository(new Region()))
-            ->query()
+        return Region::query()
             ->orderBy('name')
             ->get(['code', 'name']);
     }
@@ -72,7 +71,7 @@ class PSGCRepository extends Repository
     public function getBarangayById(string $code)
     {
         return DB::table('psgc_barangays')
-            ->where('code', $code)
+            ->where('brgy_code', $code)
             ->value('id');
     }
 }

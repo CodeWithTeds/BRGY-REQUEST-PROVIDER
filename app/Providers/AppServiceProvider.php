@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Address;
+use App\Models\ApplicantProfile;
+use App\Models\BarangayPermit;
+use App\Models\SupportingDocument;
+use App\Repositories\BussinessPermitRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +16,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(BussinessPermitRepository::class, function ($app) {
+            return new BussinessPermitRepository(
+                new BarangayPermit(),
+                new ApplicantProfile(),
+                new Address(),
+                new SupportingDocument()
+            );
+        });
     }
 
     /**

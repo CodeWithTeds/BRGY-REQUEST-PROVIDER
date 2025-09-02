@@ -11,18 +11,32 @@ class BarangayPermit extends Model
 
     protected $fillable = [
         'user_id',
-        'application_type',
-        'business_name',
-        'business_address',
-        'owner_name',
-        'contact_number',
-        'email',
         'status',
         'remarks',
+        'application_date',
+    ];
+
+    protected $attributes = [
+        'status' => 'pending',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function applicantProfile()
+    {
+        return $this->hasOne(ApplicantProfile::class);
+    }
+
+    public function address()
+    {
+        return $this->hasOne(Address::class);
+    }
+
+    public function supportingDocument()
+    {
+        return $this->hasOne(SupportingDocument::class);
     }
 }

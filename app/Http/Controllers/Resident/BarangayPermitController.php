@@ -26,17 +26,28 @@ class BarangayPermitController extends Controller
 
     public function store(StoreBarangayPermitRequest $request)
     {
-        $validated = $request->validated();
-        $user = Auth::user();
+        try {
+            $validated = $request->validated();
+            $user = Auth::user();
 
-        // Resolve PSGC barangay id if available
-        if (!empty($validated['barangay_code'])) {
-            $validated['barangay_id'] = $this->psgcRepository->getBarangayById($validated['barangay_code']);
+            // Resolve PSGC barangay id if available
+            if (!empty($validated['barangay_code'])) {
+                $barangayId = $this->psgcRepository->getBarangayById($validated['barangay_code']);
+                if ($barangayId) {
+                    $validated['barangay_id'] = $barangayId;
+                }
+            }
+
+            $this->bussinessPermitRepository->createPermitApplication($validated, $user->id);
+
+            return redirect()->route('resident.dashboard')
+                ->with('success', 'Barangay permit application submitted successfully.');
+        } catch (\Exception $e) {
+            report($e);
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Failed to submit barangay permit application: ' . $e->getMessage()]);
         }
-
-        $this->bussinessPermitRepository->createPermitApplication($validated, $user->id);
-
-        return redirect()->route('resident.dashboard')->with('success', 'Barangay permit application submitted successfully.');
     }
 
     public function barangaysByIslandGroup(string $code)
