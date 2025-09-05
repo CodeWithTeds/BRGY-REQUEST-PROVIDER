@@ -1,58 +1,62 @@
-import { useForm } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { useForm } from '@inertiajs/vue3'
+import { makeMapLabel } from '@/composables/useLabels'
 
 export function useBarangayClearanceForm() {
     const form = useForm({
-        // Personal Information
         first_name: '',
         middle_name: '',
         last_name: '',
-        birth_date: '',
+        date_of_birth: '',
+        place_of_birth: '',
         civil_status: '',
         gender: '',
+        citizenship: '',
         contact_number: '',
         email: '',
         purpose: '',
 
-        // Address Information
-        address_type: 'present',
+        address_type: '',
+        house_no: '',
+        street: '',
+        purok: '',
         region_code: '',
         province_code: '',
         city_code: '',
         barangay_code: '',
-        house_no: '',
-        street: '',
-        purok: '',
+        zip_code: '',
 
-        // Supporting Documents
         document_type: '',
-        document_file: null as File | null,
-    });
+        document: null as File | null,
+    })
 
-    const civilStatusLabel = computed(() => ({
+    const civilStatusOptions = {
         single: 'Single',
         married: 'Married',
         widowed: 'Widowed',
-        divorced: 'Divorced',
-        separated: 'Separated'
-    }));
+        separated: 'Separated',
+    }
 
-    const genderLabel = computed(() => ({
+    const genderOptions = {
         male: 'Male',
         female: 'Female',
-        other: 'Other'
-    }));
+        other: 'Other',
+    }
 
-    const documentTypeLabel = computed(() => ({
-        valid_id: 'Valid ID',
-        proof_of_residence: 'Proof of Residence',
-        other: 'Other Supporting Document'
-    }));
+    const documentTypeOptions = {
+        certificate_of_residency: 'Certificate of Residency',
+        lease_contract: 'Lease Contract',
+        utility_bill: 'Utility Bill',
+    }
 
-    const addressTypeLabel = computed(() => ({
+    const addressTypeOptions = {
         present: 'Present Address',
-        permanent: 'Permanent Address'
-    }));
+        permanent: 'Permanent Address',
+    }
+
+    const civilStatusLabel = makeMapLabel(() => form.civil_status, civilStatusOptions)
+    const genderLabel = makeMapLabel(() => form.gender, genderOptions)
+    const documentTypeLabel = makeMapLabel(() => form.document_type, documentTypeOptions)
+    const addressTypeLabel = makeMapLabel(() => form.address_type, addressTypeOptions)
 
     return {
         form,
@@ -60,5 +64,5 @@ export function useBarangayClearanceForm() {
         genderLabel,
         documentTypeLabel,
         addressTypeLabel,
-    };
+    }
 }

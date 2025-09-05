@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, FileText, UserCheck, MapPin, FileCheck2, AlertCircle } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { ArrowRight, UserCheck, MapPin, FileCheck2, AlertCircle } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -16,6 +15,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
+
     <Head title="Barangay Clearance" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
