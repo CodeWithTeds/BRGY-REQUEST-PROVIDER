@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen relative overflow-hidden bg-[#2C4854]">
+    <div class="min-h-screen relative overflow-hidden bg-main">
         <ResidentHeader />
         <!-- Content -->
         <div
@@ -18,10 +18,10 @@
                     text="BRGY Request Provider A web-based system that simplifies barangay service requests and document processing. Residents can easily submit requests online, while barangay officials can track, manage, and process applications more efficiently." />
                 <div class="mt-8">
                     <Link href="#features-section"
-                        class="group inline-flex items-center gap-3 rounded-full border-2 border-[#efeeed]/80 bg-[#efeeed] text-[#2C4854] transition hover:bg-transparent hover:text-[#efeeed]">
+                        class="group inline-flex items-center gap-3 rounded-full border-2 border-[#efeeed]/80 bg-[#efeeed] text-main transition hover:bg-transparent hover:text-[#efeeed]">
                     <span class="px-6 py-3 text-sm font-semibold tracking-wide">LEARN MORE</span>
                     <span
-                        class="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#2C4854] text-[#efeeed] group-hover:bg-[#efeeed] group-hover:text-[#2C4854]">
+                        class="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-main text-[#efeeed] group-hover:bg-[#efeeed] group-hover:text-main">
                         <i class="pi pi-arrow-right" style="font-size: 1rem"></i>
                     </span>
                     </Link>
@@ -35,16 +35,16 @@
 
                 <!-- Device -->
                 <div
-                    class="absolute left-1/2 top-[60%] z-10 h-full w-full -translate-x-1/2 -translate-y-1/2 rounded-[3rem] bg-[#efeeed] shadow-[0_20px_80px_rgba(44,72,84,0.35)] ring-8 ring-[#2C4854]">
+                    class="absolute left-1/2 top-[60%] z-10 h-full w-full -translate-x-1/2 -translatey-1/2 rounded-[3rem] bg-[#efeeed] shadow-[0_20px_80px_rgba(44,72,84,0.35)] ring-8 ring-main">
                     <!-- Notch -->
-                    <div class="mx-auto mt-4 h-6 w-40 rounded-b-2xl bg-[#2C4854]"></div>
+                    <div class="mx-auto mt-4 h-6 w-40 rounded-b-2xl bg-main"></div>
                     <!-- Screen content -->
                     <div class="p-6">
                         <div class="mt-10 space-y-4">
-                            <div class="h-11 rounded-lg border border-[#2C4854]/20 bg-[#efeeed]"></div>
-                            <div class="h-11 rounded-lg border border-[#2C4854]/20 bg-[#efeeed]"></div>
+                            <div class="h-11 rounded-lg border border-main/20 bg-[#efeeed]"></div>
+                            <div class="h-11 rounded-lg border border-main/20 bg-[#efeeed]"></div>
                             <button
-                                class="mt-2 w-full rounded-lg bg-[#2C4854] py-3 text-sm font-medium text-[#efeeed]">Sign
+                                class="mt-2 w-full rounded-lg bg-main py-3 text-sm font-medium text-[#efeeed]">Sign
                                 In</button>
                         </div>
                     </div>

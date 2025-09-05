@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Models\User;
 use App\Models\BarangayClearance;
 use App\Models\ApplicantProfile;
 use App\Models\Address;
@@ -13,7 +12,7 @@ use Illuminate\Support\Arr;
 class BarangayClearanceRepository extends Repository {
     
     public function __construct(
-        protected BarangayClearance $barangayClearance,
+        BarangayClearance $barangayClearance,
         protected ?ApplicantProfile $applicantProfile = null,
         protected ?Address $address = null,
         protected ?SupportingDocument $supportingDocument = null
@@ -109,6 +108,31 @@ class BarangayClearanceRepository extends Repository {
             'file' => 'document',
             'storage_path' => 'documents/clearance'
         ];
+    }
+
+    public function getClearances(int $userId)
+    {
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->with(['applicantProfile', 'address', 'supportingDocument'])
+            ->latest()
+            ->get();
+    }
+
+    public function getPendingClearance(int $userId)
+    {
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->whereIn('status', ['pending', 'processing'])
+            ->first();
+    }
+
+    public function getClearance(int $id, int $userId)
+    {
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->with(['applicantProfile', 'address', 'supportingDocument'])
+            ->findOrFail($id);
     }
 
     public function createClearanceApplication(array $data, int $userId): BarangayClearance

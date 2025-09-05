@@ -98,21 +98,28 @@ function submit() {
                                     </div>
 
                                     <div>
-                                        <Label for="birth_date">Birth Date</Label>
-                                        <Input id="birth_date" v-model="form.birth_date" type="date" :error="form.errors.birth_date" />
-                                        <div v-if="form.errors.birth_date" class="text-sm text-red-600">{{ form.errors.birth_date }}</div>
+                                        <Label for="date_of_birth">Birth Date</Label>
+                                        <Input id="date_of_birth" v-model="form.date_of_birth" type="date" :error="form.errors.date_of_birth" />
+                                        <div v-if="form.errors.date_of_birth" class="text-sm text-red-600">{{ form.errors.date_of_birth }}</div>
+                                    </div>
+
+                                    <div>
+                                        <Label for="place_of_birth">Place of Birth</Label>
+                                        <Input id="place_of_birth" v-model="form.place_of_birth" type="text" :error="form.errors.place_of_birth" />
+                                        <div v-if="form.errors.place_of_birth" class="text-sm text-red-600">{{ form.errors.place_of_birth }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="civil_status">Civil Status</Label>
                                         <Select v-model="form.civil_status">
                                             <SelectTrigger :error="form.errors.civil_status">
-                                                <SelectValue placeholder="Select civil status" />
+                                                <SelectValue placeholder="Select civil status">{{ civilStatusLabel || 'Select civil status' }}</SelectValue>
                                             </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem v-for="(label, value) in civilStatusLabel" :key="value" :value="value">
-                                                    {{ label }}
-                                                </SelectItem>
+                                            <SelectContent position="popper" side="bottom" :sideOffset="4" align="start" :alignOffset="0" :avoidCollisions="true">
+                                                <SelectItem value="single">Single</SelectItem>
+                                                <SelectItem value="married">Married</SelectItem>
+                                                <SelectItem value="widowed">Widowed</SelectItem>
+                                                <SelectItem value="separated">Separated</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <div v-if="form.errors.civil_status" class="text-sm text-red-600">{{ form.errors.civil_status }}</div>
@@ -122,15 +129,21 @@ function submit() {
                                         <Label for="gender">Gender</Label>
                                         <Select v-model="form.gender">
                                             <SelectTrigger :error="form.errors.gender">
-                                                <SelectValue placeholder="Select gender" />
+                                                <SelectValue placeholder="Select gender">{{ genderLabel || 'Select gender' }}</SelectValue>
                                             </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem v-for="(label, value) in genderLabel" :key="value" :value="value">
-                                                    {{ label }}
-                                                </SelectItem>
+                                            <SelectContent position="popper" side="bottom" :sideOffset="4" align="start" :alignOffset="0" :avoidCollisions="true">
+                                                <SelectItem value="male">Male</SelectItem>
+                                                <SelectItem value="female">Female</SelectItem>
+                                                <SelectItem value="other">Other</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <div v-if="form.errors.gender" class="text-sm text-red-600">{{ form.errors.gender }}</div>
+                                    </div>
+
+                                    <div>
+                                        <Label for="citizenship">Citizenship</Label>
+                                        <Input id="citizenship" v-model="form.citizenship" type="text" :error="form.errors.citizenship" />
+                                        <div v-if="form.errors.citizenship" class="text-sm text-red-600">{{ form.errors.citizenship }}</div>
                                     </div>
 
                                     <div>
@@ -160,12 +173,11 @@ function submit() {
                                     <Label for="address_type">Address Type</Label>
                                     <Select v-model="form.address_type">
                                         <SelectTrigger :error="form.errors.address_type">
-                                            <SelectValue placeholder="Select address type" />
+                                            <SelectValue placeholder="Select address type">{{ addressTypeLabel || 'Select address type' }}</SelectValue>
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem v-for="(label, value) in addressTypeLabel" :key="value" :value="value">
-                                                {{ label }}
-                                            </SelectItem>
+                                        <SelectContent position="popper" side="bottom" :sideOffset="4" align="start" :alignOffset="0" :avoidCollisions="true">
+                                            <SelectItem value="present">Present Address</SelectItem>
+                                            <SelectItem value="permanent">Permanent Address</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <div v-if="form.errors.address_type" class="text-sm text-red-600">{{ form.errors.address_type }}</div>
@@ -206,6 +218,12 @@ function submit() {
                                         <Input id="purok" v-model="form.purok" type="text" :error="form.errors.purok" />
                                         <div v-if="form.errors.purok" class="text-sm text-red-600">{{ form.errors.purok }}</div>
                                     </div>
+
+                                    <div>
+                                        <Label for="zip_code">Zip Code</Label>
+                                        <Input id="zip_code" v-model="form.zip_code" type="text" :error="form.errors.zip_code" />
+                                        <div v-if="form.errors.zip_code" class="text-sm text-red-600">{{ form.errors.zip_code }}</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -217,12 +235,12 @@ function submit() {
                                         <Label for="document_type">Document Type</Label>
                                         <Select v-model="form.document_type">
                                             <SelectTrigger :error="form.errors.document_type">
-                                                <SelectValue placeholder="Select document type" />
+                                                <SelectValue placeholder="Select document type">{{ documentTypeLabel || 'Select document type' }}</SelectValue>
                                             </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem v-for="(label, value) in documentTypeLabel" :key="value" :value="value">
-                                                    {{ label }}
-                                                </SelectItem>
+                                            <SelectContent position="popper" side="bottom" :sideOffset="4" align="start" :alignOffset="0" :avoidCollisions="true">
+                                                <SelectItem value="certificate_of_residency">Certificate of Residency</SelectItem>
+                                                <SelectItem value="lease_contract">Lease Contract</SelectItem>
+                                                <SelectItem value="utility_bill">Utility Bill</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <div v-if="form.errors.document_type" class="text-sm text-red-600">{{ form.errors.document_type }}</div>
@@ -233,10 +251,10 @@ function submit() {
                                         <Input
                                             id="document_file"
                                             type="file"
-                                            @input="(e: Event) => form.document_file = (e.target as HTMLInputElement)?.files?.[0] || null"
-                                            :error="form.errors.document_file"
+                                            @input="(e: Event) => form.document = (e.target as HTMLInputElement)?.files?.[0] || null"
+                                            :error="form.errors.document"
                                         />
-                                        <div v-if="form.errors.document_file" class="text-sm text-red-600">{{ form.errors.document_file }}</div>
+                                        <div v-if="form.errors.document" class="text-sm text-red-600">{{ form.errors.document }}</div>
                                     </div>
                                 </div>
                             </div>

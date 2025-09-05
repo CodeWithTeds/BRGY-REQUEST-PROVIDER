@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Resident;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Resident\StoreBarangayClearanceRequest;
 use App\Repositories\PSGCRepository;
 use App\Repositories\BarangayClearanceRepository;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class BarangayClearanceController extends Controller
@@ -19,65 +19,50 @@ class BarangayClearanceController extends Controller
     public function index()
     {
         return Inertia::render('Resident/BarangayClearance/Index', [
-            'clearances' => Auth::user()->barangayClearances()
-                ->with(['applicantProfile', 'address', 'supportingDocument'])
-                ->latest()
-                ->get()
+            'clearances' => $this->barangayClearanceRepository->getClearances(Auth::id())
         ]);
     }
 
     public function create()
     {
+        $pendingClearance = $this->barangayClearanceRepository->getPendingClearance(Auth::id());
+
+        if ($pendingClearance) {
+            return Inertia::render('Resident/BarangayClearance/Pending', [
+                'clearance' => $pendingClearance,
+            ]);
+        }
+
         return Inertia::render('Resident/BarangayClearance/Create', [
             'barangays' => $this->psgcRepository->getBarangaysByIslandGroup(),
             'regions' => $this->psgcRepository->getRegions(),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreBarangayClearanceRequest $request)
     {
-        $validated = $request->validate([
-            'purpose' => 'required|string|max:500',
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'suffix' => 'nullable|string|max:255',
-            'date_of_birth' => 'required|date',
-            'place_of_birth' => 'required|string|max:255',
-            'civil_status' => 'required|string|in:single,married,widowed,separated',
-            'gender' => 'required|string|in:male,female,other',
-            'citizenship' => 'required|string|max:255',
-            'contact_number' => 'required|string|max:255',
-            'address_type' => 'required|string|in:present,permanent',
-            'house_no' => 'required|string|max:255',
-            'street' => 'required|string|max:255',
-            'purok' => 'nullable|string|max:255',
-            'region_code' => 'required|string|exists:regions,code',
-            'province_code' => 'required|string|exists:provinces,code',
-            'city_code' => 'required|string|exists:cities,code',
-            'barangay_code' => 'required|string|exists:barangays,code',
-            'zip_code' => 'required|string|max:20',
-            'document_type' => 'required|string|in:certificate_of_residency,lease_contract,utility_bill',
-            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048'
-        ]);
+        try {
+            $validated = $request->validated();
+            $user = Auth::user();
 
-        $clearance = $this->barangayClearanceRepository->createClearanceApplication(
-            $validated,
-            Auth::id()
-        );
-
-        return redirect()->route('resident.barangay-clearance.show', $clearance)
-            ->with('success', 'Barangay Clearance application submitted successfully.');
+            $clearance = $this->barangayClearanceRepository->createClearanceApplication(
+                $validated,
+                $user->id
+            );
+            return redirect()->route('resident.barangay-clearance.show', $clearance)
+                ->with('success', 'Barangay Clearance application submitted successfully.');
+        } catch (\Exception $e) {
+            report($e);
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['error' => 'Failed to submit barangay clearance application: ' . $e->getMessage()]);
+        }
     }
 
     public function show(int $id)
     {
-        $clearance = Auth::user()->barangayClearances()
-            ->with(['applicantProfile', 'address', 'supportingDocument'])
-            ->findOrFail($id);
-
         return Inertia::render('Resident/BarangayClearance/Show', [
-            'clearance' => $clearance
+            'clearance' => $this->barangayClearanceRepository->getClearance($id, Auth::id())
         ]);
     }
 }
