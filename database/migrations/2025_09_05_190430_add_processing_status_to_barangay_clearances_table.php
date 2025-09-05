@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE barangay_clearances MODIFY COLUMN status ENUM('pending', 'processing', 'approved', 'rejected') DEFAULT 'pending'");
+        Schema::table('barangay_clearances', function (Blueprint $table) {
+            $table->string('status')->default('pending')->change();
+        });
     }
 
     /**
@@ -20,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE barangay_clearances MODIFY COLUMN status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending'");
+        Schema::table('barangay_clearances', function (Blueprint $table) {
+            $table->string('status')->default('pending')->change();
+        });
     }
 };

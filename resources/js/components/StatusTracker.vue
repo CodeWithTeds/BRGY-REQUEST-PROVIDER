@@ -19,21 +19,21 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue';
 
 const props = defineProps({
   currentStatus: {
     type: String,
     required: true,
-    validator: (value) => ['pending', 'processing', 'approved', 'rejected'].includes(value),
+    validator: (value: string) => ['pending', 'processing', 'approved', 'rejected'].includes(value),
   },
 });
 
 const statuses = ['pending', 'processing', 'approved'];
 const statusIndex = computed(() => statuses.indexOf(props.currentStatus));
 
-const getStepClass = (index) => {
+const getStepClass = (index: number) => {
   if (index < statusIndex.value) {
     return 'bg-primary text-primary-foreground';
   }
@@ -43,7 +43,7 @@ const getStepClass = (index) => {
   return 'bg-gray-200 text-gray-500';
 };
 
-const getLineClass = (index, isAfter = false) => {
+const getLineClass = (index: number, isAfter = false) => {
   if (isAfter) {
     if (index < statusIndex.value) {
       return 'bg-primary';
@@ -56,7 +56,7 @@ const getLineClass = (index, isAfter = false) => {
   return 'bg-gray-200';
 };
 
-const getTextClass = (index) => {
+const getTextClass = (index: number) => {
   if (index <= statusIndex.value) {
     return 'text-primary';
   }

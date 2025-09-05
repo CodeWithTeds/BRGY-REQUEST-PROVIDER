@@ -31,7 +31,7 @@
   </app-layout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import StatusTracker from '@/components/StatusTracker.vue';
 
