@@ -18,6 +18,14 @@ class BarangayPermitController extends Controller
 
     public function create()
     {
+        $pendingPermit = $this->bussinessPermitRepository->getPendingPermit(Auth::id());
+
+        if ($pendingPermit) {
+            return Inertia::render('Resident/BarangayPermit/Pending', [
+                'permit' => $pendingPermit,
+            ]);
+        }
+
         return Inertia::render('Resident/BarangayPermit/Create', [
             'barangays' => $this->psgcRepository->getBarangaysByIslandGroup(),
             'regions' => $this->psgcRepository->getRegions(),
@@ -62,7 +70,7 @@ class BarangayPermitController extends Controller
     public function provincesByRegion(string $code)
     {
         return response()->json($this->psgcRepository->getProvincesByRegion($code));
-    }
+    } 
 
     public function citiesByProvince(string $code)
     {

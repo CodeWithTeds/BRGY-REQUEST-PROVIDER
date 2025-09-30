@@ -26,7 +26,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Certificate of Residency',
-        href: '/certificate-of-residency',
+        href: route('resident.certificate-of-residency.create'),
         icon: UserCheck,
     },
     {

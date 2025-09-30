@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Resident\BarangayPermitController;
 use App\Http\Controllers\Resident\BarangayClearanceController;
+use App\Http\Controllers\Resident\CertificateOfResidencyController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -23,6 +24,9 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
     Route::get('/barangay-clearance', function () {
         return Inertia::render('Resident/BarangayClearance');
     })->name('resident.barangay-clearance');
+
+    Route::get('certificate-of-residency', [CertificateOfResidencyController::class, 'create'])->name('resident.certificate-of-residency.create');
+    Route::post('certificate-of-residency', [CertificateOfResidencyController::class, 'store'])->name('resident.certificate-of-residency.store');
 
     Route::get('/barangay-permit/create', [BarangayPermitController::class, 'create'])->name('barangay-permit.create');
     Route::post('/barangay-permit', [BarangayPermitController::class, 'store'])->name('barangay-permit.store');

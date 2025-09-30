@@ -116,6 +116,14 @@ class BussinessPermitRepository extends Repository {
         return $this->createPermitWithRelations($data, $userId, $models);
     }
 
+    public function getPendingPermit(int $userId)
+    {
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->whereIn('status', ['pending', 'processing'])
+            ->first();
+    }
+
     public function createSupportingDocument(array $data, int $userId): SupportingDocument
     {
         if (!$this->supportingDocument) {
