@@ -124,6 +124,14 @@ class BussinessPermitRepository extends Repository {
             ->first();
     }
 
+    public function getLatestPermit(int $userId)
+    {
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->latest()
+            ->first();
+    }
+
     public function createSupportingDocument(array $data, int $userId): SupportingDocument
     {
         if (!$this->supportingDocument) {

@@ -26,6 +26,14 @@ class BarangayPermitController extends Controller
             ]);
         }
 
+        // If there is an approved or rejected latest permit, show a status message instead of create form
+        $latest = $this->bussinessPermitRepository->getLatestPermit(Auth::id());
+        if ($latest && in_array($latest->status, ['approved', 'rejected'])) {
+            return Inertia::render('Resident/BarangayPermit/StatusMessage', [
+                'permit' => $latest,
+            ]);
+        }
+
         return Inertia::render('Resident/BarangayPermit/Create', [
             'barangays' => $this->psgcRepository->getBarangaysByIslandGroup(),
             'regions' => $this->psgcRepository->getRegions(),

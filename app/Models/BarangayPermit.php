@@ -35,8 +35,20 @@ class BarangayPermit extends Model
         return $this->hasOne(Address::class);
     }
 
+    // Additional relationship to retrieve ALL addresses linked to this permit
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
     public function supportingDocument()
     {
         return $this->hasOne(SupportingDocument::class);
+    }
+
+    // Additional relationship to retrieve ALL supporting documents linked to this permit
+    public function supportingDocuments()
+    {
+        return $this->hasMany(SupportingDocument::class);
     }
 }
