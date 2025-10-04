@@ -59,6 +59,17 @@ Route::prefix('admin')->group(function () {
         Route::get('dashboard', function () {
             return Inertia::render('Admin/Dashboard');
         })->name('admin.dashboard');
+
+        Route::get('business-permits', [App\Http\Controllers\Admin\BusinessPermitController::class, 'index'])
+            ->name('admin.business-permits');
+        Route::get('business-permits/{id}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'show'])
+            ->name('admin.business-permits.show');
+        // View supporting document file inline in browser
+        Route::get('business-permits/{id}/documents/{docId}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'viewDocument'])
+            ->name('admin.business-permits.documents.view');
+        // Update status and remarks
+        Route::post('business-permits/{id}/status', [App\Http\Controllers\Admin\BusinessPermitController::class, 'updateStatus'])
+            ->name('admin.business-permits.update-status');
     });
 });
 
