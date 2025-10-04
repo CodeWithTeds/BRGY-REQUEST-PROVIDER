@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center justify-center w-full mt-8">
+  <div :class="['flex items-center justify-center w-full', noMargin ? 'mt-0' : 'mt-8']">
     <div class="w-full max-w-4xl">
       <div class="flex items-center justify-between">
         <div v-for="(status, index) in statuses" :key="status" class="flex-1 text-center">
@@ -27,6 +27,10 @@ const props = defineProps({
     type: String,
     required: true,
     validator: (value: string) => ['pending', 'processing', 'approved', 'rejected'].includes(value),
+  },
+  noMargin: {
+    type: Boolean,
+    default: false,
   },
 });
 

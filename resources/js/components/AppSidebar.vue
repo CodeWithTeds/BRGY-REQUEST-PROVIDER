@@ -4,9 +4,10 @@ import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, IdCard, FileCheck, Building2, UserCheck } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, Folder, LayoutGrid, IdCard, FileCheck, Building2, UserCheck, FileText } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import { computed } from 'vue';
 
 const mainNavItems: NavItem[] = [
     {
@@ -36,6 +37,24 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
+const adminNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/admin/dashboard',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Business Permits',
+        href: '/admin/business-permits',
+        icon: FileText,
+    },
+    {
+        title: 'Profile Settings',
+        href: '/settings/profile',
+        icon: UserCheck,
+    },
+];
+
 const footerNavItems: NavItem[] = [
     {
         title: 'Github Repo',
@@ -48,6 +67,14 @@ const footerNavItems: NavItem[] = [
         icon: BookOpen,
     },
 ];
+
+const isAdmin = computed(() => {
+    return window.location.pathname.startsWith('/admin');
+});
+
+const navItems = computed(() => {
+    return isAdmin.value ? adminNavItems : mainNavItems;
+});
 </script>
 
 <template>
@@ -65,7 +92,7 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain :items="navItems" />
         </SidebarContent>
 
         <SidebarFooter>
