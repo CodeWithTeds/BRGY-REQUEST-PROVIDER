@@ -8,6 +8,7 @@ use App\Repositories\PSGCRepository;
 use App\Repositories\BarangayClearanceRepository;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Http\Resources\BarangayClearanceDetailResource;
 
 class BarangayClearanceController extends Controller
 {
@@ -49,7 +50,7 @@ class BarangayClearanceController extends Controller
                 $validated,
                 $user->id
             );
-            return redirect()->route('resident.barangay-clearance.show', $clearance)
+            return redirect()->route('barangay-clearance.show', $clearance->id)
                 ->with('success', 'Barangay Clearance application submitted successfully.');
         } catch (\Exception $e) {
             report($e);
@@ -61,8 +62,11 @@ class BarangayClearanceController extends Controller
 
     public function show(int $id)
     {
+        $clearance = $this->barangayClearanceRepository->getClearance($id, Auth::id());
+        $data = (new BarangayClearanceDetailResource($clearance))->toArray(request());
+
         return Inertia::render('Resident/BarangayClearance/Show', [
-            'clearance' => $this->barangayClearanceRepository->getClearance($id, Auth::id())
+            'clearance' => $data,
         ]);
     }
 }

@@ -72,6 +72,18 @@ Route::prefix('admin')->group(function () {
         // Update status and remarks
         Route::post('business-permits/{id}/status', [App\Http\Controllers\Admin\BusinessPermitController::class, 'updateStatus'])
             ->name('admin.business-permits.update-status');
+
+        // Admin Barangay Clearances
+        Route::get('barangay-clearances', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'index'])
+            ->name('admin.barangay-clearances');
+        Route::get('barangay-clearances/{id}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'show'])
+            ->name('admin.barangay-clearances.show');
+        Route::delete('barangay-clearances/{id}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'destroy'])
+            ->name('admin.barangay-clearances.destroy');
+        Route::get('barangay-clearances/{id}/documents/{docId}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'viewDocument'])
+            ->name('admin.barangay-clearances.documents.view');
+        Route::post('barangay-clearances/{id}/status', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'updateStatus'])
+            ->name('admin.barangay-clearances.update-status');
     });
 });
 

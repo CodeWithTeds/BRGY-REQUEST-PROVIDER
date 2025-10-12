@@ -49,4 +49,16 @@ class BarangayClearance extends Model
     {
         return $this->hasOne(SupportingDocument::class);
     }
+
+    // Additional relationship to retrieve ALL supporting documents linked to this clearance
+    public function supportingDocuments()
+    {
+        return $this->hasMany(SupportingDocument::class);
+    }
+
+    // Additional relationship to retrieve ALL addresses linked to this clearance
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
 }

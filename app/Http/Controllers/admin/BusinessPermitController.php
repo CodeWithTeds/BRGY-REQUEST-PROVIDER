@@ -49,11 +49,12 @@ class BusinessPermitController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $permit = $this->permitRepo->getWithAllRelations($id);
 
-        $data = new BusinessPermitDetailResource($permit);
+        // Unwrap resource to a plain array so Vue gets direct fields
+        $data = (new BusinessPermitDetailResource($permit))->toArray($request);
 
         $stats = [
             'total' => BarangayPermit::count(),

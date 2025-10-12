@@ -87,7 +87,6 @@ class BarangayClearanceRepository extends Repository {
         return [
             'model' => $this->address,
             'only' => [
-                'address_type',
                 'house_no',
                 'street',
                 'purok',
@@ -96,6 +95,9 @@ class BarangayClearanceRepository extends Repository {
                 'city_code',
                 'barangay_code',
                 'zip_code'
+            ],
+            'extra' => [
+                'type' => $data['address_type'] ?? null,
             ]
         ];
     }
@@ -104,8 +106,27 @@ class BarangayClearanceRepository extends Repository {
     {
         return [
             'model' => $this->supportingDocument,
+            // Include document_type in attributes so multiple records are created per type
             'only' => ['document_type'],
+            'attributes' => [
+                'document_type' => $data['document_type'] ?? null,
+            ],
             'file' => 'document',
+            'storage_path' => 'documents/clearance'
+        ];
+    }
+
+    protected function getValidIdDocumentConfig(): array
+    {
+        return [
+            'model' => $this->supportingDocument,
+            // Force document_type to 'valid_id' independent of request field
+            'only' => [],
+            'attributes' => [
+                'document_type' => 'valid_id',
+            ],
+            'extra' => ['document_type' => 'valid_id'],
+            'file' => 'valid_id_document',
             'storage_path' => 'documents/clearance'
         ];
     }
@@ -114,7 +135,7 @@ class BarangayClearanceRepository extends Repository {
     {
         return $this->model->newQuery()
             ->where('user_id', $userId)
-            ->with(['applicantProfile', 'address', 'supportingDocument'])
+            ->with(['applicantProfile', 'address', 'supportingDocuments'])
             ->latest()
             ->get();
     }
@@ -131,7 +152,7 @@ class BarangayClearanceRepository extends Repository {
     {
         return $this->model->newQuery()
             ->where('user_id', $userId)
-            ->with(['applicantProfile', 'address', 'supportingDocument'])
+            ->with(['applicantProfile', 'address', 'supportingDocuments'])
             ->findOrFail($id);
     }
 
@@ -145,6 +166,8 @@ class BarangayClearanceRepository extends Repository {
             'applicant_profile' => $this->getApplicantProfileConfig(),
             'address' => $this->getAddressConfig($data),
             'supporting_document' => $this->getSupportingDocumentConfig($data),
+            // Optional valid ID document if provided
+            'valid_id_document' => $this->getValidIdDocumentConfig(),
         ];
 
         return $this->createClearanceWithRelations($data, $userId, $models);
@@ -171,5 +194,62 @@ class BarangayClearanceRepository extends Repository {
         }
 
         return $clearance->update($data);
+    }
+
+    /**
+     * Admin: get a single clearance with all related models for detailed view.
+     */
+    public function getWithAllRelations(int $id): BarangayClearance
+    {
+        return $this->model->newQuery()
+            ->with([
+                'applicantProfile',
+                'user',
+                'address.barangay',
+                'address.city',
+                'address.province',
+                'address.region',
+                'supportingDocuments',
+            ])->findOrFail($id);
+    }
+
+    /**
+     * Admin: get list of clearances with relations and optional filters.
+     */
+    public function adminListWithFilters(array $filters)
+    {
+        $query = $this->model->newQuery()
+            ->with(['applicantProfile', 'user', 'address.barangay'])
+            ->latest();
+
+        // Filters: name, status, application date range
+        $name = trim((string) ($filters['name'] ?? ''));
+        if ($name !== '') {
+            $query->whereHas('applicantProfile', function ($ap) use ($name) {
+                $ap->where(function ($sub) use ($name) {
+                    $sub->where('first_name', 'like', '%' . $name . '%')
+                        ->orWhere('middle_name', 'like', '%' . $name . '%')
+                        ->orWhere('last_name', 'like', '%' . $name . '%')
+                        ->orWhere('suffix', 'like', '%' . $name . '%');
+                });
+            });
+        }
+
+        $status = $filters['status'] ?? null;
+        if (in_array($status, ['pending', 'processing', 'approved', 'rejected'])) {
+            $query->where('status', $status);
+        }
+
+        $dateFrom = $filters['date_from'] ?? null;
+        $dateTo = $filters['date_to'] ?? null;
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('application_date', [$dateFrom, $dateTo]);
+        } elseif ($dateFrom) {
+            $query->whereDate('application_date', '>=', $dateFrom);
+        } elseif ($dateTo) {
+            $query->whereDate('application_date', '<=', $dateTo);
+        }
+
+        return $query->get();
     }
 }

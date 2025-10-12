@@ -43,7 +43,9 @@ class StoreBarangayClearanceRequest extends FormRequest
             'barangay_code' => 'required|string|exists:barangays,code',
             'zip_code' => 'required|string|max:20',
             'document_type' => 'required|string|in:certificate_of_residency,lease_contract,utility_bill',
-            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048'
+            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            // Additional separate Valid ID document (optional)
+            'valid_id_document' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ];
     }
 }

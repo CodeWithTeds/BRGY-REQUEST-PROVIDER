@@ -49,6 +49,11 @@ const adminNavItems: NavItem[] = [
         icon: FileText,
     },
     {
+        title: 'Barangay Clearances',
+        href: '/admin/barangay-clearances',
+        icon: FileCheck,
+    },
+    {
         title: 'Profile Settings',
         href: '/settings/profile',
         icon: UserCheck,

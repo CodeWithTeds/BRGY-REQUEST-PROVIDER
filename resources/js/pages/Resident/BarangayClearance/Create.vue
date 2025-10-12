@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useBarangayClearanceForm } from '@/composables/useBarangayClearanceForm'
 import PsgcAddressSelector from '@/components/address/PsgcAddressSelector.vue'
-import { Head } from '@inertiajs/vue3'
+import { Head, router } from '@inertiajs/vue3'
 import type { BreadcrumbItem } from '@/types'
+import { ref, computed } from 'vue'
+import Toastify from 'toastify-js'
 
 const {
     form,
@@ -34,8 +36,96 @@ const props = defineProps<{
     regions: Array<{ code: string; name: string }>,
 }>()
 
+// Local ref for additional Valid ID document
+const validIdDocument = ref<File | null>(null)
+// Use a generic index signature for dynamic error keys in template
+const extraErrors = computed(() => form.errors as Record<string, string>)
+
+// Wizard step state similar to Permit
+const steps = ['Personal Information', 'PSGC Address', 'Supporting Documents']
+const currentStep = ref(0)
+const isFirstStep = computed(() => currentStep.value === 0)
+const isLastStep = computed(() => currentStep.value === steps.length - 1)
+
+function requiredFieldsForStep(step: number): string[] {
+    if (step === 0) {
+        return [
+            'first_name',
+            'last_name',
+            'date_of_birth',
+            'place_of_birth',
+            'civil_status',
+            'gender',
+            'citizenship',
+            'contact_number',
+            'purpose',
+        ]
+    }
+    if (step === 1) {
+        return [
+            'address_type',
+            'region_code',
+            'province_code',
+            'city_code',
+            'barangay_code',
+            'house_no',
+            'street',
+            'zip_code',
+        ]
+    }
+    return ['document_type', 'document']
+}
+
+const canProceed = computed(() => {
+    const required = requiredFieldsForStep(currentStep.value)
+    return required.every((field) => {
+        const value = (form as any)[field]
+        return value !== undefined && value !== null && value !== ''
+    })
+})
+
+function markMissingErrors(fields: string[]) {
+    const errs = form.errors as Record<string, string>
+    fields.forEach((f) => {
+        const value = (form as any)[f]
+        if (value === undefined || value === null || value === '') {
+            errs[f] = 'This field is required'
+        } else {
+            delete errs[f]
+        }
+    })
+}
+
+function goNext() {
+    const required = requiredFieldsForStep(currentStep.value)
+    markMissingErrors(required)
+    if (!canProceed.value) {
+        Toastify({
+            text: 'Please complete all required fields before proceeding.',
+            duration: 3500,
+            gravity: 'top',
+            position: 'right',
+            backgroundColor: '#dc2626',
+            close: true,
+        }).showToast()
+        return
+    }
+    currentStep.value = Math.min(currentStep.value + 1, steps.length - 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function goBack() {
+    currentStep.value = Math.max(currentStep.value - 1, 0)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 function submit() {
     form.clearErrors()
+    // Attach additional Valid ID file via transform
+    form.transform((data) => ({
+        ...data,
+        valid_id_document: validIdDocument.value,
+    }))
     form.post(route('barangay-clearance.store'), {
         preserveScroll: true,
         forceFormData: true,
@@ -45,13 +135,32 @@ function submit() {
         },
         onError: (errors) => {
             console.error('Form submission failed:', errors)
+            Toastify({
+                text: 'Submission failed. Please check required fields and files.',
+                duration: 4500,
+                gravity: 'top',
+                position: 'right',
+                backgroundColor: '#dc2626',
+                close: true,
+            }).showToast()
         },
         onSuccess: () => {
-            console.log('Form submitted successfully')
+            Toastify({
+                text: 'Application submitted successfully! We\'ll notify you once processed.',
+                duration: 4000,
+                gravity: 'top',
+                position: 'right',
+                backgroundColor: '#16a34a',
+                close: true,
+            }).showToast()
+
+            // Navigate to resident clearance landing instead of staying on create
+            router.get(route('resident.barangay-clearance'))
         },
         onFinish: () => {
             if (!form.hasErrors) {
                 form.reset()
+                validIdDocument.value = null
             }
         }
     })
@@ -71,12 +180,35 @@ function submit() {
                             <CardDescription>Fill out the form to apply for a barangay clearance.</CardDescription>
                         </CardHeader>
                         <CardContent class="space-y-6">
+                            <!-- Wizard Progress -->
+                            <div class="mt-2">
+                                <div class="flex items-center justify-between">
+                                    <div v-for="(label, idx) in steps" :key="label" class="flex-1 text-center">
+                                        <div class="flex items-center justify-center">
+                                            <div class="flex-1 h-1" :class="idx > 0 ? (idx <= currentStep ? 'bg-emerald-500' : 'bg-neutral-300') : 'bg-transparent'"></div>
+                                            <div class="relative">
+                                                <div :class="[
+                                                    'w-10 h-10 rounded-full flex items-center justify-center border text-sm font-semibold',
+                                                    idx < currentStep ? 'bg-emerald-500 text-white border-emerald-500' : idx === currentStep ? 'border-emerald-500 text-emerald-600' : 'border-neutral-300 text-neutral-400'
+                                                ]">
+                                                    {{ idx + 1 }}
+                                                </div>
+                                            </div>
+                                            <div class="flex-1 h-1" :class="idx < steps.length - 1 ? (idx < currentStep ? 'bg-emerald-500' : 'bg-neutral-300') : 'bg-transparent'"></div>
+                                        </div>
+                                        <p :class="[
+                                            'mt-2 text-sm font-medium',
+                                            idx <= currentStep ? 'text-emerald-700' : 'text-neutral-400'
+                                        ]">{{ label }}</p>
+                                    </div>
+                                </div>
+                            </div>
                             <div v-if="Object.keys(form.errors).length > 0" class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
                                 Please check the form for errors and try again.
                             </div>
 
                             <!-- Personal Information -->
-                            <div class="space-y-4">
+                            <div v-if="currentStep === 0" class="space-y-4">
                                 <h3 class="text-lg font-medium">Personal Information</h3>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
@@ -167,7 +299,7 @@ function submit() {
                             </div>
 
                             <!-- Address Information -->
-                            <div class="space-y-4">
+                            <div v-if="currentStep === 1" class="space-y-4">
                                 <h3 class="text-lg font-medium">Address Information</h3>
                                 <div>
                                     <Label for="address_type">Address Type</Label>
@@ -228,7 +360,7 @@ function submit() {
                             </div>
 
                             <!-- Supporting Documents -->
-                            <div class="space-y-4">
+                            <div v-if="currentStep === 2" class="space-y-4">
                                 <h3 class="text-lg font-medium">Supporting Documents</h3>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
@@ -247,23 +379,33 @@ function submit() {
                                     </div>
 
                                     <div>
-                                        <Label for="document_file">Upload Document</Label>
+                                        <Label for="document_file">Proof of Residence</Label>
                                         <Input
                                             id="document_file"
                                             type="file"
-                                            @input="(e: Event) => form.document = (e.target as HTMLInputElement)?.files?.[0] || null"
+                                            @change="form.document = $event.target.files?.[0] || null"
                                             :error="form.errors.document"
+                                            accept=".jpg,.jpeg,.png,.pdf"
                                         />
                                         <div v-if="form.errors.document" class="text-sm text-red-600">{{ form.errors.document }}</div>
+                                    </div>
+
+                                    <!-- Valid ID Upload -->
+                                    <div>
+                                        <Label for="valid_id_document">Valid ID</Label>
+                                        <Input id="valid_id_document" type="file" @change="validIdDocument = $event.target.files?.[0] || null" :error="extraErrors['valid_id_document']" accept=".jpg,.jpeg,.png,.pdf" />
+                                        <div v-if="extraErrors['valid_id_document']" class="text-sm text-red-600">{{ extraErrors['valid_id_document'] }}</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Submit Button -->
-                            <div class="flex justify-end pt-6">
-                                <Button type="submit" :disabled="form.processing" :loading="form.processing">
-                                    Submit Application
-                                </Button>
+                            <div class="flex items-center justify-between pt-6">
+                                <Button type="button" variant="outline" @click="goBack" :disabled="isFirstStep">Back</Button>
+                                <div class="flex gap-3">
+                                    <Button v-if="!isLastStep" type="button" @click="goNext">Next</Button>
+                                    <Button v-else type="submit" :disabled="form.processing" :loading="form.processing">Submit Application</Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
