@@ -29,8 +29,21 @@ interface Stats {
   rejected: number;
 }
 
+interface Filters {
+  name?: string;
+  status?: 'approved' | 'pending' | 'processing' | 'rejected' | '';
+  date_from?: string;
+  date_to?: string;
+}
+
 // Use props inside script
-const props = defineProps<{ permits: Permit[]; stats: Stats }>();
+const props = defineProps<{ permits: Permit[]; stats: Stats; filters?: Filters }>();
+
+// Filter state (server-driven)
+const filterName = ref(props.filters?.name ?? '');
+const filterStatus = ref<Filters['status']>(props.filters?.status ?? '');
+const filterDateFrom = ref(props.filters?.date_from ?? '');
+const filterDateTo = ref(props.filters?.date_to ?? '');
 
 // Selection state
 const selectedIds = ref<number[]>([]);
@@ -67,6 +80,24 @@ function gotoPage(next: number) {
 
 function initial(name: string) {
   return (name?.trim()?.charAt(0) || '?').toUpperCase();
+}
+
+function applyFilters() {
+  page.value = 1;
+  router.get('/admin/business-permits', {
+    name: filterName.value || undefined,
+    status: filterStatus.value || undefined,
+    date_from: filterDateFrom.value || undefined,
+    date_to: filterDateTo.value || undefined,
+  }, { preserveState: true, replace: true });
+}
+
+function resetFilters() {
+  filterName.value = '';
+  filterStatus.value = '';
+  filterDateFrom.value = '';
+  filterDateTo.value = '';
+  applyFilters();
 }
 
 
@@ -145,6 +176,25 @@ const breadcrumbs: BreadcrumbItem[] = [
           <PermitStatsCards :stats="props.stats" class="mb-6" />
           <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6">
+              <!-- Filters Toolbar -->
+              <div class="mb-4 rounded-md border border-[#2c4454]/20 bg-white p-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <input v-model="filterName" type="text" placeholder="Search by name" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30" />
+                  <select v-model="filterStatus" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30">
+                    <option value="">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <input v-model="filterDateFrom" type="date" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30" />
+                  <input v-model="filterDateTo" type="date" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30" />
+                </div>
+                <div class="mt-3 flex items-center gap-2">
+                  <button class="px-3 py-2 rounded-md bg-[#2c4454] text-white text-sm hover:opacity-90" @click="applyFilters">Apply filters</button>
+                  <button class="px-3 py-2 rounded-md bg-gray-200 text-[#2c4454] text-sm hover:bg-gray-300" @click="resetFilters">Reset</button>
+                </div>
+              </div>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                   <thead class="bg-gray-50">
