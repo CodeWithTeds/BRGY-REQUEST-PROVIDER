@@ -64,6 +64,8 @@ Route::prefix('admin')->group(function () {
             ->name('admin.business-permits');
         Route::get('business-permits/{id}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'show'])
             ->name('admin.business-permits.show');
+        Route::delete('business-permits/{id}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'destroy'])
+            ->name('admin.business-permits.destroy');
         // View supporting document file inline in browser
         Route::get('business-permits/{id}/documents/{docId}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'viewDocument'])
             ->name('admin.business-permits.documents.view');

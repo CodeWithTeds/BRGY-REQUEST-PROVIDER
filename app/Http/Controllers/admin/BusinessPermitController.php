@@ -203,4 +203,26 @@ class BusinessPermitController extends Controller
         // redirect back to the show page
         return redirect()->route('admin.business-permits.show', ['id' => $id]);
     }
+
+    public function destroy($id)
+    {
+        $permit = BarangayPermit::with(['supportingDocuments', 'addresses'])->findOrFail($id);
+
+        foreach ($permit->supportingDocuments as $doc) {
+            $path = $doc->file_path;
+            if ($path && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+            $doc->delete();
+        }
+
+        // Delete related addresses
+        if (method_exists($permit, 'addresses')) {
+            $permit->addresses()->delete();
+        }
+
+        $permit->delete();
+
+        return redirect()->route('admin.business-permits')->with('success', 'Barangay Business Permit deleted.');
+    }
 }

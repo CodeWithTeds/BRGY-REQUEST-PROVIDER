@@ -82,6 +82,10 @@ function notify(message: string, variant: 'success' | 'error' | 'info' = 'info')
   }).showToast();
 }
 
+function goBack() {
+  window.history.back();
+}
+
 function updateStatus(status: string) {
   form.status = status;
   form.post(`/admin/business-permits/${props.permit.id}/status`, {
@@ -126,6 +130,13 @@ const statusChip = (s: string) => {
     <template #header>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
+          <button
+            @click="goBack"
+            aria-label="Go back"
+            class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white p-2 text-sm text-[#2c4454] hover:bg-gray-50"
+          >
+            <ArrowLeft class="h-4 w-4" />
+          </button>
           <Link :href="'/admin/business-permits'" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" />
             Back to list
@@ -144,6 +155,13 @@ const statusChip = (s: string) => {
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6 space-y-6">
+              <!-- Local back button visible within page content -->
+              <div class="flex items-center">
+                <Link :href="'/admin/business-permits'" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
+                  <ArrowLeft class="h-4 w-4" />
+                  Back to list
+                </Link>
+              </div>
               <!-- Applicant summary -->
               <div class="flex flex-wrap items-start justify-between gap-6">
                 <div>
