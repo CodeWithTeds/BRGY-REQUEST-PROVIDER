@@ -7,6 +7,7 @@ use App\Http\Requests\Resident\StoreBarangayPermitRequest;
 use App\Repositories\PSGCRepository;
 use App\Repositories\BussinessPermitRepository;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class BarangayPermitController extends Controller
@@ -43,10 +44,38 @@ class BarangayPermitController extends Controller
     public function store(StoreBarangayPermitRequest $request)
     {
         try {
+            /** @var Request $request */
             $validated = $request->validated();
             $user = Auth::user();
 
-            $this->bussinessPermitRepository->createPermitApplication($validated, $user->id);
+            // Create the main permit and related base records
+            $permit = $this->bussinessPermitRepository->createPermitApplication($validated, $user->id);
+
+            // Save optional additional supporting documents as separate records
+            if ($request->hasFile('valid_id_document')) {
+                $this->bussinessPermitRepository->createSupportingDocumentForPermit(
+                    $user->id,
+                    $permit->id,
+                    $request->file('valid_id_document'),
+                    'valid_id'
+                );
+            }
+            if ($request->hasFile('barangay_clearance_business_document')) {
+                $this->bussinessPermitRepository->createSupportingDocumentForPermit(
+                    $user->id,
+                    $permit->id,
+                    $request->file('barangay_clearance_business_document'),
+                    'barangay_clearance_business'
+                );
+            }
+            if ($request->hasFile('lease_contract_document')) {
+                $this->bussinessPermitRepository->createSupportingDocumentForPermit(
+                    $user->id,
+                    $permit->id,
+                    $request->file('lease_contract_document'),
+                    'lease_contract'
+                );
+            }
 
             return redirect()->route('resident.dashboard')
                 ->with('success', 'Barangay permit application submitted successfully.');

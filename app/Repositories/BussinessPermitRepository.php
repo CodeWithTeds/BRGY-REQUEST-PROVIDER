@@ -9,6 +9,7 @@ use App\Models\Address;
 use App\Models\SupportingDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Http\UploadedFile;
 
 class BussinessPermitRepository extends Repository {
     
@@ -146,6 +147,27 @@ class BussinessPermitRepository extends Repository {
                 $config['extra'] ?? [],
                 ['file_path' => $data[$config['file']]->store($config['storage_path'], 'public')]
             ));
+        });
+    }
+
+    /**
+     * Create a supporting document linked to a specific Barangay Permit.
+     */
+    public function createSupportingDocumentForPermit(int $userId, int $permitId, UploadedFile $file, string $type): SupportingDocument
+    {
+        if (!$this->supportingDocument) {
+            throw new \RuntimeException('Supporting document model not initialized.');
+        }
+
+        return $this->transaction(function () use ($userId, $permitId, $file, $type) {
+            $path = $file->store('supporting_documents', 'public');
+
+            return $this->supportingDocument->create([
+                'user_id' => $userId,
+                'barangay_permit_id' => $permitId,
+                'document_type' => $type,
+                'file_path' => $path,
+            ]);
         });
     }
 }

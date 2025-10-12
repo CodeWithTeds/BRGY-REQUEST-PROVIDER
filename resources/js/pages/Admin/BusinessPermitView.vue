@@ -205,9 +205,7 @@ const statusChip = (s: string) => {
                           </div>
                         </div>
                         <div class="flex items-center gap-2">
-                          <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" :class="doc.verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'">
-                            {{ doc.verified ? 'Verified' : 'Pending verification' }}
-                          </span>
+                        
                           <a v-if="doc.file_path" :href="`/admin/business-permits/${props.permit.id}/documents/${doc.id}`" target="_blank" rel="noopener" class="text-xs text-[#2c4454] hover:underline">View</a>
                         </div>
                       </div>

@@ -39,6 +39,11 @@ class StoreBarangayPermitRequest extends FormRequest
             // Document upload
             'document_type' => ['required', 'string', 'max:100'],
             'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+
+            // Additional separate documents (optional)
+            'valid_id_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'barangay_clearance_business_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'lease_contract_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ];
     }
 }
