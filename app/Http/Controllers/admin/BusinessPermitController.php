@@ -5,55 +5,35 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BarangayPermit;
 use App\Models\SupportingDocument;
+use App\Repositories\BussinessPermitRepository;
+use App\Http\Resources\BusinessPermitResource;
+use App\Http\Resources\BusinessPermitDetailResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\File;
+use Inertia\Inertia;
 
 class BusinessPermitController extends Controller
 {
-    public function index()
+    public function __construct(protected BussinessPermitRepository $permitRepo)
     {
-        $collection = BarangayPermit::with(['applicantProfile', 'user', 'address.barangay'])
-            ->latest()
-            ->get();
+    }
 
-        $permits = $collection->map(function ($permit) {
-            $ap = $permit->applicantProfile;
-            $addr = $permit->address;
+    public function index(Request $request)
+    {
+        $filters = [
+            'name' => trim((string) $request->input('name', '')),
+            'status' => $request->input('status'),
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+        ];
 
-            $fullName = trim(collect([
-                $ap?->first_name,
-                $ap?->middle_name,
-                $ap?->last_name,
-                $ap?->suffix,
-            ])->filter()->join(' '));
+        $collection = $this->permitRepo->adminListWithFilters($filters);
 
-            if ($fullName === '') {
-                $fullName = $permit->user?->name;
-            }
-
-            $addressLine = trim(collect([
-                $addr?->house_no,
-                $addr?->street,
-                $addr?->purok,
-            ])->filter()->join(', '));
-
-            return [
-                'id' => $permit->id,
-                'full_name' => $fullName,
-                'application_date' => $permit->application_date,
-                'status' => $permit->status,
-                'created_at' => optional($permit->created_at)?->toDateTimeString(),
-                'updated_at' => optional($permit->updated_at)?->toDateTimeString(),
-                'gender' => $ap?->gender,
-                'citizenship' => $ap?->citizenship,
-                'contact_number' => $ap?->contact_number,
-                'barangay' => $addr?->barangay?->name,
-                'address_line' => $addressLine,
-                'remarks' => $permit->remarks,
-            ];
-        });
+        // Unwrap resource collection to a plain array to avoid 'data' wrapper
+        $permits = $collection->map(function ($permit) use ($request) {
+            return (new BusinessPermitResource($permit))->toArray($request);
+        })->all();
 
         $stats = [
             'total' => $collection->count(),
@@ -65,91 +45,16 @@ class BusinessPermitController extends Controller
         return Inertia::render('Admin/BusinessPermits', [
             'permits' => $permits,
             'stats' => $stats,
+            'filters' => $filters,
         ]);
     }
 
     public function show($id)
     {
-        $permit = BarangayPermit::with([
-            'applicantProfile',
-            'user',
-            'addresses.barangay',
-            'addresses.city',
-            'addresses.province',
-            'addresses.region',
-            'supportingDocuments',
-        ])->findOrFail($id);
+        $permit = $this->permitRepo->getWithAllRelations($id);
 
-        $ap = $permit->applicantProfile;
+        $data = new BusinessPermitDetailResource($permit);
 
-        $fullName = trim(collect([
-            $ap?->first_name,
-            $ap?->middle_name,
-            $ap?->last_name,
-            $ap?->suffix,
-        ])->filter()->join(' '));
-        if ($fullName === '') {
-            $fullName = $permit->user?->name;
-        }
-
-        $addresses = $permit->addresses->map(function ($addr) {
-            $line = trim(collect([
-                $addr?->house_no,
-                $addr?->street,
-                $addr?->purok,
-            ])->filter()->join(', '));
-
-            return [
-                'id' => $addr->id,
-                'type' => $addr->type,
-                'line' => $line,
-                'barangay' => $addr?->barangay?->name,
-                'city' => $addr?->city?->name,
-                'province' => $addr?->province?->name,
-                'region' => $addr?->region?->name,
-                'zip_code' => $addr?->zip_code,
-            ];
-        });
-
-        $documents = $permit->supportingDocuments->map(function ($doc) {
-            return [
-                'id' => $doc->id,
-                'document_type' => $doc->document_type,
-                'file_path' => $doc->file_path,
-                'verified' => (bool) $doc->verified,
-            ];
-        });
-
-        $data = [
-            'id' => $permit->id,
-            'full_name' => $fullName,
-            'application_date' => $permit->application_date,
-            'status' => $permit->status,
-            'created_at' => optional($permit->created_at)?->toDateTimeString(),
-            'updated_at' => optional($permit->updated_at)?->toDateTimeString(),
-            'gender' => $ap?->gender,
-            'citizenship' => $ap?->citizenship,
-            'contact_number' => $ap?->contact_number,
-            'user' => [
-                'id' => $permit->user?->id,
-                'name' => $permit->user?->name,
-                'email' => $permit->user?->email,
-            ],
-            'remarks' => $permit->remarks,
-            'applicant_profile' => [
-                'first_name' => $ap?->first_name,
-                'middle_name' => $ap?->middle_name,
-                'last_name' => $ap?->last_name,
-                'suffix' => $ap?->suffix,
-                'date_of_birth' => optional($ap?->date_of_birth)?->toDateString(),
-                'place_of_birth' => $ap?->place_of_birth,
-                'civil_status' => $ap?->civil_status,
-            ],
-            'addresses' => $addresses,
-            'supporting_documents' => $documents,
-        ];
-
-        // Global status counts
         $stats = [
             'total' => BarangayPermit::count(),
             'pending' => BarangayPermit::where('status', 'pending')->count(),
@@ -171,12 +76,11 @@ class BusinessPermitController extends Controller
             ->where('barangay_permit_id', $permit->id)
             ->firstOrFail();
 
-        $path = $document->file_path ?? null; // e.g. 'supporting_documents/xyz.jpg'
+        $path = $document->file_path ?? null;
         if (!$path || !Storage::disk('public')->exists($path)) {
             abort(404, 'File not found');
         }
 
-        // Build absolute path on public disk and stream inline
         $fullPath = Storage::disk('public')->path($path);
         $mime = File::mimeType($fullPath) ?? 'application/octet-stream';
         $filename = basename($fullPath);
@@ -189,19 +93,17 @@ class BusinessPermitController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
-            'status' => 'required|string|in:pending,processing,approved,rejected',
+            'status' => 'required|in:pending,processing,approved,rejected',
             'remarks' => 'nullable|string',
         ]);
 
         $permit = BarangayPermit::findOrFail($id);
         $permit->status = $validated['status'];
-        if (isset($validated['remarks'])) {
-            $permit->remarks = $validated['remarks'];
-        }
+        $permit->remarks = $validated['remarks'] ?? null;
         $permit->save();
 
-        // redirect back to the show page
-        return redirect()->route('admin.business-permits.show', ['id' => $id]);
+        return redirect()->route('admin.business-permits.show', $id)
+            ->with('success', 'Permit status updated.');
     }
 
     public function destroy($id)
@@ -216,7 +118,6 @@ class BusinessPermitController extends Controller
             $doc->delete();
         }
 
-        // Delete related addresses
         if (method_exists($permit, 'addresses')) {
             $permit->addresses()->delete();
         }

@@ -170,4 +170,65 @@ class BussinessPermitRepository extends Repository {
             ]);
         });
     }
+
+    /**
+     * Admin: get list of permits with relations and optional filters.
+     */
+    public function adminListWithFilters(array $filters)
+    {
+        $query = $this->model->newQuery()
+            ->with(['applicantProfile', 'user', 'address.barangay'])
+            ->latest();
+
+        // Filters: name, status, application date range
+        $name = trim((string) ($filters['name'] ?? ''));
+        if ($name !== '') {
+            $query->where(function ($q) use ($name) {
+                $q->whereHas('applicantProfile', function ($ap) use ($name) {
+                    $ap->where(function ($sub) use ($name) {
+                        $sub->where('first_name', 'like', '%' . $name . '%')
+                            ->orWhere('middle_name', 'like', '%' . $name . '%')
+                            ->orWhere('last_name', 'like', '%' . $name . '%')
+                            ->orWhere('suffix', 'like', '%' . $name . '%');
+                    });
+                })->orWhereHas('user', function ($u) use ($name) {
+                    $u->where('name', 'like', '%' . $name . '%');
+                });
+            });
+        }
+
+        $status = $filters['status'] ?? null;
+        if (in_array($status, ['pending', 'processing', 'approved', 'rejected'])) {
+            $query->where('status', $status);
+        }
+
+        $dateFrom = $filters['date_from'] ?? null;
+        $dateTo = $filters['date_to'] ?? null;
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('application_date', [$dateFrom, $dateTo]);
+        } elseif ($dateFrom) {
+            $query->whereDate('application_date', '>=', $dateFrom);
+        } elseif ($dateTo) {
+            $query->whereDate('application_date', '<=', $dateTo);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Admin: get a single permit with all related models for detailed view.
+     */
+    public function getWithAllRelations(int $id): BarangayPermit
+    {
+        return $this->model->newQuery()
+            ->with([
+                'applicantProfile',
+                'user',
+                'addresses.barangay',
+                'addresses.city',
+                'addresses.province',
+                'addresses.region',
+                'supportingDocuments',
+            ])->findOrFail($id);
+    }
 }
