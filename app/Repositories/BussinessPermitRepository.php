@@ -183,13 +183,14 @@ class BussinessPermitRepository extends Repository {
         // Filters: name, status, application date range
         $name = trim((string) ($filters['name'] ?? ''));
         if ($name !== '') {
-            // Limit name search strictly to Applicant Profile fields
+            // Support full-name searches by matching concatenated fields, and partials
             $query->whereHas('applicantProfile', function ($ap) use ($name) {
                 $ap->where(function ($sub) use ($name) {
                     $sub->where('first_name', 'like', '%' . $name . '%')
                         ->orWhere('middle_name', 'like', '%' . $name . '%')
                         ->orWhere('last_name', 'like', '%' . $name . '%')
-                        ->orWhere('suffix', 'like', '%' . $name . '%');
+                        ->orWhere('suffix', 'like', '%' . $name . '%')
+                        ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) like ?", ['%' . $name . '%']);
                 });
             });
         }

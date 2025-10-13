@@ -230,7 +230,8 @@ class BarangayClearanceRepository extends Repository {
                     $sub->where('first_name', 'like', '%' . $name . '%')
                         ->orWhere('middle_name', 'like', '%' . $name . '%')
                         ->orWhere('last_name', 'like', '%' . $name . '%')
-                        ->orWhere('suffix', 'like', '%' . $name . '%');
+                        ->orWhere('suffix', 'like', '%' . $name . '%')
+                        ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) like ?", ['%' . $name . '%']);
                 });
             });
         }

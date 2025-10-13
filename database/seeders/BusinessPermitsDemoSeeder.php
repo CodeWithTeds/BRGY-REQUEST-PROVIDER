@@ -23,11 +23,17 @@ class BusinessPermitsDemoSeeder extends Seeder
         }
 
         $faker = \Faker\Factory::create('en_PH');
-
         $statuses = ['pending', 'processing', 'approved', 'rejected'];
+        
+        // Total records to seed
+        $count = 150000;
+        
+        // Cache barangays and cities to avoid per-iteration queries
+        $barangays = Barangay::query()->select(['code', 'city_code'])->get();
+        $cities = City::query()->select(['code', 'province_code', 'region_code'])->get()->keyBy('code');
 
-        // Create 100 demo users and permits with related records
-        for ($i = 0; $i < 100; $i++) {
+        // Create demo users and permits with related records
+        for ($i = 0; $i < $count; $i++) {
             // Use lowercase to match enum definitions in migrations
             $gender = Arr::random(['male', 'female']);
 
@@ -37,9 +43,9 @@ class BusinessPermitsDemoSeeder extends Seeder
                 'password' => bcrypt('password'),
                 'role' => 'resident',
             ]);
-
-            $barangay = Barangay::inRandomOrder()->first();
-            $city = $barangay ? City::query()->where('code', $barangay->city_code)->first() : null;
+            
+            $barangay = $barangays->random();
+            $city = $barangay ? $cities->get($barangay->city_code) : null;
 
             $permit = BarangayPermit::create([
                 'user_id' => $user->id,
@@ -86,6 +92,11 @@ class BusinessPermitsDemoSeeder extends Seeder
                 'verified' => false,
                 'barangay_permit_id' => $permit->id,
             ]);
+
+            // Progress output every 5,000 records
+            if (($i + 1) % 5000 === 0) {
+                $this->command?->info('Seeded ' . ($i + 1) . ' permits...');
+            }
         }
     }
 }

@@ -39,8 +39,14 @@ class CertificateOfResidencyRepository extends Repository
 
         $name = trim((string) ($filters['name'] ?? ''));
         if ($name !== '') {
-            $query->whereHas('user', function ($u) use ($name) {
-                $u->where('name', 'like', '%' . $name . '%');
+            // Support full-name searches against both user.name and applicant profile fields
+            $query->where(function ($q) use ($name) {
+                $q->whereHas('user', function ($u) use ($name) {
+                    $u->where('name', 'like', '%' . $name . '%');
+                })
+                ->orWhereHas('user.applicantProfile', function ($ap) use ($name) {
+                    $ap->whereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) like ?", ['%' . $name . '%']);
+                });
             });
         }
 
