@@ -3,9 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\CertificateOfResidency;
+use App\Traits\AdminListFilters;
 
 class CertificateOfResidencyRepository extends Repository
 {
+    use AdminListFilters;
     public function __construct(CertificateOfResidency $model)
     {
         parent::__construct($model);
@@ -37,33 +39,16 @@ class CertificateOfResidencyRepository extends Repository
             ->with(['user.applicantProfile', 'user.addresses.barangay'])
             ->latest();
 
-        $name = trim((string) ($filters['name'] ?? ''));
-        if ($name !== '') {
-            // Support full-name searches against both user.name and applicant profile fields
-            $query->where(function ($q) use ($name) {
-                $q->whereHas('user', function ($u) use ($name) {
+        $this->applyNameStatusDateFilters($query, $filters, function ($q, string $name) {
+            $q->where(function ($sub) use ($name) {
+                $sub->whereHas('user', function ($u) use ($name) {
                     $u->where('name', 'like', '%' . $name . '%');
                 })
                 ->orWhereHas('user.applicantProfile', function ($ap) use ($name) {
                     $ap->whereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) like ?", ['%' . $name . '%']);
                 });
             });
-        }
-
-        $status = $filters['status'] ?? null;
-        if (in_array($status, ['pending', 'processing', 'approved', 'rejected'])) {
-            $query->where('status', $status);
-        }
-
-        $dateFrom = $filters['date_from'] ?? null;
-        $dateTo = $filters['date_to'] ?? null;
-        if ($dateFrom && $dateTo) {
-            $query->whereBetween('application_date', [$dateFrom, $dateTo]);
-        } elseif ($dateFrom) {
-            $query->whereDate('application_date', '>=', $dateFrom);
-        } elseif ($dateTo) {
-            $query->whereDate('application_date', '<=', $dateTo);
-        }
+        });
 
         // Server-side pagination to reduce payload size
         return $query->paginate($perPage, ['*'], 'page', $page);

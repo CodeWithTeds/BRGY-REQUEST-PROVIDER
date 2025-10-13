@@ -12,48 +12,31 @@ use App\Http\Resources\ResidencyCertificateDetailResource;
 use App\Models\SupportingDocument;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\AdminListRequest;
+use App\Services\AdminListService;
 
 class ResidencyCertificateController extends Controller
 {
-    public function __construct(protected CertificateOfResidencyRepository $repo)
-    {
+    public function __construct(
+        protected CertificateOfResidencyRepository $repo,
+        protected AdminListService $listService,
+    ) {
     }
 
-    public function index(Request $request)
+    public function index(AdminListRequest $request)
     {
-        $filters = [
-            'name' => trim((string) $request->input('name', '')),
-            'status' => $request->input('status'),
-            'date_from' => $request->input('date_from'),
-            'date_to' => $request->input('date_to'),
-        ];
-        $page = max(1, (int) $request->input('page', 1));
-        $perPage = min(100, max(1, (int) $request->input('per_page', 10)));
-
-        $paginator = $this->repo->adminListWithFilters($filters, $page, $perPage);
-
-        $residencies = collect($paginator->items())->map(function ($item) use ($request) {
-            return (new ResidencyCertificateResource($item))->toArray($request);
-        })->all();
-
-        $stats = [
-            'total' => CertificateOfResidency::count(),
-            'approved' => CertificateOfResidency::where('status', 'approved')->count(),
-            'pending' => CertificateOfResidency::where('status', 'pending')->count(),
-            'rejected' => CertificateOfResidency::where('status', 'rejected')->count(),
-            'processing' => CertificateOfResidency::where('status', 'processing')->count(),
-        ];
+        $result = $this->listService->getList(
+            $request,
+            $this->repo,
+            CertificateOfResidency::class,
+            fn($item) => (new ResidencyCertificateResource($item))->toArray($request)
+        );
 
         return Inertia::render('Admin/ResidencyCertificates', [
-            'residencies' => $residencies,
-            'stats' => $stats,
-            'filters' => $filters,
-            'pagination' => [
-                'current_page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'last_page' => $paginator->lastPage(),
-                'total' => $paginator->total(),
-            ],
+            'residencies' => $result['items'],
+            'stats' => $result['stats'],
+            'filters' => $result['filters'],
+            'pagination' => $result['pagination'],
         ]);
     }
 
