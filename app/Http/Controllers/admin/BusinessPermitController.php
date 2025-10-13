@@ -27,25 +27,34 @@ class BusinessPermitController extends Controller
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
         ];
+        $page = max(1, (int) $request->input('page', 1));
+        $perPage = min(100, max(1, (int) $request->input('per_page', 10)));
 
-        $collection = $this->permitRepo->adminListWithFilters($filters);
+        $paginator = $this->permitRepo->adminListWithFilters($filters, $page, $perPage);
 
-        // Unwrap resource collection to a plain array to avoid 'data' wrapper
-        $permits = $collection->map(function ($permit) use ($request) {
+        // Unwrap only the current page items into a plain array
+        $permits = collect($paginator->items())->map(function ($permit) use ($request) {
             return (new BusinessPermitResource($permit))->toArray($request);
         })->all();
 
+        // Stats computed from DB to reflect global totals
         $stats = [
-            'total' => $collection->count(),
-            'approved' => $collection->where('status', 'approved')->count(),
-            'pending' => $collection->where('status', 'pending')->count(),
-            'rejected' => $collection->where('status', 'rejected')->count(),
+            'total' => BarangayPermit::count(),
+            'approved' => BarangayPermit::where('status', 'approved')->count(),
+            'pending' => BarangayPermit::where('status', 'pending')->count(),
+            'rejected' => BarangayPermit::where('status', 'rejected')->count(),
         ];
 
         return Inertia::render('Admin/BusinessPermits', [
             'permits' => $permits,
             'stats' => $stats,
             'filters' => $filters,
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+            ],
         ]);
     }
 

@@ -27,25 +27,33 @@ class ResidencyCertificateController extends Controller
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
         ];
+        $page = max(1, (int) $request->input('page', 1));
+        $perPage = min(100, max(1, (int) $request->input('per_page', 10)));
 
-        $collection = $this->repo->adminListWithFilters($filters);
+        $paginator = $this->repo->adminListWithFilters($filters, $page, $perPage);
 
-        $residencies = $collection->map(function ($item) use ($request) {
+        $residencies = collect($paginator->items())->map(function ($item) use ($request) {
             return (new ResidencyCertificateResource($item))->toArray($request);
         })->all();
 
         $stats = [
-            'total' => $collection->count(),
-            'approved' => $collection->where('status', 'approved')->count(),
-            'pending' => $collection->where('status', 'pending')->count(),
-            'rejected' => $collection->where('status', 'rejected')->count(),
-            'processing' => $collection->where('status', 'processing')->count(),
+            'total' => CertificateOfResidency::count(),
+            'approved' => CertificateOfResidency::where('status', 'approved')->count(),
+            'pending' => CertificateOfResidency::where('status', 'pending')->count(),
+            'rejected' => CertificateOfResidency::where('status', 'rejected')->count(),
+            'processing' => CertificateOfResidency::where('status', 'processing')->count(),
         ];
 
         return Inertia::render('Admin/ResidencyCertificates', [
             'residencies' => $residencies,
             'stats' => $stats,
             'filters' => $filters,
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+            ],
         ]);
     }
 

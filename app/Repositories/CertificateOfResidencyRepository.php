@@ -31,7 +31,7 @@ class CertificateOfResidencyRepository extends Repository
     /**
      * Admin: list residency certificates with optional filters.
      */
-    public function adminListWithFilters(array $filters)
+    public function adminListWithFilters(array $filters, int $page = 1, int $perPage = 10)
     {
         $query = $this->model->newQuery()
             ->with(['user.applicantProfile', 'user.addresses.barangay'])
@@ -65,7 +65,8 @@ class CertificateOfResidencyRepository extends Repository
             $query->whereDate('application_date', '<=', $dateTo);
         }
 
-        return $query->get();
+        // Server-side pagination to reduce payload size
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**

@@ -37,7 +37,7 @@ interface Filters {
 }
 
 // Use props inside script
-const props = defineProps<{ permits: Permit[]; stats: Stats; filters?: Filters }>();
+const props = defineProps<{ permits: Permit[]; stats: Stats; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number } }>();
 
 // Filter state (server-driven)
 const filterName = ref(props.filters?.name ?? '');
@@ -62,20 +62,27 @@ function toggleSelected(id: number) {
   }
 }
 
-// Pagination state
-const page = ref(1);
-const perPage = ref(10);
+// Pagination state (server-driven)
+const page = ref(props.pagination?.current_page ?? 1);
+const perPage = ref(props.pagination?.per_page ?? 10);
 
-const totalItems = computed(() => props.permits.length);
-const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / perPage.value)));
+const totalItems = computed(() => props.pagination?.total ?? props.permits.length);
+const totalPages = computed(() => props.pagination?.last_page ?? Math.max(1, Math.ceil(totalItems.value / perPage.value)));
 
-const paginatedPermits = computed(() => {
-  const start = (page.value - 1) * perPage.value;
-  return props.permits.slice(start, start + perPage.value);
-});
+// Server returns only current page items
+const paginatedPermits = computed(() => props.permits);
 
 function gotoPage(next: number) {
-  page.value = Math.min(Math.max(1, next), totalPages.value);
+  const nextPage = Math.min(Math.max(1, next), totalPages.value);
+  page.value = nextPage;
+  router.get('/admin/business-permits', {
+    name: filterName.value || undefined,
+    status: filterStatus.value || undefined,
+    date_from: filterDateFrom.value || undefined,
+    date_to: filterDateTo.value || undefined,
+    page: nextPage,
+    per_page: perPage.value,
+  }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function initial(name: string) {
@@ -89,7 +96,9 @@ function applyFilters() {
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
     date_to: filterDateTo.value || undefined,
-  }, { preserveState: true, replace: true });
+    page: 1,
+    per_page: perPage.value,
+  }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function resetFilters() {
@@ -310,13 +319,12 @@ const breadcrumbs: BreadcrumbItem[] = [
               <div class="mt-4 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-sm text-[#2c4454]">
                   <label>Rows per page</label>
-                  <select v-model.number="perPage" class="border border-[#2c4454]/20 rounded px-2 py-1 text-sm">
+                  <select v-model.number="perPage" class="border border-[#2c4454]/20 rounded px-2 py-1 text-sm" @change="applyFilters">
                     <option :value="10">10</option>
                     <option :value="25">25</option>
                     <option :value="50">50</option>
                   </select>
-                  <span class="ml-2">{{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, totalItems) }} of {{
-                    totalItems }}</span>
+                  <span class="ml-2">{{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, totalItems) }} of {{ totalItems }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <button class="px-3 py-2 border border-[#2c4454]/20 rounded hover:bg-gray-50"

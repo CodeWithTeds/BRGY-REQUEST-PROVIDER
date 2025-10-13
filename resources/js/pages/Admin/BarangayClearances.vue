@@ -36,7 +36,7 @@ interface Filters {
   date_to?: string;
 }
 
-const props = defineProps<{ clearances: Clearance[]; stats: Stats; filters?: Filters }>();
+const props = defineProps<{ clearances: Clearance[]; stats: Stats; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number } }>();
 
 // Filter state (server-driven)
 const filterName = ref(props.filters?.name ?? '');
@@ -61,20 +61,27 @@ function toggleSelected(id: number) {
   }
 }
 
-// Pagination state
-const page = ref(1);
-const perPage = ref(10);
+// Pagination state (server-driven)
+const page = ref(props.pagination?.current_page ?? 1);
+const perPage = ref(props.pagination?.per_page ?? 10);
 
-const totalItems = computed(() => props.clearances.length);
-const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / perPage.value)));
+const totalItems = computed(() => props.pagination?.total ?? props.clearances.length);
+const totalPages = computed(() => props.pagination?.last_page ?? Math.max(1, Math.ceil(totalItems.value / perPage.value)));
 
-const paginatedClearances = computed(() => {
-  const start = (page.value - 1) * perPage.value;
-  return props.clearances.slice(start, start + perPage.value);
-});
+// Server returns only current page items
+const paginatedClearances = computed(() => props.clearances);
 
 function gotoPage(next: number) {
-  page.value = Math.min(Math.max(1, next), totalPages.value);
+  const nextPage = Math.min(Math.max(1, next), totalPages.value);
+  page.value = nextPage;
+  router.get('/admin/barangay-clearances', {
+    name: filterName.value || undefined,
+    status: filterStatus.value || undefined,
+    date_from: filterDateFrom.value || undefined,
+    date_to: filterDateTo.value || undefined,
+    page: nextPage,
+    per_page: perPage.value,
+  }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function initial(name: string) {
@@ -88,7 +95,9 @@ function applyFilters() {
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
     date_to: filterDateTo.value || undefined,
-  }, { preserveState: true, replace: true });
+    page: 1,
+    per_page: perPage.value,
+  }, { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function resetFilters() {

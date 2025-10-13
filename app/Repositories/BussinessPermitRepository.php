@@ -88,7 +88,7 @@ class BussinessPermitRepository extends Repository {
                 'region_code',
                 'zip_code'
             ]
-            // Removed legacy barangay_id usage in favor of PSGC codes
+
         ];
     }
 
@@ -174,7 +174,7 @@ class BussinessPermitRepository extends Repository {
     /**
      * Admin: get list of permits with relations and optional filters.
      */
-    public function adminListWithFilters(array $filters)
+    public function adminListWithFilters(array $filters, int $page = 1, int $perPage = 10)
     {
         $query = $this->model->newQuery()
             ->with(['applicantProfile', 'user', 'address.barangay'])
@@ -210,7 +210,8 @@ class BussinessPermitRepository extends Repository {
             $query->whereDate('application_date', '<=', $dateTo);
         }
 
-        return $query->get();
+        // Server-side pagination to avoid loading massive datasets into memory
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     /**

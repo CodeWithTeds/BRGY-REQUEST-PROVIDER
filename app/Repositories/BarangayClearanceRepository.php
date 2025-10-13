@@ -216,7 +216,7 @@ class BarangayClearanceRepository extends Repository {
     /**
      * Admin: get list of clearances with relations and optional filters.
      */
-    public function adminListWithFilters(array $filters)
+    public function adminListWithFilters(array $filters, int $page = 1, int $perPage = 10)
     {
         $query = $this->model->newQuery()
             ->with(['applicantProfile', 'user', 'address.barangay'])
@@ -251,6 +251,7 @@ class BarangayClearanceRepository extends Repository {
             $query->whereDate('application_date', '<=', $dateTo);
         }
 
-        return $query->get();
+        // Server-side pagination for large datasets
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 }

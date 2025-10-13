@@ -26,10 +26,12 @@ class BarangayClearanceController extends Controller
             'date_from' => $request->input('date_from'),
             'date_to' => $request->input('date_to'),
         ];
+        $page = max(1, (int) $request->input('page', 1));
+        $perPage = min(100, max(1, (int) $request->input('per_page', 10)));
 
-        $collection = $this->clearanceRepo->adminListWithFilters($filters);
+        $paginator = $this->clearanceRepo->adminListWithFilters($filters, $page, $perPage);
 
-        $clearances = $collection->map(function ($c) {
+        $clearances = collect($paginator->items())->map(function ($c) {
             $ap = $c->applicantProfile;
             $addr = $c->address;
             $barangay = $addr?->barangay?->name ?? null;
@@ -67,17 +69,24 @@ class BarangayClearanceController extends Controller
             ];
         })->all();
 
+        // Global stats from DB for accuracy on large datasets
         $stats = [
-            'total' => $collection->count(),
-            'approved' => $collection->where('status', 'approved')->count(),
-            'pending' => $collection->where('status', 'pending')->count(),
-            'rejected' => $collection->where('status', 'rejected')->count(),
+            'total' => BarangayClearance::count(),
+            'approved' => BarangayClearance::where('status', 'approved')->count(),
+            'pending' => BarangayClearance::where('status', 'pending')->count(),
+            'rejected' => BarangayClearance::where('status', 'rejected')->count(),
         ];
 
         return Inertia::render('Admin/BarangayClearances', [
             'clearances' => $clearances,
             'stats' => $stats,
             'filters' => $filters,
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'last_page' => $paginator->lastPage(),
+                'total' => $paginator->total(),
+            ],
         ]);
     }
 
