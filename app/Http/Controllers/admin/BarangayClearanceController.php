@@ -10,22 +10,20 @@ use App\Traits\DocumentStreaming;
 use Illuminate\Http\Request;
 use App\Http\Requests\AdminListRequest;
 use App\Services\AdminListService;
-use Illuminate\Http\JsonResponse;
-use App\Traits\JsonResponds;
 use App\Http\Resources\BarangayClearanceResource;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
 class BarangayClearanceController extends Controller
 {
     use DocumentStreaming;
-    use JsonResponds;
     public function __construct(
         protected BarangayClearanceRepository $clearanceRepo,
         protected AdminListService $listService,
     ) {
     }
 
-    public function index(AdminListRequest $request): JsonResponse
+    public function index(AdminListRequest $request)
     {
         $result = $this->listService->getList(
             $request,
@@ -34,7 +32,7 @@ class BarangayClearanceController extends Controller
             fn($c) => (new BarangayClearanceResource($c))->toArray($request)
         );
 
-        return response()->json([
+        return Inertia::render('Admin/BarangayClearances', [
             'clearances' => $result['items'],
             'stats' => $result['stats'],
             'filters' => $result['filters'],
@@ -42,15 +40,14 @@ class BarangayClearanceController extends Controller
         ]);
     }
 
-    public function show(Request $request, $id): JsonResponse
+    public function show(Request $request, $id)
     {
         $clearance = $this->clearanceRepo->getWithAllRelations($id);
 
         // Unwrap resource to a plain array so Vue gets direct fields
         $data = (new BarangayClearanceDetailResource($clearance))->toArray($request);
-        return response()->json([
+        return Inertia::render('Admin/BarangayClearanceView', [
             'clearance' => $data,
-            'stats' => $this->listService->getStats(BarangayClearance::class),
         ]);
     }
 
@@ -60,7 +57,7 @@ class BarangayClearanceController extends Controller
         return $this->streamSupportingDocument((int) $id, (int) $docId, 'barangay_clearance_id');
     }
 
-    public function updateStatus(Request $request, $id): JsonResponse
+    public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
             'status' => 'required|in:pending,processing,approved,rejected',
@@ -72,13 +69,11 @@ class BarangayClearanceController extends Controller
         $clearance->remarks = $validated['remarks'] ?? null;
         $clearance->save();
 
-        return $this->jsonUpdated($clearance->id, [
-            'status' => $clearance->status,
-            'remarks' => $clearance->remarks,
-        ], 'Clearance status updated.');
+        return redirect()->route('admin.barangay-clearances.show', $id)
+            ->with('success', 'Clearance status updated.');
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy($id)
     {
         $clearance = BarangayClearance::with(['supportingDocument', 'address'])->findOrFail($id);
 
@@ -97,6 +92,7 @@ class BarangayClearanceController extends Controller
 
         $clearance->delete();
 
-        return $this->jsonDeleted($id, 'Barangay Clearance');
+        return redirect()->route('admin.barangay-clearances')
+            ->with('success', 'Barangay Clearance deleted.');
     }
 }
