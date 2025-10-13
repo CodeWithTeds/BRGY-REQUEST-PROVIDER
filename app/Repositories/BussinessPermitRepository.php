@@ -214,4 +214,51 @@ class BussinessPermitRepository extends Repository {
                 'supportingDocuments',
             ])->findOrFail($id);
     }
+
+    /**
+     * Admin: update status and optional remarks for a permit.
+     */
+    public function updateStatus(int $id, string $status, ?string $remarks = null): bool
+    {
+        /** @var BarangayPermit|null $permit */
+        $permit = $this->model->find($id);
+        if (!$permit) {
+            return false;
+        }
+
+        $data = ['status' => $status];
+        if ($remarks !== null) {
+            $data['remarks'] = $remarks;
+        }
+
+        return $permit->update($data);
+    }
+
+    /**
+     * Admin: delete permit and cascade delete related records and files.
+     */
+    public function deleteWithCascade(int $id): bool
+    {
+        /** @var BarangayPermit|null $permit */
+        $permit = $this->model->newQuery()->with(['supportingDocuments', 'addresses'])->find($id);
+        if (!$permit) {
+            return false;
+        }
+
+        return $this->transaction(function () use ($permit) {
+            foreach ($permit->supportingDocuments as $doc) {
+                $path = $doc->file_path;
+                if ($path && \Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+                }
+                $doc->delete();
+            }
+
+            if (method_exists($permit, 'addresses')) {
+                $permit->addresses()->delete();
+            }
+
+            return (bool) $permit->delete();
+        });
+    }
 }

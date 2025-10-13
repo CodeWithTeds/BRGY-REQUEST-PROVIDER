@@ -5,19 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Repositories\BarangayClearanceRepository;
 use App\Models\BarangayClearance;
-use App\Models\SupportingDocument;
 use App\Http\Resources\BarangayClearanceDetailResource;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
+use App\Traits\DocumentStreaming;
 use Illuminate\Http\Request;
 use App\Http\Requests\AdminListRequest;
 use App\Services\AdminListService;
 use Illuminate\Http\JsonResponse;
 use App\Traits\JsonResponds;
 use App\Http\Resources\BarangayClearanceResource;
+use Illuminate\Support\Facades\Storage;
 
 class BarangayClearanceController extends Controller
 {
+    use DocumentStreaming;
     use JsonResponds;
     public function __construct(
         protected BarangayClearanceRepository $clearanceRepo,
@@ -56,23 +56,8 @@ class BarangayClearanceController extends Controller
 
     public function viewDocument($id, $docId)
     {
-        $clearance = BarangayClearance::findOrFail($id);
-        $document = SupportingDocument::where('id', $docId)
-            ->where('barangay_clearance_id', $clearance->id)
-            ->firstOrFail();
-
-        $path = $document->file_path ?? null;
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            abort(404, 'File not found');
-        }
-
-        $fullPath = Storage::disk('public')->path($path);
-        $mime = File::mimeType($fullPath) ?? 'application/octet-stream';
-        $filename = basename($fullPath);
-        return response()->file($fullPath, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
-        ]);
+        BarangayClearance::findOrFail($id);
+        return $this->streamSupportingDocument((int) $id, (int) $docId, 'barangay_clearance_id');
     }
 
     public function updateStatus(Request $request, $id): JsonResponse

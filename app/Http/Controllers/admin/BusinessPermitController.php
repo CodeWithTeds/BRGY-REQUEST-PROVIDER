@@ -4,74 +4,47 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BarangayPermit;
-use App\Models\SupportingDocument;
 use App\Repositories\BussinessPermitRepository;
 use App\Http\Resources\BusinessPermitResource;
 use App\Http\Resources\BusinessPermitDetailResource;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\File;
+use App\Http\Requests\AdminListRequest;
+use App\Http\Requests\Admin\UpdateBusinessPermitStatusRequest;
+use App\Services\AdminListService;
+use App\Traits\DocumentStreaming;
 use Inertia\Inertia;
 
 class BusinessPermitController extends Controller
 {
-    public function __construct(protected BussinessPermitRepository $permitRepo)
-    {
+    use DocumentStreaming;
+    public function __construct(
+        protected BussinessPermitRepository $permitRepo,
+        protected AdminListService $listService,
+    ) {
     }
 
-    public function index(Request $request)
+    public function index(AdminListRequest $request)
     {
-        $filters = [
-            'name' => trim((string) $request->input('name', '')),
-            'status' => $request->input('status'),
-            'date_from' => $request->input('date_from'),
-            'date_to' => $request->input('date_to'),
-        ];
-        $page = max(1, (int) $request->input('page', 1));
-        $perPage = min(100, max(1, (int) $request->input('per_page', 10)));
-
-        $paginator = $this->permitRepo->adminListWithFilters($filters, $page, $perPage);
-
-        // Unwrap only the current page items into a plain array
-        $permits = collect($paginator->items())->map(function ($permit) use ($request) {
-            return (new BusinessPermitResource($permit))->toArray($request);
-        })->all();
-
-        // Stats computed from DB to reflect global totals
-        $stats = [
-            'total' => BarangayPermit::count(),
-            'approved' => BarangayPermit::where('status', 'approved')->count(),
-            'pending' => BarangayPermit::where('status', 'pending')->count(),
-            'rejected' => BarangayPermit::where('status', 'rejected')->count(),
-        ];
+        $result = $this->listService->getList(
+            $request,
+            $this->permitRepo,
+            BarangayPermit::class,
+            fn($permit) => (new BusinessPermitResource($permit))->toArray($request)
+        );
 
         return Inertia::render('Admin/BusinessPermits', [
-            'permits' => $permits,
-            'stats' => $stats,
-            'filters' => $filters,
-            'pagination' => [
-                'current_page' => $paginator->currentPage(),
-                'per_page' => $paginator->perPage(),
-                'last_page' => $paginator->lastPage(),
-                'total' => $paginator->total(),
-            ],
+            'permits' => $result['items'],
+            'stats' => $result['stats'],
+            'filters' => $result['filters'],
+            'pagination' => $result['pagination'],
         ]);
     }
 
-    public function show(Request $request, $id)
+    public function show(AdminListRequest $request, $id)
     {
         $permit = $this->permitRepo->getWithAllRelations($id);
 
-        // Unwrap resource to a plain array so Vue gets direct fields
         $data = (new BusinessPermitDetailResource($permit))->toArray($request);
-
-        $stats = [
-            'total' => BarangayPermit::count(),
-            'pending' => BarangayPermit::where('status', 'pending')->count(),
-            'processing' => BarangayPermit::where('status', 'processing')->count(),
-            'approved' => BarangayPermit::where('status', 'approved')->count(),
-            'rejected' => BarangayPermit::where('status', 'rejected')->count(),
-        ];
+        $stats = $this->listService->getStats(BarangayPermit::class);
 
         return Inertia::render('Admin/BusinessPermitView', [
             'permit' => $data,
@@ -81,36 +54,14 @@ class BusinessPermitController extends Controller
 
     public function viewDocument($id, $docId)
     {
-        $permit = BarangayPermit::findOrFail($id);
-        $document = SupportingDocument::where('id', $docId)
-            ->where('barangay_permit_id', $permit->id)
-            ->firstOrFail();
-
-        $path = $document->file_path ?? null;
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            abort(404, 'File not found');
-        }
-
-        $fullPath = Storage::disk('public')->path($path);
-        $mime = File::mimeType($fullPath) ?? 'application/octet-stream';
-        $filename = basename($fullPath);
-        return response()->file($fullPath, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
-        ]);
+        BarangayPermit::findOrFail($id);
+        return $this->streamSupportingDocument((int) $id, (int) $docId, 'barangay_permit_id');
     }
 
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(UpdateBusinessPermitStatusRequest $request, $id)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,processing,approved,rejected',
-            'remarks' => 'nullable|string',
-        ]);
-
-        $permit = BarangayPermit::findOrFail($id);
-        $permit->status = $validated['status'];
-        $permit->remarks = $validated['remarks'] ?? null;
-        $permit->save();
+        $v = $request->validated();
+        $this->permitRepo->updateStatus($id, $v['status'], $v['remarks'] ?? null);
 
         return redirect()->route('admin.business-permits.show', $id)
             ->with('success', 'Permit status updated.');
@@ -118,21 +69,7 @@ class BusinessPermitController extends Controller
 
     public function destroy($id)
     {
-        $permit = BarangayPermit::with(['supportingDocuments', 'addresses'])->findOrFail($id);
-
-        foreach ($permit->supportingDocuments as $doc) {
-            $path = $doc->file_path;
-            if ($path && Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
-            }
-            $doc->delete();
-        }
-
-        if (method_exists($permit, 'addresses')) {
-            $permit->addresses()->delete();
-        }
-
-        $permit->delete();
+        $this->permitRepo->deleteWithCascade($id);
 
         return redirect()->route('admin.business-permits')->with('success', 'Barangay Business Permit deleted.');
     }

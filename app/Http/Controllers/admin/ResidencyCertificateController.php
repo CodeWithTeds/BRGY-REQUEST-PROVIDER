@@ -9,14 +9,13 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Http\Resources\ResidencyCertificateResource;
 use App\Http\Resources\ResidencyCertificateDetailResource;
-use App\Models\SupportingDocument;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
+use App\Traits\DocumentStreaming;
 use App\Http\Requests\AdminListRequest;
 use App\Services\AdminListService;
 
 class ResidencyCertificateController extends Controller
 {
+    use DocumentStreaming;
     public function __construct(
         protected CertificateOfResidencyRepository $repo,
         protected AdminListService $listService,
@@ -87,22 +86,7 @@ class ResidencyCertificateController extends Controller
 
     public function viewDocument($id, $docId)
     {
-        $certificate = CertificateOfResidency::findOrFail($id);
-        $document = SupportingDocument::where('id', $docId)
-            ->where('certificate_of_residency_id', $certificate->id)
-            ->firstOrFail();
-
-        $path = $document->file_path ?? null;
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            abort(404, 'File not found');
-        }
-
-        $fullPath = Storage::disk('public')->path($path);
-        $mime = File::mimeType($fullPath) ?? 'application/octet-stream';
-        $filename = basename($fullPath);
-        return response()->file($fullPath, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
-        ]);
+        CertificateOfResidency::findOrFail($id);
+        return $this->streamSupportingDocument((int) $id, (int) $docId, 'certificate_of_residency_id');
     }
 }
