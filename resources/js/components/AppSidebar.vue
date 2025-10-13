@@ -32,7 +32,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Certificate of Indigency',
-        href: '/certificate-of-indigency',
+        href: route('resident.certificate-of-indigency.create'),
         icon: IdCard,
     },
 ];
@@ -57,6 +57,11 @@ const adminNavItems: NavItem[] = [
         title: 'Residency Certificates',
         href: '/admin/residency-certificates',
         icon: UserCheck,
+    },
+    {
+        title: 'Indigency Certificates',
+        href: '/admin/indigency-certificates',
+        icon: IdCard,
     },
     {
         title: 'Profile Settings',

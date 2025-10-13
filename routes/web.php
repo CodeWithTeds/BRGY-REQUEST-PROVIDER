@@ -28,6 +28,10 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
     Route::get('certificate-of-residency', [CertificateOfResidencyController::class, 'create'])->name('resident.certificate-of-residency.create');
     Route::post('certificate-of-residency', [CertificateOfResidencyController::class, 'store'])->name('resident.certificate-of-residency.store');
 
+    // Certificate of Indigency (Resident)
+    Route::get('certificate-of-indigency', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'create'])->name('resident.certificate-of-indigency.create');
+    Route::post('certificate-of-indigency', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'store'])->name('resident.certificate-of-indigency.store');
+
     Route::get('/barangay-permit/create', [BarangayPermitController::class, 'create'])->name('barangay-permit.create');
     Route::post('/barangay-permit', [BarangayPermitController::class, 'store'])->name('barangay-permit.store');
 
@@ -60,28 +64,41 @@ Route::prefix('admin')->group(function () {
             return Inertia::render('Admin/Dashboard');
         })->name('admin.dashboard');
 
+        // Admin Business Permits (controller-backed Inertia pages)
         Route::get('business-permits', [App\Http\Controllers\Admin\BusinessPermitController::class, 'index'])
             ->name('admin.business-permits');
         Route::get('business-permits/{id}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'show'])
             ->name('admin.business-permits.show');
         Route::delete('business-permits/{id}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'destroy'])
             ->name('admin.business-permits.destroy');
+
         // View supporting document file inline in browser
         Route::get('business-permits/{id}/documents/{docId}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'viewDocument'])
             ->name('admin.business-permits.documents.view');
+            
         // Update status and remarks
         Route::post('business-permits/{id}/status', [App\Http\Controllers\Admin\BusinessPermitController::class, 'updateStatus'])
             ->name('admin.business-permits.update-status');
 
-        // Admin Barangay Clearances
+        // Admin Barangay Clearances (controller-backed Inertia pages)
         Route::get('barangay-clearances', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'index'])
             ->name('admin.barangay-clearances');
         Route::get('barangay-clearances/{id}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'show'])
             ->name('admin.barangay-clearances.show');
+
+        // JSON API routes for Barangay Clearances
+        Route::get('api/barangay-clearances', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'index'])
+            ->name('admin.api.barangay-clearances');
+
+        Route::get('api/barangay-clearances/{id}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'show'])
+            ->name('admin.api.barangay-clearances.show');
+
         Route::delete('barangay-clearances/{id}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'destroy'])
             ->name('admin.barangay-clearances.destroy');
+
         Route::get('barangay-clearances/{id}/documents/{docId}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'viewDocument'])
             ->name('admin.barangay-clearances.documents.view');
+            
         Route::post('barangay-clearances/{id}/status', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'updateStatus'])
             ->name('admin.barangay-clearances.update-status');
 
@@ -98,6 +115,18 @@ Route::prefix('admin')->group(function () {
         // Update status and remarks
         Route::post('residency-certificates/{id}/status', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'updateStatus'])
             ->name('admin.residency-certificates.update-status');
+
+        // Admin Indigency Certificates
+        Route::get('indigency-certificates', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'index'])
+            ->name('admin.indigency-certificates');
+        Route::get('indigency-certificates/{id}', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'show'])
+            ->name('admin.indigency-certificates.show');
+        Route::delete('indigency-certificates/{id}', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'destroy'])
+            ->name('admin.indigency-certificates.destroy');
+        Route::get('indigency-certificates/{id}/documents/{docId}', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'viewDocument'])
+            ->name('admin.indigency-certificates.documents.view');
+        Route::post('indigency-certificates/{id}/status', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'updateStatus'])
+            ->name('admin.indigency-certificates.update-status');
     });
 });
 
