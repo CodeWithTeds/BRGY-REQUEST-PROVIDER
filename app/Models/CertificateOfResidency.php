@@ -13,6 +13,17 @@ class CertificateOfResidency extends Model
         'user_id',
         'purpose',
         'status',
+        'remarks',
         'application_date',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function supportingDocuments()
+    {
+        return $this->hasMany(SupportingDocument::class);
+    }
 }

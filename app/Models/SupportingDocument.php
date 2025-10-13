@@ -14,6 +14,7 @@ class SupportingDocument extends Model
         'document_type',
         'file_path',
         'verified',
+        'certificate_of_residency_id',
         'barangay_permit_id',
         'barangay_clearance_id'
     ];
@@ -35,5 +36,10 @@ class SupportingDocument extends Model
     public function barangayClearance()
     {
         return $this->belongsTo(BarangayClearance::class);
+    }
+
+    public function certificateOfResidency()
+    {
+        return $this->belongsTo(CertificateOfResidency::class);
     }
 }

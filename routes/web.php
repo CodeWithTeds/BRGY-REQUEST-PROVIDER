@@ -84,6 +84,20 @@ Route::prefix('admin')->group(function () {
             ->name('admin.barangay-clearances.documents.view');
         Route::post('barangay-clearances/{id}/status', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'updateStatus'])
             ->name('admin.barangay-clearances.update-status');
+
+        // Admin Residency Certificates (real data)
+        Route::get('residency-certificates', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'index'])
+            ->name('admin.residency-certificates');
+        Route::get('residency-certificates/{id}', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'show'])
+            ->name('admin.residency-certificates.show');
+        Route::delete('residency-certificates/{id}', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'destroy'])
+            ->name('admin.residency-certificates.destroy');
+        // View supporting document file inline in browser
+        Route::get('residency-certificates/{id}/documents/{docId}', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'viewDocument'])
+            ->name('admin.residency-certificates.documents.view');
+        // Update status and remarks
+        Route::post('residency-certificates/{id}/status', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'updateStatus'])
+            ->name('admin.residency-certificates.update-status');
     });
 });
 

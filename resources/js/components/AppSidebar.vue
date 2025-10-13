@@ -54,6 +54,11 @@ const adminNavItems: NavItem[] = [
         icon: FileCheck,
     },
     {
+        title: 'Residency Certificates',
+        href: '/admin/residency-certificates',
+        icon: UserCheck,
+    },
+    {
         title: 'Profile Settings',
         href: '/settings/profile',
         icon: UserCheck,
@@ -74,7 +79,8 @@ const footerNavItems: NavItem[] = [
 ];
 
 const isAdmin = computed(() => {
-    return window.location.pathname.startsWith('/admin');
+    const path = window.location.pathname;
+    return path.startsWith('/admin') || path.includes('/admin/');
 });
 
 const navItems = computed(() => {

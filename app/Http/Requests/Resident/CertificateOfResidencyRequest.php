@@ -23,6 +23,10 @@ class CertificateOfResidencyRequest extends FormRequest
     {
         return [
             'purpose' => ['required', 'string', 'max:255'],
+            'valid_government_id_document' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'proof_of_residence_document' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'lease_contract_document' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'authorization_letter_document' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ];
     }
 }
