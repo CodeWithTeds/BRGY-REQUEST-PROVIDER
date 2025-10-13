@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\BarangayClearance;
+use App\Traits\AdminListFilters;
 use App\Models\ApplicantProfile;
 use App\Models\Address;
 use App\Models\SupportingDocument;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 
 class BarangayClearanceRepository extends Repository {
+    use AdminListFilters;
     
     public function __construct(
         BarangayClearance $barangayClearance,
@@ -222,10 +224,8 @@ class BarangayClearanceRepository extends Repository {
             ->with(['applicantProfile', 'user', 'address.barangay'])
             ->latest();
 
-        // Filters: name, status, application date range
-        $name = trim((string) ($filters['name'] ?? ''));
-        if ($name !== '') {
-            $query->whereHas('applicantProfile', function ($ap) use ($name) {
+        $this->applyNameStatusDateFilters($query, $filters, function ($q, string $name) {
+            $q->whereHas('applicantProfile', function ($ap) use ($name) {
                 $ap->where(function ($sub) use ($name) {
                     $sub->where('first_name', 'like', '%' . $name . '%')
                         ->orWhere('middle_name', 'like', '%' . $name . '%')
@@ -234,22 +234,7 @@ class BarangayClearanceRepository extends Repository {
                         ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) like ?", ['%' . $name . '%']);
                 });
             });
-        }
-
-        $status = $filters['status'] ?? null;
-        if (in_array($status, ['pending', 'processing', 'approved', 'rejected'])) {
-            $query->where('status', $status);
-        }
-
-        $dateFrom = $filters['date_from'] ?? null;
-        $dateTo = $filters['date_to'] ?? null;
-        if ($dateFrom && $dateTo) {
-            $query->whereBetween('application_date', [$dateFrom, $dateTo]);
-        } elseif ($dateFrom) {
-            $query->whereDate('application_date', '>=', $dateFrom);
-        } elseif ($dateTo) {
-            $query->whereDate('application_date', '<=', $dateTo);
-        }
+        });
 
         // Server-side pagination for large datasets
         return $query->paginate($perPage, ['*'], 'page', $page);
