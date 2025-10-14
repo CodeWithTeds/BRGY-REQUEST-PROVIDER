@@ -100,6 +100,8 @@ const user = page.props.auth.user as User;
                 </Form>
             </div>
 
+            
+
             <DeleteUser />
         </SettingsLayout>
     </AppLayout>

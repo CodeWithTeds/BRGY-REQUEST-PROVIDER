@@ -18,9 +18,28 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
+
         return Inertia::render('settings/Profile', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'applicantProfile' => $user->applicantProfile ? $user->applicantProfile->only([
+                'first_name', 'middle_name', 'last_name', 'suffix', 'date_of_birth', 'place_of_birth',
+                'civil_status', 'gender', 'citizenship', 'contact_number',
+            ]) : null,
+        ]);
+    }
+
+    public function editPersonal(Request $request): Response
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        return Inertia::render('settings/PersonalInformation', [
+            'status' => $request->session()->get('status'),
+            'applicantProfile' => $user->applicantProfile ? $user->applicantProfile->only([
+                'first_name', 'middle_name', 'last_name', 'suffix', 'date_of_birth', 'place_of_birth',
+                'civil_status', 'gender', 'citizenship', 'contact_number',
+            ]) : null,
         ]);
     }
 
@@ -29,13 +48,30 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        return to_route('profile.edit');
+    }
+
+    /**
+     * Create or update the user's applicant profile personal information.
+     */
+    public function updateApplicant(\App\Http\Requests\Settings\ApplicantProfileUpdateRequest $request): RedirectResponse
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $data = $request->validated();
+
+        $profile = $user->applicantProfile()->firstOrNew();
+        $profile->fill($data);
+        $profile->user_id = $user->id;
+        $profile->save();
 
         return to_route('profile.edit');
     }
