@@ -27,10 +27,39 @@ const leaseContractDocument = ref<File | null>(null)
 const extraErrors = computed(() => form.errors as Record<string, string>)
 
 
+type ApplicantProfileProps = {
+    first_name?: string | null;
+    middle_name?: string | null;
+    last_name?: string | null;
+    suffix?: string | null;
+    date_of_birth?: string | null;
+    place_of_birth?: string | null;
+    civil_status?: 'single' | 'married' | 'widowed' | 'separated' | string | null;
+    gender?: 'male' | 'female' | 'other' | string | null;
+    citizenship?: string | null;
+    contact_number?: string | null;
+} | null
+
 const props = defineProps<{
     barangays: Array<{ code: string; name: string }>,
     regions: Array<{ code: string; name: string }>,
+    applicantProfile?: ApplicantProfileProps,
 }>()
+
+// Prefill form from applicantProfile if available
+if (props.applicantProfile) {
+    const ap = props.applicantProfile
+    form.first_name = ap?.first_name ?? ''
+    form.middle_name = ap?.middle_name ?? ''
+    form.last_name = ap?.last_name ?? ''
+    form.suffix = ap?.suffix ?? ''
+    form.date_of_birth = ap?.date_of_birth ?? ''
+    form.place_of_birth = ap?.place_of_birth ?? ''
+    form.civil_status = (ap?.civil_status as string) ?? form.civil_status
+    form.gender = (ap?.gender as string) ?? form.gender
+    form.citizenship = ap?.citizenship ?? ''
+    form.contact_number = ap?.contact_number ?? ''
+}
 
 // Wizard step state
 const steps = ['Personal Information', 'PSGC Address', 'Supporting Document']
