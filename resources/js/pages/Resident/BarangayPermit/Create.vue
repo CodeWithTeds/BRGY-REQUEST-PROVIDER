@@ -55,8 +55,9 @@ if (props.applicantProfile) {
     form.suffix = ap?.suffix ?? ''
     form.date_of_birth = ap?.date_of_birth ?? ''
     form.place_of_birth = ap?.place_of_birth ?? ''
-    form.civil_status = (ap?.civil_status as string) ?? form.civil_status
-    form.gender = (ap?.gender as string) ?? form.gender
+    // Normalize to lowercase so Select labels render correctly
+    form.civil_status = ap?.civil_status ? String(ap.civil_status).toLowerCase() : form.civil_status
+    form.gender = ap?.gender ? String(ap.gender).toLowerCase() : form.gender
     form.citizenship = ap?.citizenship ?? ''
     form.contact_number = ap?.contact_number ?? ''
 }

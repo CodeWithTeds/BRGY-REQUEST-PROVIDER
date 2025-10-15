@@ -14,10 +14,15 @@ class BarangayPermit extends Model
         'status',
         'remarks',
         'application_date',
+        'appointment_at',
     ];
 
     protected $attributes = [
         'status' => 'pending',
+    ];
+
+    protected $casts = [
+        'appointment_at' => 'datetime',
     ];
 
     public function user()

@@ -22,6 +22,10 @@ const sidebarNavItems: NavItem[] = [
         title: 'Appearance',
         href: '/settings/appearance',
     },
+    {
+        title: 'My Address (PSGC)',
+        href: '/settings/my-address',
+    },
 ];
 
 const page = usePage();

@@ -3,9 +3,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { CheckCircle2, XCircle, Info, Calendar, ClipboardList, FileCheck } from 'lucide-vue-next';
 import Toastify from 'toastify-js';
 import { onMounted, computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import StatusTracker from '@/components/StatusTracker.vue';
 
-const props = defineProps<{ permit: { id?: number; status: string; remarks?: string; application_date?: string } }>();
+const props = defineProps<{ permit: { id?: number; status: string; remarks?: string; application_date?: string; appointment_at?: string | null } }>();
 
 const isApproved = props.permit.status === 'approved';
 const isRejected = props.permit.status === 'rejected';
@@ -26,16 +27,13 @@ function notify() {
   }).showToast();
 }
 
-function handleScheduleClick() {
-  Toastify({
-    text: 'Scheduling feature will be available soon. Please proceed to your barangay office to set an appointment.',
-    duration: 4500,
-    gravity: 'top',
-    position: 'right',
-    backgroundColor: '#2563eb',
-    close: true,
-  }).showToast();
-}
+const appointmentDisplay = computed(() => {
+  if (!props.permit.appointment_at) return null
+  try {
+    const d = new Date(props.permit.appointment_at as string)
+    return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short', hour12: true })
+  } catch { return props.permit.appointment_at as string }
+})
 
 onMounted(() => {
   notify();
@@ -90,10 +88,13 @@ onMounted(() => {
               <li>Office hours are typically Monday–Friday, 8:00 AM–5:00 PM. Confirm availability with your barangay office.</li>
               <li>Processing and printing may take up to 2–3 business days depending on queue.</li>
             </ul>
-            <div class="mt-4">
-              <button type="button" @click="handleScheduleClick" class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                Schedule Pickup
-              </button>
+            <div class="mt-4 flex items-center gap-2">
+              <Link :href="route('barangay-permit.schedule')" class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                {{ appointmentDisplay ? 'Reschedule Appointment' : 'Schedule Appointment' }}
+              </Link>
+              <div v-if="appointmentDisplay" class="text-[#2C4854] ml-2">
+                <span class="opacity-70">Current:</span> <span class="font-medium">{{ appointmentDisplay }}</span>
+              </div>
             </div>
           </div>
 

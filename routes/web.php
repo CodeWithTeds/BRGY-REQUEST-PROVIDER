@@ -35,6 +35,12 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
     Route::get('/barangay-permit/create', [BarangayPermitController::class, 'create'])->name('barangay-permit.create');
     Route::post('/barangay-permit', [BarangayPermitController::class, 'store'])->name('barangay-permit.store');
 
+    // Appointment scheduling for approved permits
+    Route::get('/barangay-permit/schedule', [BarangayPermitController::class, 'schedule'])
+        ->name('barangay-permit.schedule');
+    Route::post('/barangay-permit/schedule', [BarangayPermitController::class, 'scheduleStore'])
+        ->name('barangay-permit.schedule.store');
+
     Route::get('/barangay-clearance/create', [BarangayClearanceController::class, 'create'])->name('barangay-clearance.create');
     Route::post('/barangay-clearance', [BarangayClearanceController::class, 'store'])->name('barangay-clearance.store');
     Route::get('/barangay-clearance/{id}', [BarangayClearanceController::class, 'show'])->name('barangay-clearance.show');
@@ -46,6 +52,7 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
     Route::get('/psgc/regions/{code}/provinces', [BarangayPermitController::class, 'provincesByRegion'])->name('psgc.provinces.by-region');
     Route::get('/psgc/provinces/{code}/cities', [BarangayPermitController::class, 'citiesByProvince'])->name('psgc.cities.by-province');
     Route::get('/psgc/regions/{code}/cities', [BarangayPermitController::class, 'citiesByRegion'])->name('psgc.cities.by-region');
+    Route::get('/psgc/cities/{code}/barangays', [BarangayPermitController::class, 'barangaysByCity'])->name('psgc.barangays.by-city');
 });
 
 Route::middleware(['auth'])->group(function () {

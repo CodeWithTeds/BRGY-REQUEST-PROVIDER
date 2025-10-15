@@ -35,8 +35,9 @@ const page = usePage();
 const ap = page.props.applicantProfile as ApplicantProfile | null;
 
 // Local state for Selects to ensure chosen value displays and submits
-const civilStatus = ref<string>(ap?.civil_status ?? 'single');
-const gender = ref<string>(ap?.gender ?? 'male');
+// Normalize initial values to lowercase to ensure labels and selection display
+const civilStatus = ref<string>(ap?.civil_status ? String(ap.civil_status).toLowerCase() : 'single');
+const gender = ref<string>(ap?.gender ? String(ap.gender).toLowerCase() : 'male');
 
 const civilStatusLabels: Record<string, string> = {
     single: 'Single',

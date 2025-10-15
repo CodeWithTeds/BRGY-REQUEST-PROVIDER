@@ -8,6 +8,7 @@ use App\Repositories\PSGCRepository;
 use App\Repositories\BussinessPermitRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
 class BarangayPermitController extends Controller
@@ -54,6 +55,63 @@ class BarangayPermitController extends Controller
             'regions' => $this->psgcRepository->getRegions(),
             'applicantProfile' => $apData,
         ]);
+    }
+
+    /**
+     * Show appointment scheduling page for approved permits.
+     */
+    public function schedule(Request $request)
+    {
+        $latest = $this->bussinessPermitRepository->getLatestPermit(Auth::id());
+
+        if (!$latest || $latest->status !== 'approved') {
+            return redirect()->route('barangay-permit.create')
+                ->with('error', 'Scheduling is only available after approval.');
+        }
+
+        return Inertia::render('Resident/BarangayPermit/Schedule', [
+            'permit' => [
+                'id' => $latest->id,
+                'status' => $latest->status,
+                'application_date' => $latest->application_date,
+                'appointment_at' => optional($latest->appointment_at)->toDateTimeString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Store appointment schedule between 08:00 and 17:00.
+     */
+    public function scheduleStore(Request $request)
+    {
+        $data = $request->validate([
+            'permit_id' => ['required', 'integer', 'exists:barangay_permits,id'],
+            'date' => ['required', 'date', 'after_or_equal:today'],
+            'time' => ['required', 'date_format:H:i'],
+        ]);
+
+        $permit = \App\Models\BarangayPermit::query()
+            ->where('id', $data['permit_id'])
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        if ($permit->status !== 'approved') {
+            return redirect()->route('barangay-permit.create')
+                ->with('error', 'Scheduling is only available for approved permits.');
+        }
+
+        $dt = Carbon::parse($data['date'].' '.$data['time']);
+        $hhmm = $dt->format('H:i');
+        if ($hhmm < '08:00' || $hhmm > '17:00') {
+            return back()->withErrors(['time' => 'Appointment must be between 08:00 and 17:00.'])
+                ->withInput();
+        }
+
+        $permit->appointment_at = $dt;
+        $permit->save();
+
+        return redirect()->route('barangay-permit.create')
+            ->with('success', 'Appointment scheduled successfully.');
     }
 
     public function store(StoreBarangayPermitRequest $request)
