@@ -150,6 +150,14 @@ class BarangayClearanceRepository extends Repository {
             ->first();
     }
 
+    public function getLatestClearance(int $userId)
+    {
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->latest()
+            ->first();
+    }
+
     public function getClearance(int $id, int $userId)
     {
         return $this->model->newQuery()

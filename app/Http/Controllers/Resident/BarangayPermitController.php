@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
+use App\Models\Appointment;
 
 class BarangayPermitController extends Controller
 {   
@@ -33,8 +34,20 @@ class BarangayPermitController extends Controller
         // If there is an approved or rejected latest permit, show a status message instead of create form
         $latest = $this->bussinessPermitRepository->getLatestPermit(Auth::id());
         if ($latest && in_array($latest->status, ['approved', 'rejected'])) {
+            // Determine if reschedule is allowed (max 1 reschedule; i.e., 2 total appointments)
+            $latestAppointment = method_exists($latest, 'appointments') ? $latest->appointments()->orderByDesc('appointment_at')->first() : null;
+            $appointmentsCount = method_exists($latest, 'appointments') ? $latest->appointments()->count() : 0;
+
             return Inertia::render('Resident/BarangayPermit/StatusMessage', [
-                'permit' => $latest,
+                'permit' => [
+                    'id' => $latest->id,
+                    'status' => $latest->status,
+                    'remarks' => $latest->remarks,
+                    'application_date' => $latest->application_date,
+                    // Prefer appointments table; fallback to legacy column. Display in Asia/Manila. Use null-safe chaining.
+                    'appointment_at' => ($latestAppointment?->appointment_at ?? $latest->appointment_at)?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
+                ],
+                'rescheduleAllowed' => $appointmentsCount < 2,
             ]);
         }
 
@@ -72,15 +85,17 @@ class BarangayPermitController extends Controller
         }
 
         $latestAppointment = $latest->appointments()->orderByDesc('appointment_at')->first();
+        $appointmentsCount = $latest->appointments()->count();
 
         return Inertia::render('Resident/BarangayPermit/Schedule', [
             'permit' => [
                 'id' => $latest->id,
                 'status' => $latest->status,
                 'application_date' => $latest->application_date,
-                // Prefer the appointments table; fallback to legacy column for compatibility
-                'appointment_at' => optional($latestAppointment?->appointment_at ?? $latest->appointment_at)->toDateTimeString(),
+                // Prefer the appointments table; fallback to legacy column for compatibility. Display in Asia/Manila. Use null-safe chaining.
+                'appointment_at' => ($latestAppointment?->appointment_at ?? $latest->appointment_at)?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
             ],
+            'rescheduleAllowed' => $appointmentsCount < 2,
         ]);
     }
 
@@ -105,10 +120,28 @@ class BarangayPermitController extends Controller
                 ->with('error', 'Scheduling is only available for approved permits.');
         }
 
-        $dt = Carbon::parse($data['date'].' '.$data['time']);
-        $hhmm = $dt->format('H:i');
+        // Enforce: only one reschedule allowed (max 2 appointments total)
+        $appointmentsCount = method_exists($permit, 'appointments') ? $permit->appointments()->count() : 0;
+        if ($appointmentsCount >= 2) {
+            return redirect()->route('barangay-permit.schedule')
+                ->with('error', 'Rescheduling is allowed only once. Please contact your barangay office for further changes.');
+        }
+
+        $dtLocal = Carbon::createFromFormat('Y-m-d H:i', $data['date'].' '.$data['time'], 'Asia/Manila');
+        $dt = $dtLocal->copy()->setTimezone('UTC');
+        $hhmm = $dtLocal->format('H:i');
         if ($hhmm < '08:00' || $hhmm > '17:00') {
             return back()->withErrors(['time' => 'Appointment must be between 08:00 and 17:00.'])
+                ->withInput();
+        }
+
+        // Prevent double-booking: reject if slot already taken
+        $conflict = Appointment::query()
+            ->where('appointment_at', $dt)
+            ->where('status', 'scheduled')
+            ->exists();
+        if ($conflict) {
+            return back()->withErrors(['time' => 'Selected time slot is already taken. Please choose another time.'])
                 ->withInput();
         }
 
@@ -124,6 +157,34 @@ class BarangayPermitController extends Controller
 
         return redirect()->route('barangay-permit.create')
             ->with('success', 'Appointment scheduled successfully.');
+    }
+
+    /**
+     * JSON availability for a given local date (Asia/Manila). Returns occupied HH:mm slots.
+     */
+    public function availability(Request $request)
+    {
+        $request->validate([
+            'date' => ['required', 'date'],
+        ]);
+
+        $date = $request->input('date');
+        $dayLocalStart = Carbon::createFromFormat('Y-m-d H:i', $date.' 00:00', 'Asia/Manila');
+        $dayLocalEnd = Carbon::createFromFormat('Y-m-d H:i', $date.' 23:59', 'Asia/Manila');
+        $startUtc = $dayLocalStart->copy()->setTimezone('UTC');
+        $endUtc = $dayLocalEnd->copy()->setTimezone('UTC');
+
+        $occupied = Appointment::query()
+            ->whereBetween('appointment_at', [$startUtc, $endUtc])
+            ->where('status', 'scheduled')
+            ->get()
+            ->map(function ($appt) {
+                return optional($appt->appointment_at)->copy()->setTimezone('Asia/Manila')->format('H:i');
+            })
+            ->unique()
+            ->values();
+
+        return response()->json(['occupied' => $occupied]);
     }
 
     public function store(StoreBarangayPermitRequest $request)

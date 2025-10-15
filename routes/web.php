@@ -43,10 +43,29 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
         ->name('barangay-permit.schedule');
     Route::post('/barangay-permit/schedule', [BarangayPermitController::class, 'scheduleStore'])
         ->name('barangay-permit.schedule.store');
+    // Availability for occupied appointment times (permit)
+    Route::get('/barangay-permit/availability', [BarangayPermitController::class, 'availability'])
+        ->name('barangay-permit.availability');
 
     Route::get('/barangay-clearance/create', [BarangayClearanceController::class, 'create'])->name('barangay-clearance.create');
     Route::post('/barangay-clearance', [BarangayClearanceController::class, 'store'])->name('barangay-clearance.store');
-    Route::get('/barangay-clearance/{id}', [BarangayClearanceController::class, 'show'])->name('barangay-clearance.show');
+
+    // Appointment scheduling for approved clearances (define BEFORE dynamic {id} routes)
+    Route::get('/barangay-clearance/schedule', [BarangayClearanceController::class, 'schedule'])
+        ->name('barangay-clearance.schedule');
+    Route::post('/barangay-clearance/schedule', [BarangayClearanceController::class, 'scheduleStore'])
+        ->name('barangay-clearance.schedule.store');
+    // Availability for occupied appointment times (clearance)
+    Route::get('/barangay-clearance/availability', [BarangayClearanceController::class, 'availability'])
+        ->name('barangay-clearance.availability');
+
+    // Resident: Show and download (id must be numeric)
+    Route::get('/barangay-clearance/{id}', [BarangayClearanceController::class, 'show'])
+        ->whereNumber('id')
+        ->name('barangay-clearance.show');
+    Route::get('/barangay-clearance/{id}/pdf', [BarangayClearanceController::class, 'downloadPdf'])
+        ->whereNumber('id')
+        ->name('barangay-clearance.pdf');
     Route::get('/psgc/island-groups/{code}/barangays', [BarangayPermitController::class, 'barangaysByIslandGroup'])->name('psgc.barangays.by-island-group');
 
 

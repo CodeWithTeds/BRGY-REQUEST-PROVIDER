@@ -9,6 +9,9 @@ use App\Repositories\BarangayClearanceRepository;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Http\Resources\BarangayClearanceDetailResource;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Carbon;
+use App\Models\Appointment;
 
 class BarangayClearanceController extends Controller
 {
@@ -31,6 +34,28 @@ class BarangayClearanceController extends Controller
         if ($pendingClearance) {
             return Inertia::render('Resident/BarangayClearance/Pending', [
                 'clearance' => $pendingClearance,
+            ]);
+        }
+
+        // If latest clearance is approved or rejected, show status message page
+        $latest = $this->barangayClearanceRepository->getLatestClearance(Auth::id());
+        if ($latest && in_array($latest->status, ['approved', 'rejected'])) {
+            $latestAppointment = method_exists($latest, 'appointments') ? $latest->appointments()->orderByDesc('appointment_at')->first() : null;
+            $appointmentsCount = method_exists($latest, 'appointments') ? $latest->appointments()->count() : 0;
+
+            return Inertia::render('Resident/BarangayClearance/StatusMessage', [
+                'clearance' => [
+                    'id' => $latest->id,
+                    'status' => $latest->status,
+                    'remarks' => $latest->remarks,
+                    'application_date' => $latest->application_date,
+                    'issue_date' => $latest->issue_date,
+                    'expiry_date' => $latest->expiry_date,
+                    'clearance_number' => $latest->clearance_number,
+                    // Use null-safe chaining to avoid calling methods on null
+                    'appointment_at' => $latestAppointment?->appointment_at?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
+                ],
+                'rescheduleAllowed' => $appointmentsCount < 2,
             ]);
         }
 
@@ -68,5 +93,144 @@ class BarangayClearanceController extends Controller
         return Inertia::render('Resident/BarangayClearance/Show', [
             'clearance' => $data,
         ]);
+    }
+
+    /**
+     * Download an approved barangay clearance as PDF for the current resident.
+     */
+    public function downloadPdf(int $id)
+    {
+        $clearance = $this->barangayClearanceRepository->getWithAllRelations($id);
+
+        if ($clearance->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Only allow PDF download when approved
+        if ($clearance->status !== 'approved') {
+            return redirect()->route('barangay-clearance.create')
+                ->with('error', 'PDF is available only after approval.');
+        }
+
+        $data = (new BarangayClearanceDetailResource($clearance))->toArray(request());
+        $viewData = [
+            'clearance' => $data,
+            'logoPath' => public_path('images/brg.png'),
+        ];
+
+        $pdf = Pdf::setPaper('A4')->loadView('pdf.barangay_clearance', $viewData);
+        return $pdf->download('barangay-clearance-' . $clearance->id . '.pdf');
+    }
+
+    /**
+     * Show appointment scheduling page for approved clearances.
+     */
+    public function schedule()
+    {
+        $latest = $this->barangayClearanceRepository->getLatestClearance(Auth::id());
+
+        if (!$latest || $latest->status !== 'approved') {
+            return redirect()->route('barangay-clearance.create')
+                ->with('error', 'Scheduling is only available after approval.');
+        }
+
+        $latestAppointment = $latest->appointments()->orderByDesc('appointment_at')->first();
+        $appointmentsCount = $latest->appointments()->count();
+
+        return Inertia::render('Resident/BarangayClearance/Schedule', [
+            'clearance' => [
+                'id' => $latest->id,
+                'status' => $latest->status,
+                'application_date' => $latest->application_date,
+                // Use null-safe chaining to avoid calling methods on null
+                'appointment_at' => $latestAppointment?->appointment_at?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
+            ],
+            'rescheduleAllowed' => $appointmentsCount < 2,
+        ]);
+    }
+
+    /**
+     * Store appointment schedule between 08:00 and 17:00 for clearances.
+     */
+    public function scheduleStore(\Illuminate\Http\Request $request)
+    {
+        $data = $request->validate([
+            'clearance_id' => ['required', 'integer', 'exists:barangay_clearances,id'],
+            'date' => ['required', 'date', 'after_or_equal:today'],
+            'time' => ['required', 'date_format:H:i'],
+        ]);
+
+        $clearance = \App\Models\BarangayClearance::query()
+            ->where('id', $data['clearance_id'])
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        if ($clearance->status !== 'approved') {
+            return redirect()->route('barangay-clearance.create')
+                ->with('error', 'Scheduling is only available for approved clearances.');
+        }
+
+        // Enforce: only one reschedule allowed (max 2 appointments total)
+        $appointmentsCount = method_exists($clearance, 'appointments') ? $clearance->appointments()->count() : 0;
+        if ($appointmentsCount >= 2) {
+            return redirect()->route('barangay-clearance.schedule')
+                ->with('error', 'Rescheduling is allowed only once. Please contact your barangay office for further changes.');
+        }
+
+        // Interpret user input as Asia/Manila and convert to UTC for storage
+        $dtLocal = Carbon::createFromFormat('Y-m-d H:i', $data['date'].' '.$data['time'], 'Asia/Manila');
+        $dt = $dtLocal->copy()->setTimezone('UTC');
+        $hhmm = $dtLocal->format('H:i');
+        if ($hhmm < '08:00' || $hhmm > '17:00') {
+            return back()->withErrors(['time' => 'Appointment must be between 08:00 and 17:00.'])
+                ->withInput();
+        }
+
+        // Prevent double-booking: reject if slot already taken
+        $conflict = Appointment::query()
+            ->where('appointment_at', $dt)
+            ->where('status', 'scheduled')
+            ->exists();
+        if ($conflict) {
+            return back()->withErrors(['time' => 'Selected time slot is already taken. Please choose another time.'])
+                ->withInput();
+        }
+
+        // Create appointment record in the shared appointments table
+        $clearance->appointments()->create([
+            'appointment_at' => $dt,
+            'status' => 'scheduled',
+        ]);
+
+        return redirect()->route('barangay-clearance.create')
+            ->with('success', 'Appointment scheduled successfully.');
+    }
+
+    /**
+     * JSON availability for a given local date (Asia/Manila). Returns occupied HH:mm slots.
+     */
+    public function availability(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'date' => ['required', 'date'],
+        ]);
+
+        $date = $request->input('date');
+        $dayLocalStart = Carbon::createFromFormat('Y-m-d H:i', $date.' 00:00', 'Asia/Manila');
+        $dayLocalEnd = Carbon::createFromFormat('Y-m-d H:i', $date.' 23:59', 'Asia/Manila');
+        $startUtc = $dayLocalStart->copy()->setTimezone('UTC');
+        $endUtc = $dayLocalEnd->copy()->setTimezone('UTC');
+
+        $occupied = Appointment::query()
+            ->whereBetween('appointment_at', [$startUtc, $endUtc])
+            ->where('status', 'scheduled')
+            ->get()
+            ->map(function ($appt) {
+                return optional($appt->appointment_at)->copy()->setTimezone('Asia/Manila')->format('H:i');
+            })
+            ->unique()
+            ->values();
+
+        return response()->json(['occupied' => $occupied]);
     }
 }
