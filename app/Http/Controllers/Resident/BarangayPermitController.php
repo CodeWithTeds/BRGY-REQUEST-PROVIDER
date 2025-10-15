@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Resident\StoreBarangayPermitRequest;
 use App\Repositories\PSGCRepository;
 use App\Repositories\BussinessPermitRepository;
+use App\Http\Resources\BarangayPermitDetailResource;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -191,4 +193,33 @@ class BarangayPermitController extends Controller
     {
         return response()->json($this->psgcRepository->getCitiesByRegion($code));
     }
+
+    /**
+     * Download an approved barangay permit as PDF for the current resident.
+     */
+    public function downloadPdf(int $id)
+    {
+        $permit = $this->bussinessPermitRepository->getWithAllRelations($id);
+
+        if ($permit->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Only allow PDF download when approved
+        if ($permit->status !== 'approved') {
+            return redirect()->route('barangay-permit.create')
+                ->with('error', 'PDF is available only after approval.');
+        }
+
+        $data = (new BarangayPermitDetailResource($permit))->toArray(request());
+        $viewData = [
+            'permit' => $data,
+            // Use the barangay seal image from public/images; replace file as needed
+            'logoPath' => public_path('images/brg.png'),
+        ];
+
+        $pdf = Pdf::setPaper('A4')->loadView('pdf.barangay_permit', $viewData);
+        return $pdf->download('barangay-permit-' . $permit->id . '.pdf');
+    }
+
 }

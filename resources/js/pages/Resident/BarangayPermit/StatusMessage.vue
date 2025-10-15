@@ -92,6 +92,10 @@ onMounted(() => {
               <Link :href="route('barangay-permit.schedule')" class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
                 {{ appointmentDisplay ? 'Reschedule Appointment' : 'Schedule Appointment' }}
               </Link>
+              <a v-if="props.permit.id" :href="route('barangay-permit.pdf', props.permit.id)" target="_blank" rel="noopener" class="inline-flex items-center rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">
+                Download PDF
+              </a>
+      
               <div v-if="appointmentDisplay" class="text-[#2C4854] ml-2">
                 <span class="opacity-70">Current:</span> <span class="font-medium">{{ appointmentDisplay }}</span>
               </div>

@@ -34,6 +34,9 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
 
     Route::get('/barangay-permit/create', [BarangayPermitController::class, 'create'])->name('barangay-permit.create');
     Route::post('/barangay-permit', [BarangayPermitController::class, 'store'])->name('barangay-permit.store');
+    // Resident: Download approved permit as PDF
+    Route::get('/barangay-permit/{id}/pdf', [BarangayPermitController::class, 'downloadPdf'])
+        ->name('barangay-permit.pdf');
 
     // Appointment scheduling for approved permits
     Route::get('/barangay-permit/schedule', [BarangayPermitController::class, 'schedule'])
