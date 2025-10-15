@@ -71,12 +71,15 @@ class BarangayPermitController extends Controller
                 ->with('error', 'Scheduling is only available after approval.');
         }
 
+        $latestAppointment = $latest->appointments()->orderByDesc('appointment_at')->first();
+
         return Inertia::render('Resident/BarangayPermit/Schedule', [
             'permit' => [
                 'id' => $latest->id,
                 'status' => $latest->status,
                 'application_date' => $latest->application_date,
-                'appointment_at' => optional($latest->appointment_at)->toDateTimeString(),
+                // Prefer the appointments table; fallback to legacy column for compatibility
+                'appointment_at' => optional($latestAppointment?->appointment_at ?? $latest->appointment_at)->toDateTimeString(),
             ],
         ]);
     }
@@ -109,6 +112,13 @@ class BarangayPermitController extends Controller
                 ->withInput();
         }
 
+        // Create appointment record in the shared appointments table
+        $permit->appointments()->create([
+            'appointment_at' => $dt,
+            'status' => 'scheduled',
+        ]);
+
+        // Keep legacy column updated for existing front-end compatibility
         $permit->appointment_at = $dt;
         $permit->save();
 

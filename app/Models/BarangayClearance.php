@@ -61,4 +61,10 @@ class BarangayClearance extends Model
     {
         return $this->hasMany(Address::class);
     }
+
+    // Shared appointments across all document requests
+    public function appointments()
+    {
+        return $this->morphMany(Appointment::class, 'appointable');
+    }
 }

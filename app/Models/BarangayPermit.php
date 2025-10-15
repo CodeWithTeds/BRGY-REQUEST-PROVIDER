@@ -56,4 +56,10 @@ class BarangayPermit extends Model
     {
         return $this->hasMany(SupportingDocument::class);
     }
+
+    // Shared appointments across all document requests
+    public function appointments()
+    {
+        return $this->morphMany(Appointment::class, 'appointable');
+    }
 }
