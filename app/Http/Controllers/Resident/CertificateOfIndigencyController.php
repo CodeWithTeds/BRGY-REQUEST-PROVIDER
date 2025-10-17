@@ -92,11 +92,21 @@ class CertificateOfIndigencyController extends Controller
             'citizenship' => $data['citizenship'] ?? null,
             'contact_number' => $data['contact_number'] ?? null,
         ];
-        if (collect($profileData)->filter()->isNotEmpty()) {
-            $profile = $user->applicantProfile()->firstOrNew();
-            $profile->fill($profileData);
-            $profile->user_id = $user->id;
-            $profile->save();
+        $presentProfileData = array_filter($profileData, fn($v) => !is_null($v) && $v !== '');
+        if (!empty($presentProfileData)) {
+            $profile = $user->applicantProfile()->first();
+            if ($profile) {
+                // Only update fields provided; do not overwrite existing values with nulls
+                $profile->fill($presentProfileData);
+                $profile->save();
+            } else {
+                // Create profile only if all mandatory fields are present
+                $required = ['first_name','last_name','date_of_birth','place_of_birth','civil_status','gender','citizenship','contact_number'];
+                $hasRequired = collect($required)->every(fn($k) => array_key_exists($k, $presentProfileData));
+                if ($hasRequired) {
+                    $user->applicantProfile()->create($presentProfileData);
+                }
+            }
         }
 
         // Persist address to user for selected address_type (if provided)

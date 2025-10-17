@@ -13,9 +13,8 @@ Route::get('/', function () {
 
 
 Route::prefix('resident')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Resident/Home');
-    })->name('resident.dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\Resident\DashboardController::class, 'index'])
+        ->name('resident.dashboard');
 
     Route::get('/barangay-business-permit', function () {
         return Inertia::render('Resident/BarangayBusinessPermit');
