@@ -6,9 +6,9 @@ import { computed } from 'vue';
 
 const props = defineProps<{
   counts: {
-    permits: { pending: number; approved: number; rejected: number };
-    clearances: { pending: number; approved: number; rejected: number };
-    residencies: { pending: number; processing?: number; approved: number; rejected: number };
+    permits: { pending: number; approved: number; rejected: number; processing?: number; pre_approved?: number };
+    clearances: { pending: number; approved: number; rejected: number; processing?: number; pre_approved?: number };
+    residencies: { pending: number; processing?: number; approved: number; rejected: number; pre_approved?: number };
   };
   recentApplications: Array<{ id: number; type: string; status: string; application_date: string | null }>;
 }>();
@@ -16,28 +16,34 @@ const props = defineProps<{
 const totals = computed(() => ({
   permits:
     (props.counts?.permits?.pending || 0) +
+    (props.counts?.permits?.processing || 0) +
+    (props.counts?.permits?.pre_approved || 0) +
     (props.counts?.permits?.approved || 0) +
     (props.counts?.permits?.rejected || 0),
   clearances:
     (props.counts?.clearances?.pending || 0) +
+    (props.counts?.clearances?.processing || 0) +
+    (props.counts?.clearances?.pre_approved || 0) +
     (props.counts?.clearances?.approved || 0) +
     (props.counts?.clearances?.rejected || 0),
   residencies:
     (props.counts?.residencies?.pending || 0) +
     (props.counts?.residencies?.processing || 0) +
+    (props.counts?.residencies?.pre_approved || 0) +
     (props.counts?.residencies?.approved || 0) +
     (props.counts?.residencies?.rejected || 0),
 }));
 
 const statusTotals = computed(() => {
-  const p = props.counts?.permits || { pending: 0, approved: 0, rejected: 0 };
-  const c = props.counts?.clearances || { pending: 0, approved: 0, rejected: 0 };
-  const r = props.counts?.residencies || { pending: 0, processing: 0, approved: 0, rejected: 0 };
+  const p = props.counts?.permits || { pending: 0, processing: 0, pre_approved: 0, approved: 0, rejected: 0 };
+  const c = props.counts?.clearances || { pending: 0, processing: 0, pre_approved: 0, approved: 0, rejected: 0 };
+  const r = props.counts?.residencies || { pending: 0, processing: 0, pre_approved: 0, approved: 0, rejected: 0 };
   return {
     pending: (p.pending || 0) + (c.pending || 0) + (r.pending || 0),
     approved: (p.approved || 0) + (c.approved || 0) + (r.approved || 0),
     rejected: (p.rejected || 0) + (c.rejected || 0) + (r.rejected || 0),
-    processing: r.processing || 0,
+    processing: (p.processing || 0) + (c.processing || 0) + (r.processing || 0),
+    pre_approved: (p.pre_approved || 0) + (c.pre_approved || 0) + (r.pre_approved || 0),
   };
 });
 const maxBar = computed(() => Math.max(1, ...Object.values(statusTotals.value)));
@@ -56,6 +62,7 @@ const statusClass = (s: string) => {
     approved: 'bg-green-100 text-green-700 ring-green-200',
     rejected: 'bg-red-100 text-red-700 ring-red-200',
     processing: 'bg-blue-100 text-blue-700 ring-blue-200',
+    'pre-approved': 'bg-teal-100 text-teal-700 ring-teal-200',
   };
   return map[s] || 'bg-gray-100 text-gray-700 ring-gray-200';
 };
@@ -125,7 +132,7 @@ const statusClass = (s: string) => {
       </section>
 
       <!-- KPI cards -->
-      <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div class="rounded-xl bg-white p-4 ring-1 ring-black/5">
           <p class="text-xs text-secondary">Pending</p>
           <p class="mt-1 text-2xl font-semibold text-main">{{ statusTotals.pending }}</p>
@@ -140,6 +147,11 @@ const statusClass = (s: string) => {
           <p class="text-xs text-secondary">Rejected</p>
           <p class="mt-1 text-2xl font-semibold text-main">{{ statusTotals.rejected }}</p>
           <div class="mt-3 h-2 w-full rounded-full bg-secondary/20"><div class="h-2 rounded-full bg-red-500" :style="{ width: `${Math.min(100, Math.round((statusTotals.rejected / maxBar) * 100))}%` }"></div></div>
+        </div>
+        <div class="rounded-xl bg-white p-4 ring-1 ring-black/5">
+          <p class="text-xs text-secondary">Pre-Approved</p>
+          <p class="mt-1 text-2xl font-semibold text-main">{{ statusTotals.pre_approved }}</p>
+          <div class="mt-3 h-2 w-full rounded-full bg-secondary/20"><div class="h-2 rounded-full bg-teal-500" :style="{ width: `${Math.min(100, Math.round((statusTotals.pre_approved / maxBar) * 100))}%` }"></div></div>
         </div>
         <div class="rounded-xl bg-white p-4 ring-1 ring-black/5">
           <p class="text-xs text-secondary">Processing</p>
@@ -193,7 +205,7 @@ const statusClass = (s: string) => {
               <BarChart3 class="h-5 w-5 text-secondary" />
             </div>
             <div class="mt-4">
-              <div class="grid grid-cols-4 gap-3">
+              <div class="grid grid-cols-5 gap-3">
                 <div class="flex flex-col items-center gap-1">
                   <div class="h-24 w-10 rounded-md bg-brand/20">
                     <div class="w-10 rounded-b-md bg-brand" :style="{ height: barHeight(statusTotals.pending) }"></div>
@@ -211,6 +223,12 @@ const statusClass = (s: string) => {
                     <div class="w-10 rounded-b-md bg-brand" :style="{ height: barHeight(statusTotals.rejected) }"></div>
                   </div>
                   <span class="text-[11px] text-secondary">Rejected</span>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                  <div class="h-24 w-10 rounded-md bg-brand/20">
+                    <div class="w-10 rounded-b-md bg-teal-500" :style="{ height: barHeight(statusTotals.pre_approved) }"></div>
+                  </div>
+                  <span class="text-[11px] text-secondary">Pre-Approved</span>
                 </div>
                 <div class="flex flex-col items-center gap-1">
                   <div class="h-24 w-10 rounded-md bg-brand/20">

@@ -2,14 +2,14 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { LayoutGrid, FileText, FileCheck, UserCheck, IdCard, BarChart3, Clock, CheckCircle2, AlertTriangle, ClipboardList } from 'lucide-vue-next';
+import { LayoutGrid, FileText, FileCheck, UserCheck, IdCard, BarChart3, Clock, CheckCircle2, AlertTriangle, ClipboardList, BadgeCheck } from 'lucide-vue-next';
 
 const props = defineProps<{
   stats: {
-    barangay_permits: { pending: number; processing: number; approved: number; rejected: number };
-    barangay_clearances: { pending: number; processing: number; approved: number; rejected: number };
-    residency_certificates: { pending: number; processing: number; approved: number; rejected: number };
-    indigency_certificates: { pending: number; processing: number; approved: number; rejected: number };
+    barangay_permits: { pending: number; processing: number; pre_approved: number; approved: number; rejected: number };
+    barangay_clearances: { pending: number; processing: number; pre_approved: number; approved: number; rejected: number };
+    residency_certificates: { pending: number; processing: number; pre_approved: number; approved: number; rejected: number };
+    indigency_certificates: { pending: number; processing: number; pre_approved: number; approved: number; rejected: number };
   };
   auth_user: { id: number; name: string } | null;
 }>();
@@ -21,21 +21,25 @@ const totals = computed(() => ({
   permits:
     (props.stats?.barangay_permits?.pending || 0) +
     (props.stats?.barangay_permits?.processing || 0) +
+    (props.stats?.barangay_permits?.pre_approved || 0) +
     (props.stats?.barangay_permits?.approved || 0) +
     (props.stats?.barangay_permits?.rejected || 0),
   clearances:
     (props.stats?.barangay_clearances?.pending || 0) +
     (props.stats?.barangay_clearances?.processing || 0) +
+    (props.stats?.barangay_clearances?.pre_approved || 0) +
     (props.stats?.barangay_clearances?.approved || 0) +
     (props.stats?.barangay_clearances?.rejected || 0),
   residencies:
     (props.stats?.residency_certificates?.pending || 0) +
     (props.stats?.residency_certificates?.processing || 0) +
+    (props.stats?.residency_certificates?.pre_approved || 0) +
     (props.stats?.residency_certificates?.approved || 0) +
     (props.stats?.residency_certificates?.rejected || 0),
   indigency:
     (props.stats?.indigency_certificates?.pending || 0) +
     (props.stats?.indigency_certificates?.processing || 0) +
+    (props.stats?.indigency_certificates?.pre_approved || 0) +
     (props.stats?.indigency_certificates?.approved || 0) +
     (props.stats?.indigency_certificates?.rejected || 0),
 }));
@@ -43,10 +47,10 @@ const totals = computed(() => ({
 const percent = (part: number, total: number) => (total > 0 ? Math.round((part / total) * 100) : 0);
 
 const cards = computed(() => [
-  { title: 'Permits', total: totals.value.permits, icon: FileText, stats: props.stats?.barangay_permits || { pending: 0, processing: 0, approved: 0, rejected: 0 } },
-  { title: 'Clearances', total: totals.value.clearances, icon: FileCheck, stats: props.stats?.barangay_clearances || { pending: 0, processing: 0, approved: 0, rejected: 0 } },
-  { title: 'Residency', total: totals.value.residencies, icon: UserCheck, stats: props.stats?.residency_certificates || { pending: 0, processing: 0, approved: 0, rejected: 0 } },
-  { title: 'Indigency', total: totals.value.indigency, icon: IdCard, stats: props.stats?.indigency_certificates || { pending: 0, processing: 0, approved: 0, rejected: 0 } },
+  { title: 'Permits', total: totals.value.permits, icon: FileText, stats: props.stats?.barangay_permits || { pending: 0, processing: 0, pre_approved: 0, approved: 0, rejected: 0 } },
+  { title: 'Clearances', total: totals.value.clearances, icon: FileCheck, stats: props.stats?.barangay_clearances || { pending: 0, processing: 0, pre_approved: 0, approved: 0, rejected: 0 } },
+  { title: 'Residency', total: totals.value.residencies, icon: UserCheck, stats: props.stats?.residency_certificates || { pending: 0, processing: 0, pre_approved: 0, approved: 0, rejected: 0 } },
+  { title: 'Indigency', total: totals.value.indigency, icon: IdCard, stats: props.stats?.indigency_certificates || { pending: 0, processing: 0, pre_approved: 0, approved: 0, rejected: 0 } },
 ]);
 </script>
 
@@ -96,6 +100,13 @@ const cards = computed(() => [
               </div>
               <div class="h-1.5 rounded-full bg-secondary/20">
                 <div class="h-1.5 rounded-full bg-main" :style="{ width: percent(card.stats.processing, card.total) + '%' }" />
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-secondary">
+                <span class="inline-flex items-center gap-1"><BadgeCheck class="h-3.5 w-3.5 text-teal-600"/> Pre-Approved</span>
+                <span>{{ card.stats.pre_approved }}</span>
+              </div>
+              <div class="h-1.5 rounded-full bg-secondary/20">
+                <div class="h-1.5 rounded-full bg-teal-500" :style="{ width: percent(card.stats.pre_approved, card.total) + '%' }" />
               </div>
               <div class="flex items-center justify-between text-[11px] text-secondary">
                 <span>Approved</span>
@@ -155,6 +166,10 @@ const cards = computed(() => [
             <li class="flex items-center justify-between">
               <span class="inline-flex items-center gap-2 text-secondary"><Clock class="h-4 w-4 text-blue-500"/> Processing</span>
               <span class="font-medium">{{ (props.stats?.barangay_permits?.processing || 0) + (props.stats?.barangay_clearances?.processing || 0) + (props.stats?.residency_certificates?.processing || 0) + (props.stats?.indigency_certificates?.processing || 0) }}</span>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-2 text-secondary"><BadgeCheck class="h-4 w-4 text-teal-600"/> Pre-Approved</span>
+              <span class="font-medium">{{ (props.stats?.barangay_permits?.pre_approved || 0) + (props.stats?.barangay_clearances?.pre_approved || 0) + (props.stats?.residency_certificates?.pre_approved || 0) + (props.stats?.indigency_certificates?.pre_approved || 0) }}</span>
             </li>
             <li class="flex items-center justify-between">
               <span class="inline-flex items-center gap-2 text-secondary"><CheckCircle2 class="h-4 w-4 text-emerald-600"/> Approved</span>

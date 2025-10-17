@@ -27,6 +27,8 @@ interface Stats {
   approved: number;
   pending: number;
   rejected: number;
+  processing?: number;
+  pre_approved?: number;
 }
 
 interface Filters {

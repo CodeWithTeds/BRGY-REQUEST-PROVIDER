@@ -35,6 +35,8 @@ class AdminListService
             'pending' => $modelClass::where('status', 'pending')->count(),
             'rejected' => $modelClass::where('status', 'rejected')->count(),
             'processing' => $modelClass::where('status', 'processing')->count(),
+            // added pre-approved status count
+            'pre_approved' => $modelClass::where('status', 'pre-approved')->count(),
         ];
 
         return [
@@ -54,7 +56,7 @@ class AdminListService
      * Get global status counts for a given model class.
      *
      * @param string $modelClass Eloquent model class
-     * @return array{total:int,approved:int,pending:int,rejected:int,processing:int}
+     * @return array{total:int,approved:int,pending:int,rejected:int,processing:int,pre_approved:int}
      */
     public function getStats(string $modelClass): array
     {
@@ -64,6 +66,7 @@ class AdminListService
             'pending' => $modelClass::where('status', 'pending')->count(),
             'rejected' => $modelClass::where('status', 'rejected')->count(),
             'processing' => $modelClass::where('status', 'processing')->count(),
+            'pre_approved' => $modelClass::where('status', 'pre-approved')->count(),
         ];
     }
 }

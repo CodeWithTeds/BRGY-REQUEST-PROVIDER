@@ -88,6 +88,7 @@ class CertificateOfIndigencyRepository extends Repository
             'approved' => $this->model->newQuery()->where('status', 'approved')->count(),
             'rejected' => $this->model->newQuery()->where('status', 'rejected')->count(),
             'processing' => $this->model->newQuery()->where('status', 'processing')->count(),
+            'pre_approved' => $this->model->newQuery()->where('status', 'pre-approved')->count(),
         ];
 
         return [

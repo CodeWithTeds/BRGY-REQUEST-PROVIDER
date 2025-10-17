@@ -23,24 +23,28 @@ class DashboardController extends Controller
                 'approved' => BarangayPermit::where('user_id', $userId)->where('status', 'approved')->count(),
                 'rejected' => BarangayPermit::where('user_id', $userId)->where('status', 'rejected')->count(),
                 'processing' => BarangayPermit::where('user_id', $userId)->where('status', 'processing')->count(),
+                'pre_approved' => BarangayPermit::where('user_id', $userId)->where('status', 'pre-approved')->count(),
             ],
             'clearances' => [
                 'pending' => BarangayClearance::where('user_id', $userId)->where('status', 'pending')->count(),
                 'approved' => BarangayClearance::where('user_id', $userId)->where('status', 'approved')->count(),
                 'rejected' => BarangayClearance::where('user_id', $userId)->where('status', 'rejected')->count(),
                 'processing' => BarangayClearance::where('user_id', $userId)->where('status', 'processing')->count(),
+                'pre_approved' => BarangayClearance::where('user_id', $userId)->where('status', 'pre-approved')->count(),
             ],
             'residencies' => [
                 'pending' => CertificateOfResidency::where('user_id', $userId)->where('status', 'pending')->count(),
                 'approved' => CertificateOfResidency::where('user_id', $userId)->where('status', 'approved')->count(),
                 'rejected' => CertificateOfResidency::where('user_id', $userId)->where('status', 'rejected')->count(),
                 'processing' => CertificateOfResidency::where('user_id', $userId)->where('status', 'processing')->count(),
+                'pre_approved' => CertificateOfResidency::where('user_id', $userId)->where('status', 'pre-approved')->count(),
             ],
             'indigencies' => [
                 'pending' => CertificateOfIndigency::where('user_id', $userId)->where('status', 'pending')->count(),
                 'approved' => CertificateOfIndigency::where('user_id', $userId)->where('status', 'approved')->count(),
                 'rejected' => CertificateOfIndigency::where('user_id', $userId)->where('status', 'rejected')->count(),
                 'processing' => CertificateOfIndigency::where('user_id', $userId)->where('status', 'processing')->count(),
+                'pre_approved' => CertificateOfIndigency::where('user_id', $userId)->where('status', 'pre-approved')->count(),
             ],
         ];
 

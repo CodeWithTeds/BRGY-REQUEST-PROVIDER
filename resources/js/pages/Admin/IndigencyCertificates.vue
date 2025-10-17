@@ -23,6 +23,7 @@ interface StatsItem {
   approved: number
   rejected: number
   processing?: number
+  pre_approved?: number
 }
 
 interface Filters {

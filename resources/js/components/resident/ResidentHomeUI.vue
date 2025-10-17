@@ -5,10 +5,10 @@ import { computed, ref } from 'vue';
 
 const props = defineProps<{
   counts: {
-    permits: { pending: number; approved: number; rejected: number; processing?: number };
-    clearances: { pending: number; approved: number; rejected: number; processing?: number };
-    residencies: { pending: number; approved: number; rejected: number; processing?: number };
-    indigencies: { pending: number; approved: number; rejected: number; processing?: number };
+    permits: { pending: number; approved: number; rejected: number; processing?: number; pre_approved?: number };
+    clearances: { pending: number; approved: number; rejected: number; processing?: number; pre_approved?: number };
+    residencies: { pending: number; approved: number; rejected: number; processing?: number; pre_approved?: number };
+    indigencies: { pending: number; approved: number; rejected: number; processing?: number; pre_approved?: number };
   };
   recentApplications: Array<{ id: number; type: string; status: string; application_date: string | null; route?: string }>;
   applicantProfile?: { first_name?: string | null; middle_name?: string | null; last_name?: string | null; suffix?: string | null } | null;
@@ -28,34 +28,39 @@ const totals = computed(() => ({
     (props.counts?.permits?.pending || 0) +
     (props.counts?.permits?.approved || 0) +
     (props.counts?.permits?.rejected || 0) +
-    (props.counts?.permits?.processing || 0),
+    (props.counts?.permits?.processing || 0) +
+    (props.counts?.permits?.pre_approved || 0),
   clearances:
     (props.counts?.clearances?.pending || 0) +
     (props.counts?.clearances?.approved || 0) +
     (props.counts?.clearances?.rejected || 0) +
-    (props.counts?.clearances?.processing || 0),
+    (props.counts?.clearances?.processing || 0) +
+    (props.counts?.clearances?.pre_approved || 0),
   residencies:
     (props.counts?.residencies?.pending || 0) +
     (props.counts?.residencies?.approved || 0) +
     (props.counts?.residencies?.rejected || 0) +
-    (props.counts?.residencies?.processing || 0),
+    (props.counts?.residencies?.processing || 0) +
+    (props.counts?.residencies?.pre_approved || 0),
   indigencies:
     (props.counts?.indigencies?.pending || 0) +
     (props.counts?.indigencies?.approved || 0) +
     (props.counts?.indigencies?.rejected || 0) +
-    (props.counts?.indigencies?.processing || 0),
+    (props.counts?.indigencies?.processing || 0) +
+    (props.counts?.indigencies?.pre_approved || 0),
 }));
 
 const statusTotals = computed(() => {
-  const p = props.counts?.permits || { pending: 0, approved: 0, rejected: 0, processing: 0 };
-  const c = props.counts?.clearances || { pending: 0, approved: 0, rejected: 0, processing: 0 };
-  const r = props.counts?.residencies || { pending: 0, approved: 0, rejected: 0, processing: 0 };
-  const i = props.counts?.indigencies || { pending: 0, approved: 0, rejected: 0, processing: 0 };
+  const p = props.counts?.permits || { pending: 0, approved: 0, rejected: 0, processing: 0, pre_approved: 0 };
+  const c = props.counts?.clearances || { pending: 0, approved: 0, rejected: 0, processing: 0, pre_approved: 0 };
+  const r = props.counts?.residencies || { pending: 0, approved: 0, rejected: 0, processing: 0, pre_approved: 0 };
+  const i = props.counts?.indigencies || { pending: 0, approved: 0, rejected: 0, processing: 0, pre_approved: 0 };
   return {
     pending: (p.pending || 0) + (c.pending || 0) + (r.pending || 0) + (i.pending || 0),
     approved: (p.approved || 0) + (c.approved || 0) + (r.approved || 0) + (i.approved || 0),
     rejected: (p.rejected || 0) + (c.rejected || 0) + (r.rejected || 0) + (i.rejected || 0),
     processing: (p.processing || 0) + (c.processing || 0) + (r.processing || 0) + (i.processing || 0),
+    pre_approved: (p.pre_approved || 0) + (c.pre_approved || 0) + (r.pre_approved || 0) + (i.pre_approved || 0),
   };
 });
 
@@ -66,6 +71,7 @@ const donutData = computed(() => {
     { label: 'Approved', value: statusTotals.value.approved, color: '#22c55e' },
     { label: 'Rejected', value: statusTotals.value.rejected, color: '#ef4444' },
     { label: 'Processing', value: statusTotals.value.processing, color: '#3b82f6' },
+    { label: 'Pre-Approved', value: statusTotals.value.pre_approved, color: '#14b8a6' },
   ];
   const total = Math.max(1, entries.reduce((sum, e) => sum + e.value, 0));
   let acc = 0;
@@ -85,12 +91,14 @@ const overallTotal = computed(() => (
   statusTotals.value.pending +
   statusTotals.value.approved +
   statusTotals.value.rejected +
-  statusTotals.value.processing
+  statusTotals.value.processing +
+  statusTotals.value.pre_approved
 ));
 
 const statusCards = computed(() => [
   { key: 'pending', label: 'Pending', value: statusTotals.value.pending, icon: Clock, iconClass: 'text-amber-600', bgClass: 'bg-amber-100', barClass: 'bg-amber-500' },
   { key: 'approved', label: 'Approved', value: statusTotals.value.approved, icon: CheckCircle2, iconClass: 'text-green-600', bgClass: 'bg-green-100', barClass: 'bg-green-500' },
+  { key: 'pre_approved', label: 'Pre-Approved', value: statusTotals.value.pre_approved, icon: BadgeCheck, iconClass: 'text-teal-600', bgClass: 'bg-teal-100', barClass: 'bg-teal-500' },
   { key: 'rejected', label: 'Rejected', value: statusTotals.value.rejected, icon: XCircle, iconClass: 'text-red-600', bgClass: 'bg-red-100', barClass: 'bg-red-500' },
   { key: 'processing', label: 'Processing', value: statusTotals.value.processing, icon: Loader2, iconClass: 'text-blue-600', bgClass: 'bg-blue-100', barClass: 'bg-blue-500' },
 ]);
@@ -246,12 +254,13 @@ const statusCards = computed(() => [
                   })()" :fill="arc.color" />
                 </template>
                 <circle r="18" fill="white"></circle>
-                <text text-anchor="middle" dominant-baseline="middle" font-size="8" fill="#111827">{{ statusTotals.pending + statusTotals.approved + statusTotals.rejected + statusTotals.processing }}</text>
+                <text text-anchor="middle" dominant-baseline="middle" font-size="8" fill="#111827">{{ statusTotals.pending + statusTotals.approved + statusTotals.rejected + statusTotals.processing + statusTotals.pre_approved }}</text>
               </g>
             </svg>
             <ul class="space-y-1">
               <li class="flex items-center gap-2 text-sm"><span class="inline-block h-3 w-3 rounded-full" style="background:#f59e0b"></span> Pending: {{ statusTotals.pending }}</li>
               <li class="flex items-center gap-2 text-sm"><span class="inline-block h-3 w-3 rounded-full" style="background:#22c55e"></span> Approved: {{ statusTotals.approved }}</li>
+              <li class="flex items-center gap-2 text-sm"><span class="inline-block h-3 w-3 rounded-full" style="background:#14b8a6"></span> Pre-Approved: {{ statusTotals.pre_approved }}</li>
               <li class="flex items-center gap-2 text-sm"><span class="inline-block h-3 w-3 rounded-full" style="background:#ef4444"></span> Rejected: {{ statusTotals.rejected }}</li>
               <li class="flex items-center gap-2 text-sm"><span class="inline-block h-3 w-3 rounded-full" style="background:#3b82f6"></span> Processing: {{ statusTotals.processing }}</li>
             </ul>
