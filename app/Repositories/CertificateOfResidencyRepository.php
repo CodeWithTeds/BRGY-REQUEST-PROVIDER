@@ -31,6 +31,17 @@ class CertificateOfResidencyRepository extends Repository
     }
 
     /**
+     * Get the most recent residency certificate for the given user.
+     */
+    public function getLatest(int $userId): ?CertificateOfResidency
+    {
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->latest()
+            ->first();
+    }
+
+    /**
      * Admin: list residency certificates with optional filters.
      */
     public function adminListWithFilters(array $filters, int $page = 1, int $perPage = 10)
@@ -67,6 +78,7 @@ class CertificateOfResidencyRepository extends Repository
                 'user.addresses.city',
                 'user.addresses.province',
                 'user.addresses.region',
+                'supportingDocuments',
             ])
             ->findOrFail($id);
     }

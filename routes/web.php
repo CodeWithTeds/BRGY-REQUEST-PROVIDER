@@ -28,6 +28,20 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
     Route::get('certificate-of-residency', [CertificateOfResidencyController::class, 'create'])->name('resident.certificate-of-residency.create');
     Route::post('certificate-of-residency', [CertificateOfResidencyController::class, 'store'])->name('resident.certificate-of-residency.store');
 
+    // Appointment scheduling for approved residency certificates
+    Route::get('certificate-of-residency/schedule', [CertificateOfResidencyController::class, 'schedule'])
+        ->name('resident.certificate-of-residency.schedule');
+    Route::post('certificate-of-residency/schedule', [CertificateOfResidencyController::class, 'scheduleStore'])
+        ->name('resident.certificate-of-residency.schedule.store');
+    // Availability for occupied appointment times (residency)
+    Route::get('certificate-of-residency/availability', [CertificateOfResidencyController::class, 'availability'])
+        ->name('resident.certificate-of-residency.availability');
+
+    // Resident: Download approved residency certificate as PDF
+    Route::get('certificate-of-residency/{id}/pdf', [CertificateOfResidencyController::class, 'downloadPdf'])
+        ->whereNumber('id')
+        ->name('resident.certificate-of-residency.pdf');
+
     // Certificate of Indigency (Resident)
     Route::get('certificate-of-indigency', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'create'])->name('resident.certificate-of-indigency.create');
     Route::post('certificate-of-indigency', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'store'])->name('resident.certificate-of-indigency.store');
