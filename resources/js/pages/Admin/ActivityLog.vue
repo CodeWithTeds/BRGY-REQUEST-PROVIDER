@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ const subjectType = ref(props.filters?.subject_type || '');
 const clerkId = ref(props.filters?.clerk_id ? String(props.filters?.clerk_id) : '');
 const dateFrom = ref(props.filters?.date_from || '');
 const dateTo = ref(props.filters?.date_to || '');
+const revertingId = ref<number | null>(null);
 
 function submitFilters() {
   const base = route('admin.activity-log');
@@ -58,6 +59,16 @@ function subjectRoute(item: LogItem): string | null {
     default:
       return null;
   }
+}
+
+function revert(item: LogItem) {
+  if (item.action !== 'status_updated') return;
+  if (!confirm('Revert this status change?')) return;
+  revertingId.value = item.id;
+  router.post(route('admin.activity-log.revert', item.id), {}, {
+    preserveScroll: true,
+    onFinish: () => { revertingId.value = null; },
+  });
 }
 
 const userName = computed(() => page.props.auth?.user?.name || 'Admin');
@@ -110,6 +121,7 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
                   <th class="px-4 py-3 text-left">Subject</th>
                   <th class="px-4 py-3 text-left">Actor</th>
                   <th class="px-4 py-3 text-left">Description</th>
+                  <th class="px-4 py-3 text-left">Actions</th>
                   <th class="px-4 py-3 text-left">Details</th>
                 </tr>
               </thead>
@@ -135,6 +147,11 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
                   </td>
                   <td class="px-4 py-3 text-neutral-700">{{ item.description || '—' }}</td>
                   <td class="px-4 py-3">
+                    <Button v-if="item.action === 'status_updated'" size="sm" variant="outline" :disabled="revertingId === item.id" @click="revert(item)">
+                      {{ revertingId === item.id ? 'Reverting…' : 'Revert' }}
+                    </Button>
+                  </td>
+                  <td class="px-4 py-3">
                     <details class="text-neutral-700">
                       <summary class="cursor-pointer inline-flex items-center gap-2 text-secondary">
                         <Info class="h-4 w-4" /> Metadata
@@ -146,7 +163,7 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
                   </td>
                 </tr>
                 <tr v-if="props.logs.data.length === 0">
-                  <td colspan="6" class="px-4 py-6 text-center text-neutral-500">No activity recorded yet.</td>
+                  <td colspan="7" class="px-4 py-6 text-center text-neutral-500">No activity recorded yet.</td>
                 </tr>
               </tbody>
             </table>

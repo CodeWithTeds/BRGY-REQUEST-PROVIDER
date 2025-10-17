@@ -195,6 +195,8 @@ Route::prefix('admin')->group(function () {
         // Admin Activity Log
         Route::get('activity-log', [App\Http\Controllers\Admin\ActivityLogController::class, 'index'])
             ->name('admin.activity-log');
+        Route::post('activity-log/{log}/revert', [App\Http\Controllers\Admin\ActivityLogController::class, 'revert'])
+            ->name('admin.activity-log.revert');
 
         // Admin Clerks (CRUD)
         Route::get('clerks', [App\Http\Controllers\Admin\ClerkController::class, 'index'])

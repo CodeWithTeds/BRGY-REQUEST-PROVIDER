@@ -59,11 +59,14 @@ class IndigencyCertificateController extends Controller
         ]);
 
         $certificate = $this->repository->model()->findOrFail($id);
+        $from = $certificate->status;
         $certificate->status = $validated['status'];
         if (array_key_exists('remarks', $validated)) {
             $certificate->remarks = $validated['remarks'];
         }
         $certificate->save();
+
+        \App\Services\ActivityLogger::log('status_updated', $certificate, ['from' => $from, 'to' => $validated['status']]);
 
         return redirect()->route('staff.indigency-certificates.show', $id)
             ->with('success', 'Certificate status updated.');

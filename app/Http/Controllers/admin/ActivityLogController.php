@@ -63,4 +63,49 @@ class ActivityLogController extends Controller
             ],
         ]);
     }
+    public function revert(Request $request, int $log)
+    {
+        $activityLog = StaffActivityLog::findOrFail($log);
+
+        if ($activityLog->action !== 'status_updated') {
+            return back()->with('error', 'Only status updates can be reverted.');
+        }
+
+        $subjectType = $activityLog->subject_type;
+        $subjectId = $activityLog->subject_id;
+        if (!$subjectType || !$subjectId) {
+            return back()->with('error', 'Missing subject for log entry.');
+        }
+        if (!class_exists($subjectType)) {
+            return back()->with('error', 'Unknown subject type: '.$subjectType);
+        }
+
+        $model = $subjectType::find($subjectId);
+        if (!$model) {
+            return back()->with('error', 'Subject record not found.');
+        }
+
+        $meta = is_array($activityLog->metadata) ? $activityLog->metadata : [];
+        $from = $meta['from'] ?? null;
+        $to = $meta['to'] ?? null;
+        if ($from === null || $to === null) {
+            return back()->with('error', 'Log entry lacks status change metadata.');
+        }
+
+        $current = $model->getAttribute('status');
+        if ($current !== $to) {
+            return back()->with('error', 'Subject status changed since; cannot revert.');
+        }
+
+        $model->setAttribute('status', $from);
+        $model->save();
+
+        \App\Services\ActivityLogger::log('status_reverted', $model, [
+            'from' => $current,
+            'to' => $from,
+            'reverted_log_id' => $activityLog->id,
+        ], 'Admin reverted clerk status update');
+
+        return back()->with('success', 'Status reverted to '.$from);
+    }
 }
