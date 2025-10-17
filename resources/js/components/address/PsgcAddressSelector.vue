@@ -59,36 +59,36 @@ const hasProvinces = computed(() => provinces.value.length > 0)
 // Fetchers
 async function loadProvinces(regionCode: string) {
   try {
-    const res = await fetch(`/psgc/provinces?region_code=${encodeURIComponent(regionCode)}`)
+    const res = await fetch(`/resident/psgc/regions/${encodeURIComponent(regionCode)}/provinces`)
     const json = await res.json()
-    provinces.value = Array.isArray(json?.data) ? json.data : []
+    provinces.value = Array.isArray((json as any)?.data) ? (json as any).data : (Array.isArray(json) ? (json as any) : [])
   } catch {
     provinces.value = []
   }
 }
 async function loadCitiesByProvince(provinceCode: string) {
   try {
-    const res = await fetch(`/psgc/cities?province_code=${encodeURIComponent(provinceCode)}`)
+    const res = await fetch(`/resident/psgc/provinces/${encodeURIComponent(provinceCode)}/cities`)
     const json = await res.json()
-    cities.value = Array.isArray(json?.data) ? json.data : []
+    cities.value = Array.isArray((json as any)?.data) ? (json as any).data : (Array.isArray(json) ? (json as any) : [])
   } catch {
     cities.value = []
   }
 }
 async function loadCitiesByRegion(regionCode: string) {
   try {
-    const res = await fetch(`/psgc/cities?region_code=${encodeURIComponent(regionCode)}`)
+    const res = await fetch(`/resident/psgc/regions/${encodeURIComponent(regionCode)}/cities`)
     const json = await res.json()
-    cities.value = Array.isArray(json?.data) ? json.data : []
+    cities.value = Array.isArray((json as any)?.data) ? (json as any).data : (Array.isArray(json) ? (json as any) : [])
   } catch {
     cities.value = []
   }
 }
 async function loadBarangays(cityCode: string) {
   try {
-    const res = await fetch(`/psgc/barangays?city_code=${encodeURIComponent(cityCode)}`)
+    const res = await fetch(`/resident/psgc/cities/${encodeURIComponent(cityCode)}/barangays`)
     const json = await res.json()
-    barangays.value = Array.isArray(json?.data) ? json.data : []
+    barangays.value = Array.isArray((json as any)?.data) ? (json as any).data : (Array.isArray(json) ? (json as any) : [])
   } catch {
     barangays.value = []
   }

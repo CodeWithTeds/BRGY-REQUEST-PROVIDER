@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Resident;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Resident\CertificateOfResidencyRequest;
 use App\Repositories\CertificateOfResidencyRepository;
+use App\Repositories\PSGCRepository;
 use App\Models\SupportingDocument;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -13,9 +14,11 @@ use Inertia\Inertia;
 
 class CertificateOfResidencyController extends Controller
 {
-    public function __construct(private readonly CertificateOfResidencyRepository $certificateOfResidencyRepository)
-    {
-    }
+    // Extend constructor to include PSGC repository for regions list
+    public function __construct(
+        private readonly CertificateOfResidencyRepository $certificateOfResidencyRepository,
+        private readonly PSGCRepository $psgcRepository,
+    ) {}
 
     public function create()
     {
@@ -27,7 +30,25 @@ class CertificateOfResidencyController extends Controller
             ]);
         }
 
-        return Inertia::render('Resident/CertificateOfResidency/Create');
+        // Prefill applicant profile data if available
+        $ap = Auth::user()->applicantProfile;
+        $apData = $ap ? [
+            'first_name' => $ap->first_name,
+            'middle_name' => $ap->middle_name,
+            'last_name' => $ap->last_name,
+            'suffix' => $ap->suffix,
+            'date_of_birth' => optional($ap->date_of_birth)?->toDateString(),
+            'place_of_birth' => $ap->place_of_birth,
+            'civil_status' => $ap->civil_status,
+            'gender' => $ap->gender,
+            'citizenship' => $ap->citizenship,
+            'contact_number' => $ap->contact_number,
+        ] : null;
+
+        return Inertia::render('Resident/CertificateOfResidency/Create', [
+            'regions' => $this->psgcRepository->getRegions(),
+            'applicantProfile' => $apData,
+        ]);
     }
 
     public function store(CertificateOfResidencyRequest $request)
