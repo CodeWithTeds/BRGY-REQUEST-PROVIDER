@@ -125,9 +125,8 @@ Route::prefix('admin')->group(function () {
             return Inertia::render('Admin/Home');
         })->name('admin.home');
 
-        Route::get('dashboard', function () {
-            return Inertia::render('Admin/Dashboard');
-        })->name('admin.dashboard');
+        Route::get('dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])
+            ->name('admin.dashboard');
 
         // Admin Business Permits (controller-backed Inertia pages)
         Route::get('business-permits', [App\Http\Controllers\Admin\BusinessPermitController::class, 'index'])
