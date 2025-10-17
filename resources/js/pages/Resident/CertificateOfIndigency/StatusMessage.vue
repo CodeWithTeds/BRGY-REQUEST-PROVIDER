@@ -53,9 +53,9 @@ const requirements = [
         <Link v-if="props.rescheduleAllowed !== false" :href="route('resident.certificate-of-indigency.schedule')" class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
           {{ appointmentDisplay ? 'Reschedule Appointment' : 'Schedule Appointment' }}
         </Link>
-        <Link v-if="props.indigency.status === 'approved' && props.indigency.id" :href="route('resident.certificate-of-indigency.pdf', props.indigency.id)" class="inline-flex items-center rounded bg-neutral-800 px-4 py-2 text-white hover:bg-neutral-900">
+        <a v-if="props.indigency.status === 'approved' && props.indigency.id" :href="route('resident.certificate-of-indigency.pdf', props.indigency.id)" target="_blank" rel="noopener" class="inline-flex items-center rounded bg-neutral-800 px-4 py-2 text-white hover:bg-neutral-900">
           Download PDF
-        </Link>
+        </a>
       </div>
       <div v-if="appointmentDisplay" class="mt-2 text-sm text-[#2C4854]/80">Current appointment: <span class="font-medium">{{ appointmentDisplay }}</span></div>
     </template>

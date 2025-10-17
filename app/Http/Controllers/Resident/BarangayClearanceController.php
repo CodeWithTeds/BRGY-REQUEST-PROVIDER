@@ -59,9 +59,25 @@ class BarangayClearanceController extends Controller
             ]);
         }
 
+        // Prefill from user's saved ApplicantProfile when available
+        $ap = Auth::user()->applicantProfile;
+        $apData = $ap ? [
+            'first_name' => $ap->first_name,
+            'middle_name' => $ap->middle_name,
+            'last_name' => $ap->last_name,
+            'suffix' => $ap->suffix,
+            'date_of_birth' => optional($ap->date_of_birth)?->toDateString(),
+            'place_of_birth' => $ap->place_of_birth,
+            'civil_status' => $ap->civil_status,
+            'gender' => $ap->gender,
+            'citizenship' => $ap->citizenship,
+            'contact_number' => $ap->contact_number,
+        ] : null;
+
         return Inertia::render('Resident/BarangayClearance/Create', [
             'barangays' => $this->psgcRepository->getBarangaysByIslandGroup(),
             'regions' => $this->psgcRepository->getRegions(),
+            'applicantProfile' => $apData,
         ]);
     }
 

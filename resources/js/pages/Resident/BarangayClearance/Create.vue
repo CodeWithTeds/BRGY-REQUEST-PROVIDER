@@ -31,10 +31,40 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+// Define lightweight ApplicantProfile type and accept from backend
+type ApplicantProfileProps = {
+    first_name?: string | null;
+    middle_name?: string | null;
+    last_name?: string | null;
+    suffix?: string | null;
+    date_of_birth?: string | null;
+    place_of_birth?: string | null;
+    civil_status?: 'single' | 'married' | 'widowed' | 'separated' | string | null;
+    gender?: 'male' | 'female' | 'other' | string | null;
+    citizenship?: string | null;
+    contact_number?: string | null;
+} | null
+
 const props = defineProps<{
     barangays: Array<{ code: string; name: string }>,
     regions: Array<{ code: string; name: string }>,
+    applicantProfile?: ApplicantProfileProps,
 }>()
+
+// Prefill form from applicantProfile if available
+if (props.applicantProfile) {
+    const ap = props.applicantProfile
+    form.first_name = ap?.first_name ?? ''
+    form.middle_name = ap?.middle_name ?? ''
+    form.last_name = ap?.last_name ?? ''
+    // suffix not part of this form state
+    form.date_of_birth = ap?.date_of_birth ?? ''
+    form.place_of_birth = ap?.place_of_birth ?? ''
+    form.civil_status = ap?.civil_status ? String(ap.civil_status).toLowerCase() : form.civil_status
+    form.gender = ap?.gender ? String(ap.gender).toLowerCase() : form.gender
+    form.citizenship = ap?.citizenship ?? ''
+    form.contact_number = ap?.contact_number ?? ''
+}
 
 // Local ref for additional Valid ID document
 const validIdDocument = ref<File | null>(null)
