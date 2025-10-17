@@ -250,6 +250,13 @@ const statusClass = (s: string) => {
                 </div>
                 <Link href="#" class="rounded-full border border-secondary px-3 py-1 text-xs font-medium text-main hover:bg-secondary/20">Manage</Link>
               </li>
+              <li class="flex items-center justify-between gap-2 rounded-lg bg-secondary/10 px-3 py-2">
+                <div>
+                  <p class="text-sm font-medium text-main">Clerks</p>
+                  <p class="text-xs text-secondary">Staff directory</p>
+                </div>
+                <Link :href="route('admin.clerks')" class="rounded-full border border-secondary px-3 py-1 text-xs font-medium text-main hover:bg-secondary/20">Manage</Link>
+              </li>
             </ul>
             <div class="mt-3 text-center">
               <Link href="#" class="inline-flex w-full items-center justify-center rounded-full bg-secondary/20 px-3 py-1.5 text-xs font-medium text-main hover:bg-secondary/30">See All</Link>

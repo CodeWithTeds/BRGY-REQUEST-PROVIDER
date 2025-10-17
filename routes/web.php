@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Resident\BarangayPermitController;
 use App\Http\Controllers\Resident\BarangayClearanceController;
 use App\Http\Controllers\Resident\CertificateOfResidencyController;
+ use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -106,6 +107,14 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if ($user instanceof \App\Models\User && $user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+        if ($user instanceof \App\Models\User && $user->isStaff()) {
+            return redirect()->route('staff.dashboard');
+        }
         return redirect()->route('resident.dashboard');
     })->name('dashboard');
 });
@@ -183,10 +192,25 @@ Route::prefix('admin')->group(function () {
             ->name('admin.indigency-certificates.documents.view');
         Route::post('indigency-certificates/{id}/status', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'updateStatus'])
             ->name('admin.indigency-certificates.update-status');
+
+        // Admin Clerks (CRUD)
+        Route::get('clerks', [App\Http\Controllers\Admin\ClerkController::class, 'index'])
+            ->name('admin.clerks');
+        Route::post('clerks', [App\Http\Controllers\Admin\ClerkController::class, 'store'])
+            ->name('admin.clerks.store');
+        Route::patch('clerks/{id}', [App\Http\Controllers\Admin\ClerkController::class, 'update'])
+            ->name('admin.clerks.update');
+        Route::delete('clerks/{id}', [App\Http\Controllers\Admin\ClerkController::class, 'destroy'])
+            ->name('admin.clerks.destroy');
     });
 });
 
 
+
+Route::prefix('staff')->middleware(['auth', 'staff'])->group(function () {
+    Route::get('dashboard', [App\Http\Controllers\Staff\DashboardController::class, 'index'])
+        ->name('staff.dashboard');
+});
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

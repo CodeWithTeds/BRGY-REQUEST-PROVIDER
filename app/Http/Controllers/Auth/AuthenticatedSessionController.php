@@ -33,10 +33,15 @@ class AuthenticatedSessionController extends Controller
 
         session()->regenerate();
 
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
-        if ($user->isAdmin()) {
+        if ($user instanceof \App\Models\User && $user->isAdmin()) {
             return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
+
+        if ($user instanceof \App\Models\User && $user->isStaff()) {
+            return redirect()->intended(route('staff.dashboard', absolute: false));
         }
 
         return redirect()->intended(route('resident.dashboard', absolute: false));

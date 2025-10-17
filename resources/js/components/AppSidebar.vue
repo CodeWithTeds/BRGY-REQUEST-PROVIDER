@@ -4,7 +4,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, IdCard, FileCheck, Building2, UserCheck, FileText } from 'lucide-vue-next';
+import { LayoutGrid, IdCard, FileCheck, Building2, UserCheck, FileText, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { computed } from 'vue';
 
@@ -63,6 +63,25 @@ const adminNavItems: NavItem[] = [
         icon: IdCard,
     },
     {
+        title: 'Clerks',
+        href: '/admin/clerks',
+        icon: Users,
+    },
+    {
+        title: 'Profile Settings',
+        href: '/settings/profile',
+        icon: UserCheck,
+    },
+];
+
+// Staff/Clerk sidebar items
+const staffNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/staff/dashboard',
+        icon: LayoutGrid,
+    },
+    {
         title: 'Profile Settings',
         href: '/settings/profile',
         icon: UserCheck,
@@ -76,8 +95,13 @@ const isAdmin = computed(() => {
     return path.startsWith('/admin') || path.includes('/admin/');
 });
 
+const isStaff = computed(() => {
+    const path = window.location.pathname;
+    return path.startsWith('/staff') || path.includes('/staff/');
+});
+
 const navItems = computed(() => {
-    return isAdmin.value ? adminNavItems : mainNavItems;
+    return isAdmin.value ? adminNavItems : isStaff.value ? staffNavItems : mainNavItems;
 });
 </script>
 

@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'clerk_id',
     ];
 
     /**
@@ -72,6 +73,11 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isStaff(): bool
+    {
+        return in_array($this->role, ['staff', 'clerk'], true);
+    }
+
     public function city()
     {
         return $this->hasOneThrough(City::class, Address::class, 'user_id', 'code', 'id', 'city_code')
@@ -88,5 +94,10 @@ class User extends Authenticatable
     {
         return $this->hasOneThrough(Region::class, Address::class, 'user_id', 'code', 'id', 'region_code')
             ->where('addresses.type', 'present');
+    }
+
+    public function clerk()
+    {
+        return $this->belongsTo(Clerk::class);
     }
 }
