@@ -49,6 +49,17 @@ class CertificateOfIndigencyRepository extends Repository
     }
 
     /**
+     * Get the most recent indigency certificate for the given user.
+     */
+    public function getLatest(int $userId): ?CertificateOfIndigency
+    {
+        return $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->latest()
+            ->first();
+    }
+
+    /**
      * Admin: list indigency certificates with filters and stats.
      */
     public function listWithFilters(array $filters = [], int $perPage = 10): array

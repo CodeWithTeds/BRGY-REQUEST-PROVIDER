@@ -46,6 +46,20 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
     Route::get('certificate-of-indigency', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'create'])->name('resident.certificate-of-indigency.create');
     Route::post('certificate-of-indigency', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'store'])->name('resident.certificate-of-indigency.store');
 
+    // Appointment scheduling for approved indigency certificates
+    Route::get('certificate-of-indigency/schedule', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'schedule'])
+        ->name('resident.certificate-of-indigency.schedule');
+    Route::post('certificate-of-indigency/schedule', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'scheduleStore'])
+        ->name('resident.certificate-of-indigency.schedule.store');
+    // Availability for occupied appointment times (indigency)
+    Route::get('certificate-of-indigency/availability', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'availability'])
+        ->name('resident.certificate-of-indigency.availability');
+
+    // Resident: Download approved indigency certificate as PDF
+    Route::get('certificate-of-indigency/{id}/pdf', [App\Http\Controllers\Resident\CertificateOfIndigencyController::class, 'downloadPdf'])
+        ->whereNumber('id')
+        ->name('resident.certificate-of-indigency.pdf');
+
     Route::get('/barangay-permit/create', [BarangayPermitController::class, 'create'])->name('barangay-permit.create');
     Route::post('/barangay-permit', [BarangayPermitController::class, 'store'])->name('barangay-permit.store');
     // Resident: Download approved permit as PDF
