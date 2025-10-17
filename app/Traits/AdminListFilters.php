@@ -18,7 +18,7 @@ trait AdminListFilters
         }
 
         $status = $filters['status'] ?? null;
-        if (in_array($status, ['pending', 'processing', 'approved', 'rejected'])) {
+        if (in_array($status, ['pending', 'processing', 'pre-approved', 'approved', 'rejected'])) {
             $query->where('status', $status);
         }
 

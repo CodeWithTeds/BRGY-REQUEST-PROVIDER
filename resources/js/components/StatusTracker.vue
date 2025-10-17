@@ -26,7 +26,7 @@ const props = defineProps({
   currentStatus: {
     type: String,
     required: true,
-    validator: (value: string) => ['pending', 'processing', 'approved', 'rejected'].includes(value),
+    validator: (value: string) => ['pending', 'processing', 'pre-approved', 'approved', 'rejected'].includes(value),
   },
   noMargin: {
     type: Boolean,
@@ -34,7 +34,7 @@ const props = defineProps({
   },
 });
 
-const statuses = ['pending', 'processing', 'approved'];
+const statuses = ['pending', 'processing', 'pre-approved', 'approved'];
 const statusIndex = computed(() => statuses.indexOf(props.currentStatus));
 
 const getStepClass = (index: number) => {

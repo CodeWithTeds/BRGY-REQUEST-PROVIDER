@@ -8,7 +8,7 @@ import { Eye, Trash2, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 interface IndigencyItem {
   id: number
   full_name: string
-  status: 'approved' | 'pending' | 'rejected' | 'processing' | string
+  status: 'approved' | 'pending' | 'rejected' | 'processing' | 'pre-approved' | string
   application_date?: string | null
   barangay?: string | null
   address_line?: string | null
@@ -27,12 +27,14 @@ interface StatsItem {
 
 interface Filters {
   name?: string;
-  status?: 'approved' | 'pending' | 'processing' | 'rejected' | '';
+  status?: 'approved' | 'pending' | 'processing' | 'pre-approved' | 'rejected' | '';
   date_from?: string;
   date_to?: string;
 }
 
-const props = defineProps<{ indigencies: IndigencyItem[]; stats: StatsItem; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number } }>()
+const props = defineProps<{ indigencies: IndigencyItem[]; stats: StatsItem; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number }; routeGroup?: string; canDelete?: boolean }>()
+
+const basePath = computed(() => `/${props.routeGroup ?? 'admin'}/indigency-certificates`)
 
 const filterName = ref(props.filters?.name ?? '')
 const filterStatus = ref<Filters['status']>(props.filters?.status ?? '')
@@ -64,7 +66,7 @@ const paginatedIndigencies = computed(() => props.indigencies)
 function gotoPage(next: number) {
   const nextPage = Math.min(Math.max(1, next), totalPages.value)
   page.value = nextPage
-  router.get(route('admin.indigency-certificates'), {
+  router.get(basePath.value, {
     name: filterName.value || undefined,
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
@@ -76,7 +78,7 @@ function gotoPage(next: number) {
 
 function applyFilters() {
   page.value = 1
-  router.get(route('admin.indigency-certificates'), {
+  router.get(basePath.value, {
     name: filterName.value || undefined,
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
@@ -100,12 +102,13 @@ function initial(name?: string | null) {
 }
 
 function deleteItem(id: number) {
-  router.delete(route('admin.indigency-certificates.destroy', id), { preserveScroll: true })
+  if (!props.canDelete) return
+  router.delete(`${basePath.value}/${id}`, { preserveScroll: true })
 }
 </script>
 
 <template>
-  <Head title="Indigency Certificates" />
+  <Head :title="props.routeGroup === 'staff' ? 'Staff: Indigency Certificates' : 'Indigency Certificates'" />
   <AppLayout>
     <div class="p-4 sm:p-6 lg:p-8">
       <div class="space-y-6">
@@ -119,6 +122,7 @@ function deleteItem(id: number) {
                 <option value="">All statuses</option>
                 <option value="pending">Pending</option>
                 <option value="processing">Processing</option>
+                <option value="pre-approved">Pre-Approved</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
               </select>
@@ -167,11 +171,11 @@ function deleteItem(id: number) {
                     <td class="px-6 py-4 whitespace-nowrap text-sm">{{ item.updated_at || '—' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center gap-2">
-                        <Link :href="route('admin.indigency-certificates.show', item.id)" class="inline-flex items-center gap-1 px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">
+                        <Link :href="`${basePath}/${item.id}`" class="inline-flex items-center gap-1 px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">
                           <Eye class="h-4 w-4" />
                           <span>View</span>
                         </Link>
-                        <button @click="deleteItem(item.id)" class="inline-flex items-center gap-1 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm hover:bg-red-100">
+                        <button v-if="props.canDelete" @click="deleteItem(item.id)" class="inline-flex items-center gap-1 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm hover:bg-red-100">
                           <Trash2 class="h-4 w-4" />
                           <span>Delete</span>
                         </button>

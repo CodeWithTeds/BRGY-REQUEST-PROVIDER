@@ -210,6 +210,46 @@ Route::prefix('admin')->group(function () {
 Route::prefix('staff')->middleware(['auth', 'staff'])->group(function () {
     Route::get('dashboard', [App\Http\Controllers\Staff\DashboardController::class, 'index'])
         ->name('staff.dashboard');
+
+    // Staff Business Permits
+    Route::get('business-permits', [App\Http\Controllers\Staff\BusinessPermitController::class, 'index'])
+        ->name('staff.business-permits');
+    Route::get('business-permits/{id}', [App\Http\Controllers\Staff\BusinessPermitController::class, 'show'])
+        ->name('staff.business-permits.show');
+    Route::post('business-permits/{id}/status', [App\Http\Controllers\Staff\BusinessPermitController::class, 'updateStatus'])
+        ->name('staff.business-permits.update-status');
+    Route::get('business-permits/{id}/documents/{docId}', [App\Http\Controllers\Staff\BusinessPermitController::class, 'viewDocument'])
+        ->name('staff.business-permits.documents.view');
+
+    // Staff Barangay Clearances
+    Route::get('barangay-clearances', [App\Http\Controllers\Staff\BarangayClearanceController::class, 'index'])
+        ->name('staff.barangay-clearances');
+    Route::get('barangay-clearances/{id}', [App\Http\Controllers\Staff\BarangayClearanceController::class, 'show'])
+        ->name('staff.barangay-clearances.show');
+    Route::post('barangay-clearances/{id}/status', [App\Http\Controllers\Staff\BarangayClearanceController::class, 'updateStatus'])
+        ->name('staff.barangay-clearances.update-status');
+    Route::get('barangay-clearances/{id}/documents/{docId}', [App\Http\Controllers\Staff\BarangayClearanceController::class, 'viewDocument'])
+        ->name('staff.barangay-clearances.documents.view');
+
+    // Staff Residency Certificates
+    Route::get('residency-certificates', [App\Http\Controllers\Staff\ResidencyCertificateController::class, 'index'])
+        ->name('staff.residency-certificates');
+    Route::get('residency-certificates/{id}', [App\Http\Controllers\Staff\ResidencyCertificateController::class, 'show'])
+        ->name('staff.residency-certificates.show');
+    Route::post('residency-certificates/{id}/status', [App\Http\Controllers\Staff\ResidencyCertificateController::class, 'updateStatus'])
+        ->name('staff.residency-certificates.update-status');
+    Route::get('residency-certificates/{id}/documents/{docId}', [App\Http\Controllers\Staff\ResidencyCertificateController::class, 'viewDocument'])
+        ->name('staff.residency-certificates.documents.view');
+
+    // Staff Indigency Certificates
+    Route::get('indigency-certificates', [App\Http\Controllers\Staff\IndigencyCertificateController::class, 'index'])
+        ->name('staff.indigency-certificates');
+    Route::get('indigency-certificates/{id}', [App\Http\Controllers\Staff\IndigencyCertificateController::class, 'show'])
+        ->name('staff.indigency-certificates.show');
+    Route::post('indigency-certificates/{id}/status', [App\Http\Controllers\Staff\IndigencyCertificateController::class, 'updateStatus'])
+        ->name('staff.indigency-certificates.update-status');
+    Route::get('indigency-certificates/{id}/documents/{docId}', [App\Http\Controllers\Staff\IndigencyCertificateController::class, 'viewDocument'])
+        ->name('staff.indigency-certificates.documents.view');
 });
 
 require __DIR__ . '/settings.php';

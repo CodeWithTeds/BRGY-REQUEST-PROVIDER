@@ -11,7 +11,7 @@ interface Permit {
   id: number;
   full_name: string;
   application_date: string;
-  status: 'approved' | 'pending' | 'processing' | 'rejected';
+  status: 'approved' | 'pending' | 'processing' | 'pre-approved' | 'rejected';
   created_at: string;
   updated_at: string;
   gender?: string | null;
@@ -31,14 +31,15 @@ interface Stats {
 
 interface Filters {
   name?: string;
-  status?: 'approved' | 'pending' | 'processing' | 'rejected' | '';
+  status?: 'approved' | 'pending' | 'processing' | 'pre-approved' | 'rejected' | '';
   date_from?: string;
   date_to?: string;
 }
 
 // Use props inside script
-const props = defineProps<{ permits: Permit[]; stats: Stats; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number } }>();
+const props = defineProps<{ permits: Permit[]; stats: Stats; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number }; routeGroup?: string; canDelete?: boolean }>();
 
+const basePath = computed(() => `/${props.routeGroup ?? 'admin'}/business-permits`);
 // Filter state (server-driven)
 const filterName = ref(props.filters?.name ?? '');
 const filterStatus = ref<Filters['status']>(props.filters?.status ?? '');
@@ -75,7 +76,7 @@ const paginatedPermits = computed(() => props.permits);
 function gotoPage(next: number) {
   const nextPage = Math.min(Math.max(1, next), totalPages.value);
   page.value = nextPage;
-  router.get('/admin/business-permits', {
+  router.get(basePath.value, {
     name: filterName.value || undefined,
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
@@ -91,7 +92,7 @@ function initial(name: string) {
 
 function applyFilters() {
   page.value = 1;
-  router.get('/admin/business-permits', {
+  router.get(basePath.value, {
     name: filterName.value || undefined,
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
@@ -138,7 +139,7 @@ function deletePermit(id: number) {
 
 const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Admin', href: '/admin/dashboard' },
-  { title: 'Business Permits', href: '/admin/business-permits' },
+  { title: 'Business Permits', href: basePath.value },
 ];
 </script>
 
@@ -193,6 +194,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <option value="">All statuses</option>
                     <option value="pending">Pending</option>
                     <option value="processing">Processing</option>
+                    <option value="pre-approved">Pre-Approved</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                   </select>
@@ -275,6 +277,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                             'bg-green-500': permit.status === 'approved',
                             'bg-yellow-500': permit.status === 'pending',
                             'bg-blue-500': permit.status === 'processing',
+                            'bg-indigo-500': permit.status === 'pre-approved',
                             'bg-red-500': permit.status === 'rejected',
                           }" />
                           <span class="text-xs text-[#2c4454] capitalize">{{ permit.status }}</span>
@@ -302,11 +305,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div class="flex space-x-2">
-                          <a :href="`/admin/business-permits/${permit.id}`" class="text-[#2c4454] hover:opacity-80"
-                            title="View">
+                          <a :href="`${basePath}/${permit.id}`" class="text-[#2c4454] hover:opacity-80" title="View">
                             <Eye class="h-5 w-5" />
                           </a>
-                          <button class="text-red-600 hover:opacity-80" title="Delete" @click="deletePermit(permit.id)">
+                          <button v-if="props.canDelete ?? true" class="text-red-600 hover:opacity-80" title="Delete" @click="deletePermit(permit.id)">
                             <Trash2 class="h-5 w-5" />
                           </button>
                         </div>

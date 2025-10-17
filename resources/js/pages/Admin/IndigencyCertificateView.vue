@@ -54,7 +54,9 @@ interface Certificate {
   supporting_documents?: DocumentItem[];
 }
 
-const props = defineProps<{ certificate: Certificate }>();
+const props = defineProps<{ certificate: Certificate; routeGroup?: string; canApprove?: boolean }>();
+
+const basePath = computed(() => `/${props.routeGroup ?? 'admin'}/indigency-certificates`);
 
 // Initialize form with current values so changes persist
 const initialStatus = ref(props.certificate.status);
@@ -77,19 +79,17 @@ function statusIcon(s: string) {
 }
 
 function resetForm() {
-  // Inertia's useForm doesn't have setData; assign fields directly
   form.status = initialStatus.value
   form.remarks = initialRemarks.value
 }
 
 function submitStatus() {
-  form.post(route('admin.indigency-certificates.update-status', props.certificate.id), {
+  form.post(`${basePath.value}/${props.certificate.id}/status`, {
     preserveScroll: true,
     onSuccess: () => {
-      // Refresh page to reflect new status
       initialStatus.value = form.status;
       initialRemarks.value = form.remarks ?? '';
-      router.get(route('admin.indigency-certificates.show', props.certificate.id), {}, { preserveState: true, replace: true });
+      router.get(`${basePath.value}/${props.certificate.id}`, {}, { preserveState: true, replace: true });
     },
   })
 }
@@ -113,11 +113,11 @@ function goBack() {
 
 function updateStatus(status: string) {
   form.status = status;
-  form.post(route('admin.indigency-certificates.update-status', props.certificate.id), {
+  form.post(`${basePath.value}/${props.certificate.id}/status`, {
     preserveScroll: true,
     onSuccess: () => {
       notify(`Certificate status updated to ${status}.`, 'success');
-      router.get(route('admin.indigency-certificates.show', props.certificate.id), {}, { preserveState: true, replace: true });
+      router.get(`${basePath.value}/${props.certificate.id}`, {}, { preserveState: true, replace: true });
     },
     onError: () => notify('Failed to update certificate status.', 'error'),
   });
@@ -126,7 +126,7 @@ function updateStatus(status: string) {
 const showEdit = ref(false);
 function toggleEdit() { showEdit.value = !showEdit.value; }
 function saveDetails() {
-  form.post(route('admin.indigency-certificates.update-status', props.certificate.id), {
+  form.post(`${basePath.value}/${props.certificate.id}/status`, {
     preserveScroll: true,
     onSuccess: () => { notify('Certificate details saved.', 'success'); showEdit.value = false; },
     onError: () => notify('Failed to save certificate details.', 'error'),
@@ -138,6 +138,7 @@ const statusChip = (s: string) => {
     case 'approved': return 'bg-green-100 text-green-700 ring-green-200';
     case 'pending': return 'bg-yellow-100 text-yellow-700 ring-yellow-200';
     case 'processing': return 'bg-blue-100 text-blue-700 ring-blue-200';
+    case 'pre-approved': return 'bg-indigo-100 text-indigo-700 ring-indigo-200';
     case 'rejected': return 'bg-red-100 text-red-700 ring-red-200';
     default: return 'bg-gray-100 text-gray-700 ring-gray-200';
   }
@@ -153,12 +154,12 @@ const statusChip = (s: string) => {
           <button @click="goBack" aria-label="Go back" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white p-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" />
           </button>
-          <Link :href="route('admin.indigency-certificates')" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
+          <Link :href="basePath" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" />
             Back to list
           </Link>
           <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(props.certificate.status)">
-            <component :is="props.certificate.status === 'approved' ? CheckCircle2 : (props.certificate.status === 'pending' || props.certificate.status === 'processing') ? Clock : AlertTriangle" class="h-3.5 w-3.5" />
+            <component :is="props.certificate.status === 'approved' ? CheckCircle2 : (props.certificate.status === 'pending' || props.certificate.status === 'processing' || props.certificate.status === 'pre-approved') ? Clock : AlertTriangle" class="h-3.5 w-3.5" />
             <span class="capitalize">{{ props.certificate.status }}</span>
           </div>
         </div>
@@ -224,7 +225,7 @@ const statusChip = (s: string) => {
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <a v-if="doc.file_path" :href="route('admin.indigency-certificates.documents.view', { id: props.certificate.id, docId: doc.id })" target="_blank" rel="noopener" class="text-xs text-[#2c4454] hover:underline">View</a>
+                    <a v-if="doc.file_path" :href="`${basePath}/${props.certificate.id}/documents/${doc.id}`" target="_blank" rel="noopener" class="text-xs text-[#2c4454] hover:underline">View</a>
                   </div>
                 </div>
               </div>
@@ -245,9 +246,13 @@ const statusChip = (s: string) => {
                 </template>
                 <template v-else-if="props.certificate.status === 'processing'">
                   <div class="grid grid-cols-2 gap-2">
-                    <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Approve</button>
+                    <button v-if="props.canApprove" class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Approve</button>
+                    <button v-else-if="props.routeGroup === 'staff'" class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90" @click="updateStatus('pre-approved')">Pre-Approve</button>
                     <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
                   </div>
+                </template>
+                <template v-else-if="props.certificate.status === 'pre-approved'">
+                  <p class="text-sm text-[#2c4454] opacity-80">This certificate is pre-approved by staff, awaiting admin approval.</p>
                 </template>
                 <template v-else>
                   <p class="text-sm text-[#2c4454] opacity-80">No actions available for this status.</p>

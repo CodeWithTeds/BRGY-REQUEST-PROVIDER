@@ -16,7 +16,7 @@ class AdminListRequest extends FormRequest
     {
         return [
             'name' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'in:pending,processing,approved,rejected'],
+            'status' => ['nullable', 'in:pending,processing,pre-approved,approved,rejected'],
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date'],
             'page' => ['nullable', 'integer', 'min:1'],

@@ -82,6 +82,26 @@ const staffNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Business Permits',
+        href: '/staff/business-permits',
+        icon: FileText,
+    },
+    {
+        title: 'Barangay Clearances',
+        href: '/staff/barangay-clearances',
+        icon: FileCheck,
+    },
+    {
+        title: 'Residency Certificates',
+        href: '/staff/residency-certificates',
+        icon: UserCheck,
+    },
+    {
+        title: 'Indigency Certificates',
+        href: '/staff/indigency-certificates',
+        icon: IdCard,
+    },
+    {
         title: 'Profile Settings',
         href: '/settings/profile',
         icon: UserCheck,

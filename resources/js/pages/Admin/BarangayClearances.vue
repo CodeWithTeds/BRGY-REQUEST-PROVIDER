@@ -11,7 +11,7 @@ interface Clearance {
   id: number;
   full_name: string;
   application_date: string;
-  status: 'approved' | 'pending' | 'processing' | 'rejected';
+  status: 'approved' | 'pending' | 'processing' | 'pre-approved' | 'rejected';
   created_at: string;
   updated_at: string;
   gender?: string | null;
@@ -31,12 +31,15 @@ interface Stats {
 
 interface Filters {
   name?: string;
-  status?: 'approved' | 'pending' | 'processing' | 'rejected' | '';
+  status?: 'approved' | 'pending' | 'processing' | 'pre-approved' | 'rejected' | '';
   date_from?: string;
   date_to?: string;
 }
 
-const props = defineProps<{ clearances: Clearance[]; stats: Stats; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number } }>();
+// Add dynamic routing props for staff/admin contexts
+const props = defineProps<{ clearances: Clearance[]; stats: Stats; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number }; routeGroup?: string; canDelete?: boolean }>();
+
+const basePath = computed(() => `/${props.routeGroup ?? 'admin'}/barangay-clearances`);
 
 // Filter state (server-driven)
 const filterName = ref(props.filters?.name ?? '');
@@ -74,7 +77,7 @@ const paginatedClearances = computed(() => props.clearances);
 function gotoPage(next: number) {
   const nextPage = Math.min(Math.max(1, next), totalPages.value);
   page.value = nextPage;
-  router.get('/admin/barangay-clearances', {
+  router.get(basePath.value, {
     name: filterName.value || undefined,
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
@@ -90,7 +93,7 @@ function initial(name: string) {
 
 function applyFilters() {
   page.value = 1;
-  router.get('/admin/barangay-clearances', {
+  router.get(basePath.value, {
     name: filterName.value || undefined,
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
@@ -109,8 +112,9 @@ function resetFilters() {
 }
 
 function deleteClearance(id: number) {
+  if (!props.canDelete) return;
   if (!confirm('Delete this Barangay Clearance?')) return;
-  router.delete(`/admin/barangay-clearances/${id}`, {
+  router.delete(`${basePath.value}/${id}`, {
     onSuccess: () => {
       Toastify({
         text: 'Deleted Barangay Clearance!',
@@ -134,10 +138,10 @@ function deleteClearance(id: number) {
   });
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-  { title: 'Admin', href: '/admin/dashboard' },
-  { title: 'Barangay Clearances', href: '/admin/barangay-clearances' },
-];
+const breadcrumbs = computed((): BreadcrumbItem[] => [
+  { title: props.routeGroup === 'staff' ? 'Staff' : 'Admin', href: props.routeGroup === 'staff' ? '/staff/dashboard' : '/admin/dashboard' },
+  { title: 'Barangay Clearances', href: basePath.value },
+]);
 </script>
 
 <template>
@@ -168,7 +172,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <button
           class="px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">Reject
           selected</button>
-        <button
+        <button v-if="props.canDelete ?? true"
           class="px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">Delete
           selected</button>
       </div>
@@ -188,6 +192,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <option value="">All statuses</option>
                     <option value="pending">Pending</option>
                     <option value="processing">Processing</option>
+                    <option value="pre-approved">Pre-Approved</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                   </select>
@@ -253,40 +258,56 @@ const breadcrumbs: BreadcrumbItem[] = [
                           </div>
                           <div>
                             <div class="text-sm font-medium text-[#2c4454]">{{ clearance.full_name }}</div>
-                            <div class="text-xs text-[#2c4454]/70">{{ clearance.gender || '—' }}</div>
+                            <div class="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                              :class="{
+                                'bg-purple-100 text-purple-800': clearance.gender === 'Female',
+                                'bg-blue-100 text-blue-800': clearance.gender === 'Male',
+                                'bg-gray-100 text-[#2c4454]': !clearance.gender,
+                              }">
+                              {{ clearance.gender || 'Unknown' }}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td class="px-3 py-2 whitespace-nowrap">
-                        <span
-                          :class="{
-                            'bg-yellow-100 text-yellow-800': clearance.status === 'pending',
-                            'bg-blue-100 text-blue-800': clearance.status === 'processing',
-                            'bg-green-100 text-green-800': clearance.status === 'approved',
-                            'bg-red-100 text-red-800': clearance.status === 'rejected',
-                          }"
-                          class="px-2 py-1 rounded text-xs">
-                          {{ clearance.status }}
-                        </span>
+                        <div class="flex items-center gap-1">
+                          <span class="h-2 w-2 rounded-full" :class="{
+                            'bg-green-500': clearance.status === 'approved',
+                            'bg-yellow-500': clearance.status === 'pending',
+                            'bg-blue-500': clearance.status === 'processing',
+                            'bg-indigo-500': clearance.status === 'pre-approved',
+                            'bg-red-500': clearance.status === 'rejected',
+                          }" />
+                          <span class="text-xs text-[#2c4454] capitalize">{{ clearance.status }}</span>
+                        </div>
                       </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ clearance.application_date }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ clearance.barangay || '—' }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ clearance.address_line || '—' }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ clearance.contact_number || '—' }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ clearance.citizenship || '—' }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ clearance.remarks || '—' }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ clearance.updated_at }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <div class="flex items-center gap-2">
-                          <button @click="router.get(`/admin/barangay-clearances/${clearance.id}`)"
-                            class="inline-flex items-center gap-1 px-2 py-1 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-xs hover:bg-gray-50">
-                            <Eye class="h-4 w-4" />
-                            <span>View</span>
-                          </button>
-                          <button @click="deleteClearance(clearance.id)"
-                            class="inline-flex items-center gap-1 px-2 py-1 bg-white border border-red-200 text-red-600 rounded-md text-xs hover:bg-red-50">
-                            <Trash2 class="h-4 w-4" />
-                            <span>Delete</span>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] opacity-80">{{
+                        clearance.application_date
+                        }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] opacity-80">{{ clearance.barangay ||
+                        '—' }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] opacity-80">{{ clearance.address_line
+                        ||
+                        '—' }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] opacity-80">{{ clearance.contact_number
+                        ||
+                        '—' }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] opacity-80">{{ clearance.citizenship ||
+                        '—'
+                        }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] opacity-80">{{ clearance.remarks || '—'
+                        }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] opacity-80">{{ clearance.updated_at }}
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                          <a :href="`${basePath}/${clearance.id}`" class="text-[#2c4454] hover:opacity-80" title="View">
+                            <Eye class="h-5 w-5" />
+                          </a>
+                          <button v-if="props.canDelete ?? true" class="text-red-600 hover:opacity-80" title="Delete" @click="deleteClearance(clearance.id)">
+                            <Trash2 class="h-5 w-5" />
                           </button>
                         </div>
                       </td>
@@ -295,21 +316,25 @@ const breadcrumbs: BreadcrumbItem[] = [
                 </table>
               </div>
 
-              <!-- Pagination -->
               <div class="mt-4 flex items-center justify-between">
-                <div class="text-sm text-[#2c4454]">Page {{ page }} of {{ totalPages }}</div>
+                <div class="flex items-center gap-2 text-sm text-[#2c4454]">
+                  <label>Rows per page</label>
+                  <select v-model.number="perPage" class="border border-[#2c4454]/20 rounded px-2 py-1 text-sm" @change="applyFilters">
+                    <option :value="10">10</option>
+                    <option :value="25">25</option>
+                    <option :value="50">50</option>
+                  </select>
+                  <span class="ml-2">{{ (page - 1) * perPage + 1 }}-{{ Math.min(page * perPage, totalItems) }} of {{ totalItems }}</span>
+                </div>
                 <div class="flex items-center gap-2">
-                  <button
-                    class="inline-flex items-center gap-1 px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50"
-                    :disabled="page === 1" @click="gotoPage(page - 1)">
-                    <ChevronLeft class="h-4 w-4" />
-                    <span>Prev</span>
+                  <button class="px-3 py-2 border border-[#2c4454]/20 rounded hover:bg-gray-50"
+                    @click="gotoPage(page - 1)">
+                    <ChevronLeft class="h-4 w-4 text-[#2c4454]" />
                   </button>
-                  <button
-                    class="inline-flex items-center gap-1 px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50"
-                    :disabled="page === totalPages" @click="gotoPage(page + 1)">
-                    <ChevronRight class="h-4 w-4" />
-                    <span>Next</span>
+                  <span class="text-sm text-[#2c4454]">{{ page }}</span>
+                  <button class="px-3 py-2 border border-[#2c4454]/20 rounded hover:bg-gray-50"
+                    @click="gotoPage(page + 1)">
+                    <ChevronRight class="h-4 w-4 text-[#2c4454]" />
                   </button>
                 </div>
               </div>
@@ -320,3 +345,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     </div>
   </AppLayout>
 </template>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+.bp-theme {
+  font-family: 'Space Grotesk', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+</style>

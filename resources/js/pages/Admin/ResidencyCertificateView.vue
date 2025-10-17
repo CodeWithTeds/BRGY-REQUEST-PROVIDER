@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, CheckCircle2, AlertTriangle, Clock, FileText, FileCheck } from 'lucide-vue-next';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import Toastify from 'toastify-js';
 
 interface AddressItem {
@@ -54,7 +54,9 @@ interface Certificate {
   supporting_documents?: DocumentItem[];
 }
 
-const props = defineProps<{ certificate: Certificate }>();
+const props = defineProps<{ certificate: Certificate; routeGroup?: string; canApprove?: boolean }>();
+
+const basePath = computed(() => `/${props.routeGroup ?? 'admin'}/residency-certificates`);
 
 function goBack() {
   history.back();
@@ -90,7 +92,7 @@ function notify(message: string, variant: 'success' | 'error' | 'info' = 'info')
 
 function updateStatus(status: string) {
   form.status = status;
-  form.post(`/admin/residency-certificates/${props.certificate.id}/status`, {
+  form.post(`${basePath.value}/${props.certificate.id}/status`, {
     onSuccess: () => notify(`Residency certificate status updated to ${status}.`, 'success'),
     onError: () => notify('Failed to update residency certificate status.', 'error'),
   });
@@ -101,7 +103,7 @@ function toggleEdit() {
 }
 
 function saveDetails() {
-  form.post(`/admin/residency-certificates/${props.certificate.id}/status`, {
+  form.post(`${basePath.value}/${props.certificate.id}/status`, {
     onSuccess: () => {
       notify('Residency certificate details saved.', 'success');
       showEdit.value = false;
@@ -135,16 +137,17 @@ const statusChip = (s: string) => {
     case 'approved': return 'bg-green-100 text-green-700 ring-green-200';
     case 'pending': return 'bg-yellow-100 text-yellow-700 ring-yellow-200';
     case 'processing': return 'bg-blue-100 text-blue-700 ring-blue-200';
+    case 'pre-approved': return 'bg-indigo-100 text-indigo-700 ring-indigo-200';
     case 'rejected': return 'bg-red-100 text-red-700 ring-red-200';
     default: return 'bg-gray-100 text-gray-700 ring-gray-200';
   }
 };
 
-const breadcrumbs = [
-  { title: 'Admin', href: '/admin/dashboard' },
-  { title: 'Residency Certificates', href: '/admin/residency-certificates' },
-  { title: 'Details', href: `/admin/residency-certificates/${props.certificate.id}` },
-];
+const breadcrumbs = computed(() => [
+  { title: props.routeGroup === 'staff' ? 'Staff' : 'Admin', href: props.routeGroup === 'staff' ? '/staff/dashboard' : '/admin/dashboard' },
+  { title: 'Residency Certificates', href: basePath.value },
+  { title: 'Details', href: `${basePath.value}/${props.certificate.id}` },
+]);
 </script>
 
 <template>
@@ -156,12 +159,12 @@ const breadcrumbs = [
           <button aria-label="Go back" @click="goBack" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white p-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" />
           </button>
-          <Link :href="'/admin/residency-certificates'" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
+          <Link :href="basePath" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" />
             Back to list
           </Link>
           <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(props.certificate.status)">
-            <component :is="props.certificate.status === 'approved' ? CheckCircle2 : (props.certificate.status === 'pending' || props.certificate.status === 'processing') ? Clock : AlertTriangle" class="h-3.5 w-3.5" />
+            <component :is="props.certificate.status === 'approved' ? CheckCircle2 : (props.certificate.status === 'pending' || props.certificate.status === 'processing' || props.certificate.status === 'pre-approved') ? Clock : AlertTriangle" class="h-3.5 w-3.5" />
             <span class="capitalize">{{ props.certificate.status }}</span>
           </div>
         </div>
@@ -171,7 +174,7 @@ const breadcrumbs = [
 
     <div class="p-6">
       <div class="flex items-center mb-4">
-        <Link :href="'/admin/residency-certificates'" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
+        <Link :href="basePath" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
           <ArrowLeft class="h-4 w-4" />
           Back to list
         </Link>
@@ -258,7 +261,7 @@ const breadcrumbs = [
                 </div>
                 <div class="flex items-center gap-2">
                   <a
-                    :href="`/admin/residency-certificates/${props.certificate.id}/documents/${doc.id}`"
+                    :href="`${basePath}/${props.certificate.id}/documents/${doc.id}`"
                     target="_blank"
                     rel="noopener"
                     class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-1 text-xs text-[#2c4454] hover:bg-gray-50"
@@ -289,10 +292,14 @@ const breadcrumbs = [
                 </div>
               </template>
               <template v-else-if="props.certificate.status === 'processing'">
-                <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90 w-full" @click="updateStatus('approved')">Mark as Approved</button>
+                <button v-if="props.canApprove" class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90 w-full" @click="updateStatus('approved')">Mark as Approved</button>
+                <button v-else-if="props.routeGroup === 'staff'" class="mt-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90 w-full" @click="updateStatus('pre-approved')">Mark as Pre-Approved</button>
               </template>
               <template v-else-if="props.certificate.status === 'approved'">
                 <p class="text-sm text-[#2c4454] opacity-80">No further actions. This certificate is already approved.</p>
+              </template>
+              <template v-else-if="props.certificate.status === 'pre-approved'">
+                <p class="text-sm text-[#2c4454] opacity-80">This certificate is pre-approved by staff, awaiting admin approval.</p>
               </template>
               <template v-else-if="props.certificate.status === 'rejected'">
                 <p class="text-sm text-[#2c4454] opacity-80">This certificate was rejected.</p>

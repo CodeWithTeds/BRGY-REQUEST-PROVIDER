@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, CheckCircle2, AlertTriangle, Clock, FileText, FileCheck } from 'lucide-vue-next';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import Toastify from 'toastify-js';
 
 interface AddressItem {
@@ -56,8 +56,9 @@ interface Clearance {
   user?: UserItem;
 }
 
-const props = defineProps<{ clearance: Clearance }>();
+const props = defineProps<{ clearance: Clearance; routeGroup?: string; canApprove?: boolean }>();
 
+const basePath = computed(() => `/${props.routeGroup ?? 'admin'}/barangay-clearances`);
 const showEdit = ref(false);
 const form = useForm({
   status: props.clearance.status,
@@ -83,9 +84,9 @@ function goBack() {
 
 function updateStatus(status: string) {
   form.status = status;
-  form.post(`/admin/barangay-clearances/${props.clearance.id}/status`, {
-    onSuccess: () => notify(`Clearance status updated to ${status}.`, 'success'),
-    onError: () => notify('Failed to update clearance status.', 'error'),
+  form.post(`${basePath.value}/${props.clearance.id}/status`, {
+    onSuccess: () => notify(`Barangay clearance status updated to ${status}.`, 'success'),
+    onError: () => notify('Failed to update status.', 'error'),
   });
 }
 
@@ -94,9 +95,12 @@ function toggleEdit() {
 }
 
 function saveDetails() {
-  form.post(`/admin/barangay-clearances/${props.clearance.id}/status`, {
-    onSuccess: () => { notify('Clearance details saved.', 'success'); showEdit.value = false; },
-    onError: () => notify('Failed to save clearance details.', 'error'),
+  form.post(`${basePath.value}/${props.clearance.id}/status`, {
+    onSuccess: () => {
+      notify('Details saved.', 'success');
+      showEdit.value = false;
+    },
+    onError: () => notify('Failed to save details.', 'error'),
   });
 }
 
@@ -105,6 +109,7 @@ const statusChip = (s: string) => {
     case 'approved': return 'bg-green-100 text-green-700 ring-green-200';
     case 'pending': return 'bg-yellow-100 text-yellow-700 ring-yellow-200';
     case 'processing': return 'bg-blue-100 text-blue-700 ring-blue-200';
+    case 'pre-approved': return 'bg-indigo-100 text-indigo-700 ring-indigo-200';
     case 'rejected': return 'bg-red-100 text-red-700 ring-red-200';
     default: return 'bg-gray-100 text-gray-700 ring-gray-200';
   }
@@ -120,12 +125,12 @@ const statusChip = (s: string) => {
           <button @click="goBack" aria-label="Go back" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white p-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" />
           </button>
-          <Link :href="'/admin/barangay-clearances'" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
+          <Link :href="basePath" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" />
             Back to list
           </Link>
           <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(props.clearance.status)">
-            <component :is="props.clearance.status === 'approved' ? CheckCircle2 : (props.clearance.status === 'pending' || props.clearance.status === 'processing') ? Clock : AlertTriangle" class="h-3.5 w-3.5" />
+            <component :is="props.clearance.status === 'approved' ? CheckCircle2 : (props.clearance.status === 'pending' || props.clearance.status === 'processing' || props.clearance.status === 'pre-approved') ? Clock : AlertTriangle" class="h-3.5 w-3.5" />
             <span class="capitalize">{{ props.clearance.status }}</span>
           </div>
         </div>
@@ -139,7 +144,7 @@ const statusChip = (s: string) => {
           <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6 space-y-6">
               <div class="flex items-center">
-                <Link :href="'/admin/barangay-clearances'" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
+                <Link :href="basePath" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
                   <ArrowLeft class="h-4 w-4" />
                   Back to list
                 </Link>
@@ -204,7 +209,7 @@ const statusChip = (s: string) => {
                           </div>
                         </div>
                         <div class="flex items-center gap-2">
-                          <a v-if="doc.file_path" :href="`/admin/barangay-clearances/${props.clearance.id}/documents/${doc.id}`" target="_blank" rel="noopener" class="text-xs text-[#2c4454] hover:underline">View</a>
+                          <a v-if="doc.file_path" :href="`${basePath}/${props.clearance.id}/documents/${doc.id}`" target="_blank" rel="noopener" class="text-xs text-[#2c4454] hover:underline">View</a>
                         </div>
                       </div>
                     </div>
@@ -229,7 +234,8 @@ const statusChip = (s: string) => {
                       </template>
                       <template v-else-if="props.clearance.status === 'processing'">
                         <div class="grid grid-cols-2 gap-2">
-                          <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Approve</button>
+                          <button v-if="props.canApprove ?? true" class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Approve</button>
+                          <button v-else-if="props.routeGroup === 'staff'" class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90" @click="updateStatus('pre-approved')">Pre-Approve</button>
                           <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
                         </div>
                       </template>

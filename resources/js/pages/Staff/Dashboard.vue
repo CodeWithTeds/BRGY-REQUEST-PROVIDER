@@ -109,10 +109,10 @@ const cards = computed(() => [
         </div>
       </section>
       <section class="flex flex-wrap gap-2">
-        <Link href="/admin/business-permits" class="inline-flex items-center gap-2 rounded-full bg-brand px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-brand/90">Manage Permits</Link>
-        <Link href="/admin/barangay-clearances" class="inline-flex items-center gap-2 rounded-full bg-main px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-main">Manage Clearances</Link>
-        <Link href="/admin/residency-certificates" class="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-secondary/90">Manage Residency</Link>
-        <Link href="/admin/indigency-certificates" class="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-secondary/90">Manage Indigency</Link>
+        <Link href="/staff/business-permits" class="inline-flex items-center gap-2 rounded-full bg-brand px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-brand/90">Manage Permits</Link>
+        <Link href="/staff/barangay-clearances" class="inline-flex items-center gap-2 rounded-full bg-main px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-main">Manage Clearances</Link>
+        <Link href="/staff/residency-certificates" class="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-secondary/90">Manage Residency</Link>
+        <Link href="/staff/indigency-certificates" class="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-white shadow hover:bg-secondary/90">Manage Indigency</Link>
       </section>
       <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="#" class="rounded-xl bg-neutral-900 text-white p-4 hover:bg-neutral-800 transition">

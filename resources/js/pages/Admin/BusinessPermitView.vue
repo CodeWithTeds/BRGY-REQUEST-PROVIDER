@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, CheckCircle2, AlertTriangle, Clock, FileText, FileCheck, FileWarning } from 'lucide-vue-next';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import Toastify from 'toastify-js';
 
 interface AddressItem {
@@ -56,7 +56,7 @@ interface Permit {
   user?: UserItem;
 }
 
-const props = defineProps<{ permit: Permit }>();
+const props = defineProps<{ permit: Permit; routeGroup?: string; canApprove?: boolean }>();
 
 // Actions form & state
 const showEdit = ref(false);
@@ -64,6 +64,8 @@ const form = useForm({
   status: props.permit.status,
   remarks: props.permit.remarks || '',
 });
+
+const basePath = computed(() => `/${props.routeGroup ?? 'admin'}/business-permits`);
 
 onMounted(() => {
   notify(`Current status: ${props.permit.status}`, 'info');
@@ -88,7 +90,7 @@ function goBack() {
 
 function updateStatus(status: string) {
   form.status = status;
-  form.post(`/admin/business-permits/${props.permit.id}/status`, {
+  form.post(`${basePath.value}/${props.permit.id}/status`, {
     onSuccess: () => notify(`Business permit status updated to ${status}.`, 'success'),
     onError: () => notify('Failed to update business permit status.', 'error'),
   });
@@ -99,7 +101,7 @@ function toggleEdit() {
 }
 
 function saveDetails() {
-  form.post(`/admin/business-permits/${props.permit.id}/status`, {
+  form.post(`${basePath.value}/${props.permit.id}/status`, {
     onSuccess: () => {
       notify('Business permit details saved.', 'success');
       showEdit.value = false;
@@ -116,6 +118,8 @@ const statusChip = (s: string) => {
       return 'bg-yellow-100 text-yellow-700 ring-yellow-200';
     case 'processing':
       return 'bg-blue-100 text-blue-700 ring-blue-200';
+    case 'pre-approved':
+      return 'bg-indigo-100 text-indigo-700 ring-indigo-200';
     case 'rejected':
       return 'bg-red-100 text-red-700 ring-red-200';
     default:
@@ -137,12 +141,12 @@ const statusChip = (s: string) => {
           >
             <ArrowLeft class="h-4 w-4" />
           </button>
-          <Link :href="'/admin/business-permits'" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
+          <Link :href="basePath" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" />
             Back to list
           </Link>
           <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(props.permit.status)">
-            <component :is="props.permit.status === 'approved' ? CheckCircle2 : (props.permit.status === 'pending' || props.permit.status === 'processing') ? Clock : AlertTriangle" class="h-3.5 w-3.5" />
+            <component :is="props.permit.status === 'approved' ? CheckCircle2 : (props.permit.status === 'pending' || props.permit.status === 'processing' || props.permit.status === 'pre-approved') ? Clock : AlertTriangle" class="h-3.5 w-3.5" />
             <span class="capitalize">{{ props.permit.status }}</span>
           </div>
         </div>
@@ -157,7 +161,7 @@ const statusChip = (s: string) => {
             <div class="p-6 space-y-6">
               <!-- Local back button visible within page content -->
               <div class="flex items-center">
-                <Link :href="'/admin/business-permits'" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
+                <Link :href="basePath" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
                   <ArrowLeft class="h-4 w-4" />
                   Back to list
                 </Link>
@@ -224,7 +228,7 @@ const statusChip = (s: string) => {
                         </div>
                         <div class="flex items-center gap-2">
                         
-                          <a v-if="doc.file_path" :href="`/admin/business-permits/${props.permit.id}/documents/${doc.id}`" target="_blank" rel="noopener" class="text-xs text-[#2c4454] hover:underline">View</a>
+                          <a v-if="doc.file_path" :href="`${basePath}/${props.permit.id}/documents/${doc.id}`" target="_blank" rel="noopener" class="text-xs text-[#2c4454] hover:underline">View</a>
                         </div>
                       </div>
                     </div>
@@ -248,11 +252,17 @@ const statusChip = (s: string) => {
                           <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
                         </div>
                       </template>
-                      <template v-else-if="props.permit.status === 'processing'">
+                      <template v-else-if="props.permit.status === 'processing' && (props.canApprove ?? true)">
                         <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90 w-full" @click="updateStatus('approved')">Mark as Approved</button>
+                      </template>
+                      <template v-else-if="props.permit.status === 'processing' && props.routeGroup === 'staff'">
+                        <button class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90 w-full" @click="updateStatus('pre-approved')">Mark as Pre-Approved</button>
                       </template>
                       <template v-else-if="props.permit.status === 'approved'">
                         <p class="text-sm text-[#2c4454] opacity-80">No further actions. This permit is already approved.</p>
+                      </template>
+                      <template v-else-if="props.permit.status === 'pre-approved'">
+                        <p class="text-sm text-[#2c4454] opacity-80">This permit is pre-approved by staff, awaiting admin approval.</p>
                       </template>
                       <template v-else-if="props.permit.status === 'rejected'">
                         <p class="text-sm text-[#2c4454] opacity-80">This permit was rejected.</p>
