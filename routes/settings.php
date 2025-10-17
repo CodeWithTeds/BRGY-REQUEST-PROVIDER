@@ -21,4 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance');
+
+    // Personal Information settings
+    Route::get('settings/personal-information', [ProfileController::class, 'editPersonal'])->name('profile.personal.edit');
+    Route::patch('settings/personal-information', [ProfileController::class, 'updateApplicant'])->name('profile.personal.update');
 });
