@@ -4,7 +4,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, IdCard, FileCheck, Building2, UserCheck, FileText, Users } from 'lucide-vue-next';
+import { LayoutGrid, IdCard, FileCheck, Building2, UserCheck, FileText, Users, ScrollText } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { computed } from 'vue';
 
@@ -68,6 +68,11 @@ const adminNavItems: NavItem[] = [
         icon: Users,
     },
     {
+        title: 'Activity Log',
+        href: '/admin/activity-log',
+        icon: ScrollText,
+    },
+    {
         title: 'Profile Settings',
         href: '/settings/profile',
         icon: UserCheck,
@@ -100,6 +105,11 @@ const staffNavItems: NavItem[] = [
         title: 'Indigency Certificates',
         href: '/staff/indigency-certificates',
         icon: IdCard,
+    },
+    {
+        title: 'Activity Log',
+        href: '/staff/activity-log',
+        icon: ScrollText,
     },
     {
         title: 'Profile Settings',

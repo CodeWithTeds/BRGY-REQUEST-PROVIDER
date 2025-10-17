@@ -57,14 +57,16 @@ class BarangayClearanceController extends Controller
     public function updateStatus(Request $request, int $id)
     {
         $validated = $request->validate([
-            'status' => 'required|in:processing,pre-approved,rejected',
-            'remarks' => 'nullable|string',
+            'status' => ['required', 'in:processing,pre-approved,rejected'],
+            'remarks' => ['nullable', 'string'],
         ]);
 
         $clearance = BarangayClearance::findOrFail($id);
-        $clearance->status = $validated['status'];
-        $clearance->remarks = $validated['remarks'] ?? null;
-        $clearance->save();
+        $from = $clearance->status;
+
+        $this->clearanceRepo->updateStatus($id, $validated['status'], $validated['remarks'] ?? null);
+
+        \App\Services\ActivityLogger::log('status_updated', $clearance, ['from' => $from, 'to' => $validated['status']]);
 
         return redirect()->route('staff.barangay-clearances.show', $id)
             ->with('success', 'Clearance status updated.');

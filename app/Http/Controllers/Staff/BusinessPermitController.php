@@ -65,7 +65,12 @@ class BusinessPermitController extends Controller
             'remarks' => ['nullable', 'string'],
         ]);
 
+        $permit = BarangayPermit::findOrFail($id);
+        $from = $permit->status;
+
         $this->permitRepo->updateStatus($id, $validated['status'], $validated['remarks'] ?? null);
+
+        \App\Services\ActivityLogger::log('status_updated', $permit, ['from' => $from, 'to' => $validated['status']]);
 
         return redirect()->route('staff.business-permits.show', $id)
             ->with('success', 'Permit status updated.');

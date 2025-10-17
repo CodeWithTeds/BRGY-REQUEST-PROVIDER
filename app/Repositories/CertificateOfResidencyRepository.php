@@ -66,6 +66,24 @@ class CertificateOfResidencyRepository extends Repository
     }
 
     /**
+     * Update status and optional remarks for a residency certificate.
+     */
+    public function updateStatus(int $id, string $status, ?string $remarks = null): bool
+    {
+        $certificate = $this->find($id);
+        if (!$certificate) {
+            return false;
+        }
+
+        $data = ['status' => $status];
+        if ($remarks !== null) {
+            $data['remarks'] = $remarks;
+        }
+
+        return $certificate->update($data);
+    }
+
+    /**
      * Admin: get a single residency certificate with related user data for detailed view.
      */
     public function getWithAllRelations(int $id): CertificateOfResidency

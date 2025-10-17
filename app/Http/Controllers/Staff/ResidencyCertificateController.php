@@ -56,20 +56,16 @@ class ResidencyCertificateController extends Controller
     public function updateStatus(Request $request, int $id)
     {
         $validated = $request->validate([
-            'status' => 'required|in:processing,pre-approved,rejected',
-            'remarks' => 'nullable|string',
+            'status' => ['required', 'in:processing,pre-approved,rejected'],
+            'remarks' => ['nullable', 'string'],
         ]);
 
-        $residency = CertificateOfResidency::findOrFail($id);
-        $residency->status = $validated['status'];
-        if (array_key_exists('remarks', $validated)) {
-            try {
-                $residency->remarks = $validated['remarks'];
-            } catch (\Throwable $e) {
-                // ignore if column not present
-            }
-        }
-        $residency->save();
+        $certificate = CertificateOfResidency::findOrFail($id);
+        $from = $certificate->status;
+
+        $this->repo->updateStatus($id, $validated['status'], $validated['remarks'] ?? null);
+
+        \App\Services\ActivityLogger::log('status_updated', $certificate, ['from' => $from, 'to' => $validated['status']]);
 
         return redirect()->route('staff.residency-certificates.show', $id)
             ->with('success', 'Residency certificate status updated.');

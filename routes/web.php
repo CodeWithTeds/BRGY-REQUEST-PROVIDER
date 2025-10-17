@@ -192,6 +192,10 @@ Route::prefix('admin')->group(function () {
         Route::post('indigency-certificates/{id}/status', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'updateStatus'])
             ->name('admin.indigency-certificates.update-status');
 
+        // Admin Activity Log
+        Route::get('activity-log', [App\Http\Controllers\Admin\ActivityLogController::class, 'index'])
+            ->name('admin.activity-log');
+
         // Admin Clerks (CRUD)
         Route::get('clerks', [App\Http\Controllers\Admin\ClerkController::class, 'index'])
             ->name('admin.clerks');
@@ -239,6 +243,10 @@ Route::prefix('staff')->middleware(['auth', 'staff'])->group(function () {
         ->name('staff.residency-certificates.update-status');
     Route::get('residency-certificates/{id}/documents/{docId}', [App\Http\Controllers\Staff\ResidencyCertificateController::class, 'viewDocument'])
         ->name('staff.residency-certificates.documents.view');
+
+    // Staff Activity Log
+    Route::get('activity-log', [App\Http\Controllers\Staff\ActivityLogController::class, 'index'])
+        ->name('staff.activity-log');
 
     // Staff Indigency Certificates
     Route::get('indigency-certificates', [App\Http\Controllers\Staff\IndigencyCertificateController::class, 'index'])
