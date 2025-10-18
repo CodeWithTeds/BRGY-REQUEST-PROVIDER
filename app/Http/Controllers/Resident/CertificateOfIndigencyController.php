@@ -209,6 +209,12 @@ class CertificateOfIndigencyController extends Controller
         // Interpret user input as Asia/Manila and convert to UTC for storage
         $dtLocal = Carbon::createFromFormat('Y-m-d H:i', $data['date'].' '.$data['time'], 'Asia/Manila');
         $dt = $dtLocal->copy()->setTimezone('UTC');
+        
+        // Block weekends
+        if ($dtLocal->isWeekend()) {
+            return back()->withErrors(['date' => 'Appointments are only Monday–Friday.'])->withInput();
+        }
+        
         $hhmm = $dtLocal->format('H:i');
         if ($hhmm < '08:00' || $hhmm > '17:00') {
             return back()->withErrors(['time' => 'Appointment must be between 08:00 and 17:00.'])

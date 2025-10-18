@@ -35,6 +35,31 @@ watch(() => form.date, (d) => {
 
 const referenceNo = computed(() => (props.clearance?.id ? `BCL-${props.clearance.id}` : '—'))
 
+// Add client-side date constraints: today, weekend, past-date
+const today = computed(() => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+});
+const isWeekend = computed(() => {
+  if (!form.date) return false;
+  const d = new Date(`${form.date}T00:00:00`);
+  const day = d.getDay();
+  return day === 0 || day === 6;
+});
+const isPast = computed(() => {
+  if (!form.date) return false;
+  return form.date < today.value;
+});
+const clientDateError = computed(() => {
+  if (!form.date) return '';
+  if (isPast.value) return 'Date cannot be in the past.';
+  if (isWeekend.value) return 'Appointments are only Monday–Friday.';
+  return '';
+});
+
 // Timeslots between 08:00 and 17:00 in 30-min increments (display in 12-hour)
 const timeSlots = computed(() => {
   const slots: string[] = []
@@ -150,8 +175,9 @@ const breadcrumbs = [
             <form @submit.prevent="submit" class="space-y-4">
               <div>
                 <Label for="date">Date</Label>
-                <Input id="date" type="date" v-model="form.date" :error="form.errors.date" />
+                <Input id="date" type="date" v-model="form.date" :min="today" :error="form.errors.date" />
                 <div v-if="form.errors.date" class="text-sm text-red-600">{{ form.errors.date }}</div>
+                <div v-if="clientDateError" class="text-sm text-red-600">{{ clientDateError }}</div>
               </div>
 
               <div>
@@ -171,7 +197,7 @@ const breadcrumbs = [
               <input type="hidden" name="clearance_id" :value="form.clearance_id" />
 
               <div class="flex items-center gap-2">
-                <Button type="submit" :disabled="props.rescheduleAllowed === false && !!appointmentDisplay">Save Appointment</Button>
+                <Button type="submit" :disabled="(props.rescheduleAllowed === false && !!appointmentDisplay) || !!clientDateError || !form.date || !form.time">Save Appointment</Button>
                 <Link :href="route('barangay-clearance.create')">
                   <Button type="button" variant="outline">Back</Button>
                 </Link>

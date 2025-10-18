@@ -135,6 +135,10 @@ class BarangayPermitController extends Controller
         }
 
         $dtLocal = Carbon::createFromFormat('Y-m-d H:i', $data['date'].' '.$data['time'], 'Asia/Manila');
+        // Reject weekends
+        if ($dtLocal->isWeekend()) {
+            return back()->withErrors(['date' => 'Appointments are only available Monday to Friday.'])->withInput();
+        }
         $dt = $dtLocal->copy()->setTimezone('UTC');
         $hhmm = $dtLocal->format('H:i');
         if ($hhmm < '08:00' || $hhmm > '17:00') {

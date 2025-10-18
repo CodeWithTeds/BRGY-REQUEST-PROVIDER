@@ -66,6 +66,30 @@ const rescheduleForm = useForm({
   remarks: '',
 }); 
 
+// Client-side date constraints for admin reschedule
+const today = computed(() => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+});
+const isWeekend = computed(() => {
+  if (!rescheduleForm.date) return false;
+  const d = new Date(`${rescheduleForm.date}T00:00:00`);
+  const day = d.getDay();
+  return day === 0 || day === 6;
+});
+const isPast = computed(() => {
+  if (!rescheduleForm.date) return false;
+  return rescheduleForm.date < today.value;
+});
+const clientDateError = computed(() => {
+  if (!rescheduleForm.date) return '';
+  if (isPast.value) return 'Date cannot be in the past.';
+  if (isWeekend.value) return 'Appointments are only Monday–Friday.';
+  return '';
+});
 const statusForm = useForm({ status: props.appointment.status });
 const currentStatus = ref(props.appointment.status)
 const statusUpdating = ref(false)
@@ -169,27 +193,28 @@ function submitStatus() {
                       <div class="grid grid-cols-2 gap-2">
                         <div>
                           <label class="block text-xs text-[#2c4454] opacity-70">Date</label>
-                          <input v-model="rescheduleForm.date" type="date" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
+                          <input v-model="rescheduleForm.date" type="date" :min="today" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
+                          <p v-if="clientDateError" class="mt-1 text-xs text-red-600">{{ clientDateError }}</p>
+                          </div>
+                          <div>
+                            <label class="block text-xs text-[#2c4454] opacity-70">Time</label>
+                            <input v-model="rescheduleForm.time" type="time" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
+                          </div>
                         </div>
                         <div>
-                          <label class="block text-xs text-[#2c4454] opacity-70">Time</label>
-                          <input v-model="rescheduleForm.time" type="time" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
+                          <label class="block text-xs text-[#2c4454] opacity-70">Remarks</label>
+                          <textarea v-model="rescheduleForm.remarks" rows="3" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2"></textarea>
                         </div>
+                        <button @click="submitReschedule" :disabled="!!clientDateError || !rescheduleForm.date || !rescheduleForm.time" class="px-3 py-2 bg-[#2c4454] text-white rounded-md text-sm hover:opacity-90 inline-flex items-center gap-2 disabled:opacity-50">
+                          <CalendarDays class="h-4 w-4" />
+                          Reschedule
+                        </button>
+                        <p v-if="rescheduleForm.errors && (rescheduleForm.errors.date || rescheduleForm.errors.time)" class="text-xs text-red-600">
+                          {{ rescheduleForm.errors.date || rescheduleForm.errors.time }}
+                        </p>
                       </div>
-                      <div>
-                        <label class="block text-xs text-[#2c4454] opacity-70">Remarks</label>
-                        <textarea v-model="rescheduleForm.remarks" rows="3" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2"></textarea>
-                      </div>
-                      <button @click="submitReschedule" class="px-3 py-2 bg-[#2c4454] text-white rounded-md text-sm hover:opacity-90 inline-flex items-center gap-2">
-                        <CalendarDays class="h-4 w-4" />
-                        Reschedule
-                      </button>
-                      <p v-if="rescheduleForm.errors && (rescheduleForm.errors.date || rescheduleForm.errors.time)" class="text-xs text-red-600">
-                        {{ rescheduleForm.errors.date || rescheduleForm.errors.time }}
-                      </p>
                     </div>
                   </div>
-                </div>
               </div>
             </div>
           </div>
