@@ -18,7 +18,7 @@ class CertificateOfResidencyRepository extends Repository
         return $this->create([
             'user_id' => $userId,
             'purpose' => $data['purpose'],
-            'application_date' => now()->toDateString(),
+            'application_date' => now()->setTimezone('Asia/Manila')->toDateString(),
         ]);
     }
 

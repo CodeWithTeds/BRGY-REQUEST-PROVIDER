@@ -207,6 +207,19 @@ Route::prefix('admin')->group(function () {
             ->name('admin.clerks.update');
         Route::delete('clerks/{id}', [App\Http\Controllers\Admin\ClerkController::class, 'destroy'])
             ->name('admin.clerks.destroy');
+
+        // Admin Appointments Management
+        Route::get('appointments', [App\Http\Controllers\Admin\AppointmentController::class, 'index'])
+            ->name('admin.appointments');
+        Route::get('appointments/{id}', [App\Http\Controllers\Admin\AppointmentController::class, 'show'])
+            ->whereNumber('id')
+            ->name('admin.appointments.show');
+        Route::post('appointments/{id}/status', [App\Http\Controllers\Admin\AppointmentController::class, 'updateStatus'])
+            ->whereNumber('id')
+            ->name('admin.appointments.update-status');
+        Route::post('appointments/{id}/reschedule', [App\Http\Controllers\Admin\AppointmentController::class, 'reschedule'])
+            ->whereNumber('id')
+            ->name('admin.appointments.reschedule');
     });
 });
 

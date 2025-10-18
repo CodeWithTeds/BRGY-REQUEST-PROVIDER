@@ -41,8 +41,8 @@ class BarangayClearanceDetailResource extends JsonResource
             // Format dates for cleaner display
             'application_date' => optional($this->application_date)?->toDateString(),
             'status' => $this->status,
-            'created_at' => optional($this->created_at)?->toDateTimeString(),
-            'updated_at' => optional($this->updated_at)?->toDateTimeString(),
+            'created_at' => optional($this->created_at)?->copy()->setTimezone('Asia/Manila')->toDateTimeString(),
+            'updated_at' => optional($this->updated_at)?->copy()->setTimezone('Asia/Manila')->toDateTimeString(),
             'gender' => $ap?->gender,
             'citizenship' => $ap?->citizenship,
             'contact_number' => $ap?->contact_number,

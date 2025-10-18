@@ -31,7 +31,7 @@ class BussinessPermitRepository extends Repository {
             $permit = $this->create([
                 'user_id' => $userId,
                 'status' => 'pending',
-                'application_date' => now()->toDateString() // Ensure application_date is set
+                'application_date' => now()->setTimezone('Asia/Manila')->toDateString()
             ]);
             
             // Then create the related models with the permit ID
@@ -233,7 +233,7 @@ class BussinessPermitRepository extends Repository {
 
         return $permit->update($data);
     }
-
+    
     /**
      * Admin: delete permit and cascade delete related records and files.
      */

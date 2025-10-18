@@ -258,16 +258,20 @@ const statusChip = (s: string) => {
                       <template v-else-if="props.permit.status === 'processing' && props.routeGroup === 'staff'">
                         <button class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90 w-full" @click="updateStatus('pre-approved')">Mark as Pre-Approved</button>
                       </template>
-                      <template v-else-if="props.permit.status === 'approved'">
-                        <p class="text-sm text-[#2c4454] opacity-80">No further actions. This permit is already approved.</p>
-                      </template>
                       <template v-else-if="props.permit.status === 'pre-approved'">
                         <p class="text-sm text-[#2c4454] opacity-80">This permit is pre-approved by staff, awaiting admin approval.</p>
+                        <div class="mt-2 grid grid-cols-2 gap-2">
+                          <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Approve</button>
+                          <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
+                        </div>
+                      </template>
+                      <template v-else-if="props.permit.status === 'approved'">
+                        <p class="text-sm text-[#2c4454] opacity-80">No further actions. This permit is already approved.</p>
                       </template>
                       <template v-else-if="props.permit.status === 'rejected'">
                         <p class="text-sm text-[#2c4454] opacity-80">This permit was rejected.</p>
                       </template>
-                      <button class="mt-3 px-3 py-2 rounded-md bg-[#2c4454] text-white text-sm hover:opacity-90" @click="toggleEdit">Edit details</button>
+                      <button v-if="props.permit.status !== 'pre-approved'" class="mt-3 px-3 py-2 rounded-md bg-[#2c4454] text-white text-sm hover:opacity-90" @click="toggleEdit">Edit details</button>
                     </div>
                     <div v-if="showEdit" class="mt-3 space-y-2">
                       <label class="text-xs font-medium text-[#2c4454]">Remarks</label>

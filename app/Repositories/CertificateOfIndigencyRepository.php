@@ -31,7 +31,7 @@ class CertificateOfIndigencyRepository extends Repository
                 'user_id' => $userId,
                 'purpose' => $data['purpose'] ?? null,
                 'status' => 'pending',
-                'application_date' => now()->toDateString(),
+                'application_date' => now()->setTimezone('Asia/Manila')->toDateString(),
             ]);
             return $cert;
         });

@@ -24,8 +24,8 @@ class IndigencyCertificateDetailResource extends JsonResource
             'full_name' => optional($user)->name,
             'application_date' => $this->application_date,
             'status' => $this->status,
-            'created_at' => $this->created_at?->toDateTimeString(),
-            'updated_at' => $this->updated_at?->toDateTimeString(),
+            'created_at' => optional($this->created_at)?->copy()->setTimezone('Asia/Manila')->toDateTimeString(),
+            'updated_at' => optional($this->updated_at)?->copy()->setTimezone('Asia/Manila')->toDateTimeString(),
             'contact_number' => optional($user?->applicantProfile)->contact_number ?? null,
             'remarks' => $this->remarks,
             'applicant_profile' => [

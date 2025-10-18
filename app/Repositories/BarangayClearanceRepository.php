@@ -30,7 +30,7 @@ class BarangayClearanceRepository extends Repository {
                 'user_id' => $userId,
                 'status' => 'pending',
                 'purpose' => $data['purpose'] ?? null,
-                'application_date' => now()->toDateString()
+                'application_date' => now()->setTimezone('Asia/Manila')->toDateString()
             ]);
             
             // Create the related models with the clearance ID

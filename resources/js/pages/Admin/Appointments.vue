@@ -1,0 +1,307 @@
+<script setup lang="ts">
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import type { BreadcrumbItem } from '@/types';
+import { ref, computed } from 'vue';
+import { CalendarDays, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-vue-next';
+import Toastify from 'toastify-js';
+
+interface AppointmentItem {
+  id: number;
+  type: string; // Permit, Clearance, Residency, Indigency
+  appointable_type?: string;
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no_show' | string;
+  appointment_at: string | null; // ISO string localized to Asia/Manila
+  appointable_id?: number | null;
+  applicant_name?: string | null;
+}
+
+interface Stats {
+  total: number;
+  scheduled: number;
+  completed: number;
+  cancelled: number;
+  no_show: number;
+}
+
+interface Pagination {
+  current_page: number;
+  per_page: number;
+  last_page: number;
+  total: number;
+}
+
+interface FiltersProp {
+  statusOptions: string[];
+  typeOptions: { value: string; label: string }[];
+}
+
+interface QueryProp {
+  status?: string | null;
+  type?: string | null;
+  date_from?: string | null;
+  date_to?: string | null;
+  q?: string | null;
+}
+
+const props = defineProps<{
+  items: AppointmentItem[];
+  stats: Stats;
+  pagination: Pagination;
+  filters: FiltersProp;
+  query: QueryProp;
+}>();
+
+const basePath = computed(() => `/admin/appointments`);
+
+// Filters (server-driven)
+const status = ref(props.query.status || '');
+const type = ref(props.query.type || '');
+const dateFrom = ref(props.query.date_from || '');
+const dateTo = ref(props.query.date_to || '');
+const q = ref(props.query.q || '');
+
+function applyFilters(page?: number) {
+  const data: Record<string, string> = {};
+  if (status.value) data.status = status.value;
+  if (type.value) data.type = type.value;
+  if (dateFrom.value) data.date_from = dateFrom.value;
+  if (dateTo.value) data.date_to = dateTo.value;
+  if (q.value) data.q = q.value;
+  if (page && page > 0) data.page = String(page);
+  router.visit(basePath.value, {
+    method: 'get',
+    data,
+    preserveScroll: true,
+    preserveState: true,
+  });
+}
+
+function clearFilters() {
+  status.value = '';
+  type.value = '';
+  dateFrom.value = '';
+  dateTo.value = '';
+  q.value = '';
+  applyFilters();
+}
+
+function statusChip(s: string) {
+  switch (s) {
+    case 'scheduled':
+      return 'bg-indigo-100 text-indigo-700 ring-indigo-200';
+    case 'completed':
+      return 'bg-green-100 text-green-700 ring-green-200';
+    case 'cancelled':
+      return 'bg-red-100 text-red-700 ring-red-200';
+    case 'no_show':
+      return 'bg-yellow-100 text-yellow-700 ring-yellow-200';
+    default:
+      return 'bg-gray-100 text-gray-700 ring-gray-200';
+  }
+}
+
+function formatDate(iso?: string | null) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
+  } catch {
+    return iso || '—';
+  }
+}
+
+function appointableHref(item: AppointmentItem) {
+  const id = item.appointable_id;
+  if (!id) return '';
+  // Prefer FQCN mapping when available
+  switch (item.appointable_type) {
+    case 'App\\Models\\BarangayPermit':
+      return `/admin/business-permits/${id}`;
+    case 'App\\Models\\BarangayClearance':
+      return `/admin/barangay-clearances/${id}`;
+    case 'App\\Models\\CertificateOfResidency':
+      return `/admin/residency-certificates/${id}`;
+    case 'App\\Models\\CertificateOfIndigency':
+      return `/admin/indigency-certificates/${id}`;
+  }
+  // Fallback based on label
+  const t = (item.type || '').toLowerCase();
+  if (t.includes('permit')) return `/admin/business-permits/${id}`;
+  if (t.includes('clearance')) return `/admin/barangay-clearances/${id}`;
+  if (t.includes('residency')) return `/admin/residency-certificates/${id}`;
+  if (t.includes('indigency')) return `/admin/indigency-certificates/${id}`;
+  return '';
+}
+
+function toast(msg: string, type: 'info' | 'success' | 'error' = 'info') {
+  Toastify({
+    text: msg,
+    duration: 2500,
+    gravity: 'top',
+    position: 'right',
+    backgroundColor: type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#334155',
+  }).showToast();
+}
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { title: 'Admin', href: '/admin/dashboard' },
+  { title: 'Appointments', href: basePath.value },
+];
+</script>
+
+<template>
+  <Head title="Appointments" />
+
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <template #header>
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-[#2c4454]">All Appointments: <span class="font-semibold">{{ props.stats.total }}</span></div>
+        <div class="flex items-center gap-4">
+          <Link :href="basePath" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] text-sm rounded-md hover:bg-gray-50">
+            <CalendarDays class="h-4 w-4" />
+            <span>Calendar</span>
+          </Link>
+        </div>
+      </div>
+      <div class="mt-2 text-lg font-semibold text-[#2c4454]">Appointment Management</div>
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="rounded-md border border-[#2c4454]/20 p-4">
+          <p class="text-xs text-[#2c4454] opacity-70">Scheduled</p>
+          <p class="mt-1 text-2xl font-semibold text-[#2c4454]">{{ props.stats.scheduled }}</p>
+        </div>
+        <div class="rounded-md border border-[#2c4454]/20 p-4">
+          <p class="text-xs text-[#2c4454] opacity-70">Completed</p>
+          <p class="mt-1 text-2xl font-semibold text-[#2c4454]">{{ props.stats.completed }}</p>
+        </div>
+        <div class="rounded-md border border-[#2c4454]/20 p-4">
+          <p class="text-xs text-[#2c4454] opacity-70">Cancelled</p>
+          <p class="mt-1 text-2xl font-semibold text-[#2c4454]">{{ props.stats.cancelled }}</p>
+        </div>
+        <div class="rounded-md border border-[#2c4454]/20 p-4">
+          <p class="text-xs text-[#2c4454] opacity-70">No-show</p>
+          <p class="mt-1 text-2xl font-semibold text-[#2c4454]">{{ props.stats.no_show }}</p>
+        </div>
+      </div>
+    </template>
+
+    <div class="bp-theme">
+      <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+          <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6 space-y-6">
+              <!-- Filters -->
+              <div class="rounded-lg border border-[#2c4454]/20 p-4">
+                <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                  <div>
+                    <label class="block text-xs text-[#2c4454] opacity-70">Status</label>
+                    <select v-model="status" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2">
+                      <option value="">All</option>
+                      <option v-for="s in props.filters.statusOptions" :key="s" :value="s">{{ s }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs text-[#2c4454] opacity-70">Type</label>
+                    <select v-model="type" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2">
+                      <option value="">All</option>
+                      <option v-for="t in props.filters.typeOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs text-[#2c4454] opacity-70">Date from</label>
+                    <input v-model="dateFrom" type="date" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-[#2c4454] opacity-70">Date to</label>
+                    <input v-model="dateTo" type="date" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-xs text-[#2c4454] opacity-70">Search</label>
+                    <div class="mt-1 flex items-center gap-2">
+                      <div class="relative w-full">
+                        <Search class="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[#2c4454] opacity-60" />
+                        <input v-model="q" type="text" placeholder="Search by applicant or ID" class="w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 pl-8 pr-2" />
+                      </div>
+                      <button @click="applyFilters()" class="px-3 py-2 bg-[#2c4454] text-white rounded-md text-sm hover:opacity-90">Apply</button>
+                      <button @click="clearFilters()" class="px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">Clear</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Table -->
+              <div class="rounded-lg border border-[#2c4454]/20 overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">ID</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Applicant</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Type</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Appointment</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Status</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <tr v-for="item in props.items" :key="item.id" class="hover:bg-gray-50">
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">#{{ item.id }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ item.applicant_name || '—' }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">
+                        <template v-if="item.appointable_id && appointableHref(item)">
+                          <Link :href="appointableHref(item)" class="text-[#2c4454] hover:underline">{{ item.type }} #{{ item.appointable_id }}</Link>
+                        </template>
+                        <template v-else>
+                          {{ item.type }}
+                        </template>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ formatDate(item.appointment_at) }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(item.status)">
+                          <span class="capitalize">{{ item.status.replace('_', ' ') }}</span>
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                          <Link :href="`${basePath}/${item.id}`" class="text-[#2c4454] hover:opacity-80" title="View Appointment">
+                            <Eye class="h-5 w-5" />
+                          </Link>
+                          <Link v-if="item.appointable_id && appointableHref(item)" :href="appointableHref(item)" class="text-[#2c4454] hover:opacity-80" title="Open Record">
+                            <CalendarDays class="h-5 w-5" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <div class="mt-4 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-sm text-[#2c4454]">
+                  <label>Rows per page</label>
+                  <span class="font-medium">{{ props.pagination.per_page }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button :disabled="props.pagination.current_page <= 1" @click="applyFilters(props.pagination.current_page - 1)" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50 disabled:opacity-50">
+                    <ChevronLeft class="h-4 w-4" />
+                    Prev
+                  </button>
+                  <div class="text-sm text-[#2c4454]">Page <span class="font-semibold">{{ props.pagination.current_page }}</span> of <span class="font-semibold">{{ props.pagination.last_page }}</span></div>
+                  <button :disabled="props.pagination.current_page >= props.pagination.last_page" @click="applyFilters(props.pagination.current_page + 1)" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50 disabled:opacity-50">
+                    Next
+                    <ChevronRight class="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AppLayout>
+</template>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+.bp-theme { font-family: 'Space Grotesk', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+</style>

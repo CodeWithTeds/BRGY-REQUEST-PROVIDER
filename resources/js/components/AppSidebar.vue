@@ -4,7 +4,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, IdCard, FileCheck, Building2, UserCheck, FileText, Users, ScrollText } from 'lucide-vue-next';
+import { LayoutGrid, IdCard, FileCheck, Building2, UserCheck, FileText, Users, ScrollText, CalendarDays } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { computed } from 'vue';
 
@@ -46,6 +46,11 @@ const adminNavItems: NavItem[] = [
         title: 'Business Permits',
         href: '/admin/business-permits',
         icon: FileText,
+    },
+    {
+        title: 'Appointments',
+        href: '/admin/appointments',
+        icon: CalendarDays,
     },
     {
         title: 'Barangay Clearances',

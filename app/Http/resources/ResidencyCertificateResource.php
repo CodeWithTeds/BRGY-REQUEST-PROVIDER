@@ -31,7 +31,7 @@ class ResidencyCertificateResource extends JsonResource
             'address_line' => $line,
             'contact_number' => $ap?->contact_number,
             'remarks' => $this->remarks,
-            'updated_at' => optional($this->updated_at)?->toDateTimeString(),
+            'updated_at' => optional($this->updated_at)?->copy()->setTimezone('Asia/Manila')->toDateTimeString(),
         ];
     }
 }

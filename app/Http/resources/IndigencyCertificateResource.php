@@ -25,7 +25,7 @@ class IndigencyCertificateResource extends JsonResource
             'address_line' => $this->user?->addresses->first()?->line ?? null,
             'contact_number' => optional($this->user?->applicantProfile)->contact_number ?? null,
             'remarks' => $this->remarks,
-            'updated_at' => $this->updated_at?->toDateTimeString(),
+            'updated_at' => optional($this->updated_at)?->copy()->setTimezone('Asia/Manila')->toDateTimeString(),
         ];
     }
 }
