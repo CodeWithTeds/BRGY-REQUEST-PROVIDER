@@ -25,6 +25,21 @@ const requirements = [
   'Application reference number or Residency ID.',
   'Any additional documents requested in the remarks.',
 ]
+
+// Only allow initial scheduling if approved; disallow rescheduling after approval
+const canScheduleOrReschedule = computed(() => {
+  if (props.residency.status === 'approved') {
+    return !appointmentDisplay.value // allow scheduling only if not yet scheduled
+  }
+  return props.rescheduleAllowed !== false
+})
+
+const lockMessage = computed(() => {
+  if (props.residency.status === 'approved' && appointmentDisplay.value) {
+    return 'Rescheduling is disabled after approval.'
+  }
+  return 'Reschedule limit reached'
+})
 </script>
 
 <template>
@@ -50,11 +65,11 @@ const requirements = [
         <li>Processing and printing may take up to 2–3 business days depending on queue.</li>
       </ul>
       <div class="mt-4 flex items-center gap-2">
-        <Link v-if="props.rescheduleAllowed !== false" :href="route('resident.certificate-of-residency.schedule')" class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+        <Link v-if="canScheduleOrReschedule" :href="route('resident.certificate-of-residency.schedule')" class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
           {{ appointmentDisplay ? 'Reschedule Appointment' : 'Schedule Appointment' }}
         </Link>
         <span v-else class="inline-flex items-center rounded bg-neutral-300 px-4 py-2 text-neutral-700 cursor-not-allowed">
-          Reschedule limit reached
+          {{ lockMessage }}
         </span>
         <a v-if="props.residency.id" :href="route('resident.certificate-of-residency.pdf', props.residency.id)" target="_blank" rel="noopener" class="inline-flex items-center rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">
           Download PDF

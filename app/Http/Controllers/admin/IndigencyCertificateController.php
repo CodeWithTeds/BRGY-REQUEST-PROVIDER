@@ -35,6 +35,8 @@ class IndigencyCertificateController extends Controller
             'stats' => $result['stats'],
             'filters' => $request->only(['name', 'status', 'date_from', 'date_to']),
             'pagination' => $result['pagination'],
+            'routeGroup' => 'admin',
+            'canDelete' => true,
         ]);
     }
 
@@ -47,6 +49,8 @@ class IndigencyCertificateController extends Controller
 
         return Inertia::render('Admin/IndigencyCertificateView', [
             'certificate' => $data,
+            'routeGroup' => 'admin',
+            'canApprove' => true,
         ]);
     }
 

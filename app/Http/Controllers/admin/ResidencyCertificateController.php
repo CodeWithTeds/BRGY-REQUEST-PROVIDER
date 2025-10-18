@@ -36,6 +36,8 @@ class ResidencyCertificateController extends Controller
             'stats' => $result['stats'],
             'filters' => $result['filters'],
             'pagination' => $result['pagination'],
+            'routeGroup' => 'admin',
+            'canDelete' => true,
         ]);
     }
 
@@ -46,6 +48,8 @@ class ResidencyCertificateController extends Controller
 
         return Inertia::render('Admin/ResidencyCertificateView', [
             'certificate' => $data,
+            'routeGroup' => 'admin',
+            'canApprove' => true,
         ]);
     }
 

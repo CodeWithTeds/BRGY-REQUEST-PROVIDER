@@ -64,9 +64,19 @@ const rescheduleForm = useForm({
   date: '',
   time: '',
   remarks: '',
-});
+}); 
 
 const statusForm = useForm({ status: props.appointment.status });
+const currentStatus = ref(props.appointment.status)
+const statusUpdating = ref(false)
+// Lock when status is Completed, Cancelled, or No-show
+const statusLocked = computed(() => ['completed', 'cancelled', 'no_show'].includes(currentStatus.value))
+const finalStatusText = computed(() => {
+  if (currentStatus.value === 'completed') return 'This appointment is already Completed.'
+  if (currentStatus.value === 'cancelled') return 'This appointment is already Cancelled.'
+  if (currentStatus.value === 'no_show') return 'This appointment is already marked as No-show.'
+  return ''
+})
 
 function toast(msg: string, type: 'success' | 'error' | 'info' = 'info') {
   Toastify({ text: msg, duration: 2500, gravity: 'top', position: 'right', backgroundColor: type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#334155' }).showToast();
@@ -80,9 +90,15 @@ function submitReschedule() {
 }
 
 function submitStatus() {
+  statusUpdating.value = true
   statusForm.post(`${basePath.value}/${props.appointment.id}/status`, {
     preserveScroll: true,
-    onSuccess: () => toast('Appointment status updated', 'success'),
+    onSuccess: () => {
+      currentStatus.value = statusForm.status as typeof props.appointment.status
+      toast('Appointment status updated', 'success')
+    },
+    onError: () => toast('Failed to update status', 'error'),
+    onFinish: () => { statusUpdating.value = false }
   });
 }
 </script>
@@ -96,9 +112,9 @@ function submitStatus() {
           <Link :href="basePath" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50">
             <ArrowLeft class="h-4 w-4" /> Back
           </Link>
-          <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(props.appointment.status)">
-            <component :is="props.appointment.status === 'scheduled' ? Clock : props.appointment.status === 'completed' ? CheckCircle2 : AlertTriangle" class="h-3.5 w-3.5" />
-            <span class="capitalize">{{ props.appointment.status.replace('_', ' ') }}</span>
+          <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(currentStatus)">
+            <component :is="currentStatus === 'scheduled' ? Clock : currentStatus === 'completed' ? CheckCircle2 : AlertTriangle" class="h-3.5 w-3.5" />
+            <span class="capitalize">{{ (currentStatus as string).replace('_', ' ') }}</span>
           </div>
         </div>
       </div>
@@ -135,11 +151,14 @@ function submitStatus() {
                 <div class="space-y-4">
                   <div class="rounded-lg border border-[#2c4454]/20 p-4">
                     <h3 class="text-sm font-semibold text-[#2c4454]">Update Status</h3>
-                    <div class="mt-3 grid grid-cols-2 gap-2">
-                      <button class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90" @click="statusForm.status = 'scheduled'; submitStatus()">Mark Scheduled</button>
-                      <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="statusForm.status = 'completed'; submitStatus()">Mark Completed</button>
-                      <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="statusForm.status = 'cancelled'; submitStatus()">Mark Cancelled</button>
-                      <button class="px-3 py-2 rounded-md bg-yellow-600 text-white text-sm hover:opacity-90" @click="statusForm.status = 'no_show'; submitStatus()">Mark No-show</button>
+                    <div class="mt-2" v-if="statusLocked">
+                      <p class="text-xs text-[#2c4454] opacity-70">{{ finalStatusText }}</p>
+                    </div>
+                    <div v-else class="mt-3 grid grid-cols-2 gap-2">
+                      <button class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'scheduled'; submitStatus()">Mark Scheduled</button>
+                      <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'completed'; submitStatus()">Mark Completed</button>
+                      <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'cancelled'; submitStatus()">Mark Cancelled</button>
+                      <button class="px-3 py-2 rounded-md bg-yellow-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'no_show'; submitStatus()">Mark No-show</button>
                     </div>
                     <p v-if="statusForm.errors && statusForm.errors.status" class="mt-2 text-xs text-red-600">{{ statusForm.errors.status }}</p>
                   </div>
