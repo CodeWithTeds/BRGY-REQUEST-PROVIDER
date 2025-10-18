@@ -19,6 +19,7 @@ class AdminListRequest extends FormRequest
             'status' => ['nullable', 'in:pending,processing,pre-approved,approved,rejected'],
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date'],
+            'permit_id' => ['nullable', 'integer', 'min:1'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
@@ -42,6 +43,7 @@ class AdminListRequest extends FormRequest
             'status' => $v['status'] ?? null,
             'date_from' => $v['date_from'] ?? null,
             'date_to' => $v['date_to'] ?? null,
+            'permit_id' => $v['permit_id'] ?? null,
         ];
     }
 

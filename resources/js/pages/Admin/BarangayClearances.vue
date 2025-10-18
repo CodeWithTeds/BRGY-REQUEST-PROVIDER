@@ -36,6 +36,7 @@ interface Filters {
   status?: 'approved' | 'pending' | 'processing' | 'pre-approved' | 'rejected' | '';
   date_from?: string;
   date_to?: string;
+  permit_id?: string;
 }
 
 // Add dynamic routing props for staff/admin contexts
@@ -48,6 +49,7 @@ const filterName = ref(props.filters?.name ?? '');
 const filterStatus = ref<Filters['status']>(props.filters?.status ?? '');
 const filterDateFrom = ref(props.filters?.date_from ?? '');
 const filterDateTo = ref(props.filters?.date_to ?? '');
+const filterPermitId = ref(props.filters?.permit_id ?? '');
 
 // Selection state
 const selectedIds = ref<number[]>([]);
@@ -84,6 +86,7 @@ function gotoPage(next: number) {
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
     date_to: filterDateTo.value || undefined,
+    permit_id: filterPermitId.value || undefined,
     page: nextPage,
     per_page: perPage.value,
   }, { preserveState: true, preserveScroll: true, replace: true });
@@ -100,6 +103,7 @@ function applyFilters() {
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
     date_to: filterDateTo.value || undefined,
+    permit_id: filterPermitId.value || undefined,
     page: 1,
     per_page: perPage.value,
   }, { preserveState: true, preserveScroll: true, replace: true });
@@ -110,6 +114,7 @@ function resetFilters() {
   filterStatus.value = '';
   filterDateFrom.value = '';
   filterDateTo.value = '';
+  filterPermitId.value = '';
   applyFilters();
 }
 
@@ -188,7 +193,8 @@ const breadcrumbs = computed((): BreadcrumbItem[] => [
             <div class="p-6">
               <!-- Filters Toolbar -->
               <div class="mb-4 rounded-md border border-[#2c4454]/20 bg-white p-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  <input v-model="filterPermitId" type="number" placeholder="Clearance ID" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30" />
                   <input v-model="filterName" type="text" placeholder="Search by name" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30" />
                   <select v-model="filterStatus" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30">
                     <option value="">All statuses</option>
@@ -214,6 +220,9 @@ const breadcrumbs = computed((): BreadcrumbItem[] => [
                         <input type="checkbox" class="rounded" :checked="selectAll"
                           @change="toggleSelectAll(paginatedClearances)" />
                       </th>
+                      <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">
+                        Clearance ID</th>
                       <th scope="col"
                         class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">
                         User</th>
@@ -251,6 +260,9 @@ const breadcrumbs = computed((): BreadcrumbItem[] => [
                       <td class="px-4 py-4">
                         <input type="checkbox" class="rounded" :checked="selectedIds.includes(clearance.id)"
                           @change="toggleSelected(clearance.id)" />
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] font-medium">
+                        #{{ clearance.id }}
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center gap-3">

@@ -33,6 +33,7 @@ interface Filters {
   status?: 'approved' | 'pending' | 'processing' | 'pre-approved' | 'rejected' | '';
   date_from?: string;
   date_to?: string;
+  permit_id?: string;
 }
 
 const props = defineProps<{ residencies: ResidencyItem[]; stats: Stats; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number }; routeGroup?: string; canDelete?: boolean }>();
@@ -44,6 +45,7 @@ const filterName = ref(props.filters?.name ?? '');
 const filterStatus = ref<Filters['status']>(props.filters?.status ?? '');
 const filterDateFrom = ref(props.filters?.date_from ?? '');
 const filterDateTo = ref(props.filters?.date_to ?? '');
+const filterPermitId = ref(props.filters?.permit_id ?? '');
 
 // Selection state
 const selectedIds = ref<number[]>([]);
@@ -80,6 +82,7 @@ function gotoPage(next: number) {
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
     date_to: filterDateTo.value || undefined,
+    permit_id: filterPermitId.value || undefined,
     page: nextPage,
     per_page: perPage.value,
   }, { preserveState: true, preserveScroll: true, replace: true });
@@ -96,6 +99,7 @@ function applyFilters() {
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
     date_to: filterDateTo.value || undefined,
+    permit_id: filterPermitId.value || undefined,
     page: 1,
     per_page: perPage.value,
   }, { preserveState: true, preserveScroll: true, replace: true });
@@ -106,6 +110,7 @@ function resetFilters() {
   filterStatus.value = '';
   filterDateFrom.value = '';
   filterDateTo.value = '';
+  filterPermitId.value = '';
   applyFilters();
 }
 
@@ -178,7 +183,8 @@ const breadcrumbs: BreadcrumbItem[] = [
             <div class="p-6">
               <!-- Filters Toolbar -->
               <div class="mb-4 rounded-md border border-[#2c4454]/20 bg-white p-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  <input v-model="filterPermitId" type="number" placeholder="Certificate ID" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30" />
                   <input v-model="filterName" type="text" placeholder="Search by name" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30" />
                   <select v-model="filterStatus" class="w-full rounded-md border border-[#2c4454]/20 p-2 text-sm text-[#2c4454] focus:outline-none focus:ring-2 focus:ring-[#2c4454]/30">
                     <option value="">All statuses</option>
@@ -204,6 +210,7 @@ const breadcrumbs: BreadcrumbItem[] = [
                       <th class="px-4 py-3">
                         <input type="checkbox" class="rounded" :checked="selectAll" @change="toggleSelectAll(paginatedResidencies)" />
                       </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Certificate ID</th>
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">User</th>
                       <th scope="col" class="w-24 px-3 py-2 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Status</th>
                       <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Application Date</th>
@@ -219,6 +226,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <tr v-for="item in paginatedResidencies" :key="item.id" class="hover:bg-gray-50">
                       <td class="px-4 py-4">
                         <input type="checkbox" class="rounded" :checked="selectedIds.includes(item.id)" @change="toggleSelected(item.id)" />
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] font-medium">
+                        #{{ item.id }}
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center gap-3">

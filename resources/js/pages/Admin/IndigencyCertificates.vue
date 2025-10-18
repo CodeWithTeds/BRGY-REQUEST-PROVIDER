@@ -31,6 +31,7 @@ interface Filters {
   status?: 'approved' | 'pending' | 'processing' | 'pre-approved' | 'rejected' | '';
   date_from?: string;
   date_to?: string;
+  permit_id?: string;
 }
 
 const props = defineProps<{ indigencies: IndigencyItem[]; stats: StatsItem; filters?: Filters; pagination?: { current_page: number; per_page: number; last_page: number; total: number }; routeGroup?: string; canDelete?: boolean }>()
@@ -41,6 +42,7 @@ const filterName = ref(props.filters?.name ?? '')
 const filterStatus = ref<Filters['status']>(props.filters?.status ?? '')
 const filterDateFrom = ref(props.filters?.date_from ?? '')
 const filterDateTo = ref(props.filters?.date_to ?? '')
+const filterPermitId = ref(props.filters?.permit_id ?? '')
 
 const selectedIds = ref<number[]>([])
 const selectAll = ref(false)
@@ -72,6 +74,7 @@ function gotoPage(next: number) {
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
     date_to: filterDateTo.value || undefined,
+    permit_id: filterPermitId.value || undefined,
     page: nextPage,
     per_page: perPage.value,
   }, { preserveState: true, preserveScroll: true, replace: true })
@@ -84,6 +87,7 @@ function applyFilters() {
     status: filterStatus.value || undefined,
     date_from: filterDateFrom.value || undefined,
     date_to: filterDateTo.value || undefined,
+    permit_id: filterPermitId.value || undefined,
     page: 1,
     per_page: perPage.value,
   }, { preserveState: true, preserveScroll: true, replace: true })
@@ -94,6 +98,7 @@ function resetFilters() {
   filterStatus.value = ''
   filterDateFrom.value = ''
   filterDateTo.value = ''
+  filterPermitId.value = ''
   applyFilters()
 }
 
@@ -117,7 +122,8 @@ function deleteItem(id: number) {
 
         <div class="rounded-lg border border-[#2c4454]/20 bg-white">
           <div class="p-4 border-b border-[#2c4454]/10">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <input v-model="filterPermitId" type="number" placeholder="Certificate ID" class="border rounded px-3 py-2" />
               <input v-model="filterName" type="text" placeholder="Search name" class="border rounded px-3 py-2" />
               <select v-model="filterStatus" class="border rounded px-3 py-2">
                 <option value="">All statuses</option>
@@ -144,6 +150,7 @@ function deleteItem(id: number) {
                     <th class="px-4 py-3">
                       <input type="checkbox" class="rounded" :checked="selectAll" @change="toggleSelectAll(paginatedIndigencies)" />
                     </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Certificate ID</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Applicant</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Applied</th>
@@ -155,6 +162,9 @@ function deleteItem(id: number) {
                   <tr v-for="item in paginatedIndigencies" :key="item.id" class="hover:bg-gray-50">
                     <td class="px-4 py-4">
                       <input type="checkbox" class="rounded" :checked="selectedIds.includes(item.id)" @change="toggleSelected(item.id)" />
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454] font-medium">
+                      #{{ item.id }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center gap-3">

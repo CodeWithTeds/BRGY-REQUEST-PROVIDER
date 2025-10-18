@@ -32,6 +32,12 @@ trait AdminListFilters
             $query->whereDate('application_date', '<=', $dateTo);
         }
 
+        // Add permit ID filter
+        $permitId = $filters['permit_id'] ?? null;
+        if ($permitId) {
+            $query->where('id', $permitId);
+        }
+
         return $query;
     }
 }
