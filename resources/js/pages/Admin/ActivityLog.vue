@@ -23,13 +23,15 @@ interface LogItem {
 
 const props = defineProps<{
   logs: { data: LogItem[]; current_page: number; last_page: number; total: number; per_page: number };
-  filters?: { action?: string | null; subject_type?: string | null; clerk_id?: number | null; date_from?: string | null; date_to?: string | null };
+  filters?: { id?: number | null; action?: string | null; subject_type?: string | null; clerk_id?: number | null; permit_id?: number | null; date_from?: string | null; date_to?: string | null };
 }>();
 
 const page = usePage();
+const id = ref(props.filters?.id ? String(props.filters?.id) : '');
 const action = ref(props.filters?.action || '');
 const subjectType = ref(props.filters?.subject_type || '');
 const clerkId = ref(props.filters?.clerk_id ? String(props.filters?.clerk_id) : '');
+const permitId = ref(props.filters?.permit_id ? String(props.filters?.permit_id) : '');
 const dateFrom = ref(props.filters?.date_from || '');
 const dateTo = ref(props.filters?.date_to || '');
 const revertingId = ref<number | null>(null);
@@ -37,9 +39,11 @@ const revertingId = ref<number | null>(null);
 function submitFilters() {
   const base = route('admin.activity-log');
   const params = new URLSearchParams();
+  if (id.value) params.set('id', id.value);
   if (action.value) params.set('action', action.value);
   if (subjectType.value) params.set('subject_type', subjectType.value);
   if (clerkId.value) params.set('clerk_id', clerkId.value);
+  if (permitId.value) params.set('permit_id', permitId.value);
   if (dateFrom.value) params.set('date_from', dateFrom.value);
   if (dateTo.value) params.set('date_to', dateTo.value);
   window.location.href = `${base}?${params.toString()}`;
@@ -75,6 +79,7 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
 </script>
 
 <template>
+
   <Head title="Activity Log" />
   <AppLayout>
     <div class="px-6 py-6 space-y-6">
@@ -101,9 +106,11 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
         <CardContent>
           <div class="flex flex-wrap items-center gap-2 mb-4">
             <div class="flex items-center gap-2">
+              <Input v-model="id" placeholder="Filter by ID…" class="h-9 w-32" />
               <Input v-model="action" placeholder="Filter by action…" class="h-9 w-40" />
               <Input v-model="subjectType" placeholder="Filter by subject type…" class="h-9 w-56" />
               <Input v-model="clerkId" placeholder="Filter by clerk ID…" class="h-9 w-40" />
+              <Input v-model="permitId" placeholder="Filter by permit ID…" class="h-9 w-40" />
               <Input v-model="dateFrom" type="date" placeholder="From" class="h-9 w-40" />
               <Input v-model="dateTo" type="date" placeholder="To" class="h-9 w-40" />
             </div>
@@ -129,13 +136,16 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
                 <tr v-for="item in props.logs.data" :key="item.id" class="border-t border-neutral-100">
                   <td class="px-4 py-3 whitespace-nowrap text-neutral-600">{{ item.created_at }}</td>
                   <td class="px-4 py-3">
-                    <span class="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-medium text-secondary">{{ item.action }}</span>
+                    <span
+                      class="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-medium text-secondary">{{
+                      item.action }}</span>
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-2">
                       <span class="text-neutral-800">{{ item.subject_type || '—' }}</span>
                       <template v-if="subjectRoute(item)">
-                        <Link :href="subjectRoute(item)!" class="text-secondary hover:underline">#{{ item.subject_id }}</Link>
+                        <Link :href="subjectRoute(item)!" class="text-secondary hover:underline">#{{ item.subject_id }}
+                        </Link>
                       </template>
                     </div>
                   </td>
@@ -147,7 +157,8 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
                   </td>
                   <td class="px-4 py-3 text-neutral-700">{{ item.description || '—' }}</td>
                   <td class="px-4 py-3">
-                    <Button v-if="item.action === 'status_updated'" size="sm" variant="outline" :disabled="revertingId === item.id" @click="revert(item)">
+                    <Button v-if="item.action === 'status_updated'" size="sm" variant="outline"
+                      :disabled="revertingId === item.id" @click="revert(item)">
                       {{ revertingId === item.id ? 'Reverting…' : 'Revert' }}
                     </Button>
                   </td>
@@ -156,7 +167,8 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
                       <summary class="cursor-pointer inline-flex items-center gap-2 text-secondary">
                         <Info class="h-4 w-4" /> Metadata
                       </summary>
-                      <pre class="mt-2 max-w-xl overflow-x-auto rounded bg-neutral-50 p-2 text-xs">{{ JSON.stringify(item.metadata || {}, null, 2) }}</pre>
+                      <pre class="mt-2 max-w-xl overflow-x-auto rounded bg-neutral-50 p-2 text-xs">{{ JSON.stringify(item.metadata || {},
+                        null, 2) }}</pre>
                       <div class="mt-2 text-[11px] text-neutral-500">IP: {{ item.ip_address || '—' }}</div>
                       <div class="text-[11px] text-neutral-500">UA: {{ item.user_agent || '—' }}</div>
                     </details>

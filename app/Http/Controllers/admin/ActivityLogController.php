@@ -13,6 +13,9 @@ class ActivityLogController extends Controller
     {
         $query = StaffActivityLog::query()->with(['user', 'clerk']);
 
+        if ($request->filled('id')) {
+            $query->where('id', $request->integer('id'));
+        }
         if ($request->filled('action')) {
             $query->where('action', $request->string('action'));
         }
@@ -21,6 +24,9 @@ class ActivityLogController extends Controller
         }
         if ($request->filled('clerk_id')) {
             $query->where('clerk_id', $request->integer('clerk_id'));
+        }
+        if ($request->filled('permit_id')) {
+            $query->where('subject_id', $request->integer('permit_id'));
         }
         if ($request->filled('date_from')) {
             $query->where('created_at', '>=', $request->date('date_from')->format('Y-m-d').' 00:00:00');
@@ -55,9 +61,11 @@ class ActivityLogController extends Controller
         return Inertia::render('Admin/ActivityLog', [
             'logs' => $logs,
             'filters' => [
+                'id' => $request->get('id'),
                 'action' => $request->get('action'),
                 'subject_type' => $request->get('subject_type'),
                 'clerk_id' => $request->get('clerk_id'),
+                'permit_id' => $request->get('permit_id'),
                 'date_from' => $request->get('date_from'),
                 'date_to' => $request->get('date_to'),
             ],
