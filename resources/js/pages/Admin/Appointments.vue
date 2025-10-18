@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { CalendarDays, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-vue-next';
 import Toastify from 'toastify-js';
 import OccupiedCalendar from '@/components/OccupiedCalendar.vue';
@@ -156,6 +156,61 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Appointments', href: basePath.value },
 ];
 const calendarFullscreen = ref(false);
+// Availability panel state
+const availabilityDate = ref<string>(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }));
+const occupiedTimes = ref<string[]>([]);
+const timeslots = computed<string[]>(() => {
+  const slots: string[] = [];
+  const startMinutes = 8 * 60; // 08:00
+  const endMinutes = 17 * 60; // 17:00
+  for (let m = startMinutes; m <= endMinutes; m += 30) {
+    const hh = String(Math.floor(m / 60)).padStart(2, '0');
+    const mm = String(m % 60).padStart(2, '0');
+    slots.push(`${hh}:${mm}`);
+  }
+  return slots;
+});
+const selectedTimeslot = ref<string>('');
+const filteredTimeslots = computed<string[]>(() => selectedTimeslot.value ? [selectedTimeslot.value] : timeslots.value);
+function formatTime24To12(t: string) {
+  const [hStr, mStr] = t.split(':');
+  let h = parseInt(hStr, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${mStr} ${ampm}`;
+}
+const counts = ref<Record<string, number>>({});
+const capacity = ref<number>(10);
+const totalScheduled = ref<number>(0);
+const remainingPerSlot = ref<Record<string, number>>({});
+async function loadAvailability() {
+  try {
+    const url = `${basePath.value}/availability?date=${availabilityDate.value}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    counts.value = (data?.counts) || {};
+    capacity.value = (typeof data?.capacity === 'number' ? data.capacity : 10);
+    totalScheduled.value = (typeof data?.totalScheduled === 'number' ? data.totalScheduled : 0);
+    remainingPerSlot.value = (data?.remainingPerSlot) || {};
+    occupiedTimes.value = Array.isArray(data?.occupied)
+      ? data.occupied
+      : Object.entries(counts.value)
+          .filter(([, c]) => (c as number) >= capacity.value)
+          .map(([t]) => t);
+  } catch (e) {
+    counts.value = {};
+    totalScheduled.value = 0;
+    occupiedTimes.value = [];
+    remainingPerSlot.value = {};
+  }
+}
+onMounted(() => { loadAvailability(); });
+
+function onSelectDate(dateStr: string) {
+  availabilityDate.value = dateStr;
+  loadAvailability();
+}
 </script>
 
 <template>
@@ -280,6 +335,45 @@ const calendarFullscreen = ref(false);
                     </table>
                   </div>
 
+                  <!-- Availability (full-width) -->
+                  <div class="rounded-lg border border-[#2c4454]/20 overflow-x-auto mt-6">
+                    <div class="bg-gray-50 px-6 py-3 flex items-center justify-between">
+                      <div class="text-sm font-medium text-[#2c4454]">Timeslot Availability</div>
+                      <div class="flex items-center gap-2">
+                        <input v-model="availabilityDate" type="date" class="rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" @change="loadAvailability" />
+                        <select v-model="selectedTimeslot" class="rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2">
+                          <option value="">All times</option>
+                          <option v-for="t in timeslots" :key="t" :value="t">{{ formatTime24To12(t) }}</option>
+                        </select>
+                        <button @click="loadAvailability" class="px-3 py-2 bg-[#2c4454] text-white rounded-md text-sm hover:opacity-90">Check</button>
+                      </div>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Time</th>
+                          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Scheduled</th>
+                          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Remaining</th>
+                          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Capacity</th>
+                          <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                        <tr v-for="t in filteredTimeslots" :key="t" class="hover:bg-gray-50">
+                          <td class="px-6 py-4 whitespace-nowrap text-[#2c4454]">{{ formatTime24To12(t) }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap text-[#2c4454] text-right">{{ counts[t] || 0 }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap text-[#2c4454] text-right">{{ (remainingPerSlot[t] ?? (capacity - (counts[t] || 0))) }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap text-[#2c4454] text-right">{{ capacity }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="occupiedTimes.includes(t) ? 'bg-red-100 text-red-700 ring-red-200' : 'bg-green-100 text-green-700 ring-green-200'">
+                              <span class="capitalize">{{ occupiedTimes.includes(t) ? 'Full' : 'Available' }}</span>
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
                   <!-- Pagination -->
                   <div class="mt-4 flex items-center justify-between">
                     <div class="flex items-center gap-2 text-sm text-[#2c4454]">
@@ -308,7 +402,7 @@ const calendarFullscreen = ref(false);
                         Full Screen
                       </button>
                     </div>
-                    <OccupiedCalendar :busy-dates="props.calendar?.busyDates || []" :year="props.calendar?.year || new Date().getFullYear()" />
+                    <OccupiedCalendar :busy-dates="props.calendar?.busyDates || []" :year="props.calendar?.year || new Date().getFullYear()" @select-date="onSelectDate" />
                   </div>
                 </aside>
               </div>
@@ -324,7 +418,7 @@ const calendarFullscreen = ref(false);
         <button @click="calendarFullscreen = false" class="px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">Close</button>
       </div>
       <div class="p-4 max-w-7xl mx-auto">
-        <OccupiedCalendar :busy-dates="props.calendar?.busyDates || []" :year="props.calendar?.year || new Date().getFullYear()" />
+        <OccupiedCalendar :busy-dates="props.calendar?.busyDates || []" :year="props.calendar?.year || new Date().getFullYear()" @select-date="onSelectDate" />
       </div>
     </div>
   </AppLayout>

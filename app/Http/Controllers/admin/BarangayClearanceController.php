@@ -48,6 +48,8 @@ class BarangayClearanceController extends Controller
         $data = (new BarangayClearanceDetailResource($clearance))->toArray($request);
         return Inertia::render('Admin/BarangayClearanceView', [
             'clearance' => $data,
+            'routeGroup' => 'admin',
+            'canApprove' => true,
         ]);
     }
 
@@ -64,10 +66,8 @@ class BarangayClearanceController extends Controller
             'remarks' => 'nullable|string',
         ]);
 
-        $clearance = BarangayClearance::findOrFail($id);
-        $clearance->status = $validated['status'];
-        $clearance->remarks = $validated['remarks'] ?? null;
-        $clearance->save();
+        // Use repository to ensure approval metadata is populated (issue/expiry dates, number)
+        $this->clearanceRepo->updateStatus((int)$id, (string)$validated['status'], $validated['remarks'] ?? null);
 
         return redirect()->route('admin.barangay-clearances.show', $id)
             ->with('success', 'Clearance status updated.');

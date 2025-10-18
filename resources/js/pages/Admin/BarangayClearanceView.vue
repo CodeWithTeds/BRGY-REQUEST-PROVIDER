@@ -239,6 +239,12 @@ const statusChip = (s: string) => {
                           <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
                         </div>
                       </template>
+                      <template v-else-if="props.clearance.status === 'pre-approved'">
+                        <div class="grid grid-cols-2 gap-2">
+                          <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Approve</button>
+                          <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
+                        </div>
+                      </template>
                       <template v-else>
                         <p class="text-sm text-[#2c4454] opacity-80">No actions available for this status.</p>
                       </template>

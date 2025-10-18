@@ -8,6 +8,7 @@ use App\Models\BarangayPermit;
 use App\Models\BarangayClearance;
 use App\Models\CertificateOfResidency;
 use App\Models\CertificateOfIndigency;
+use App\Models\AvailabilityWindow;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -202,10 +203,6 @@ class AppointmentController extends Controller
         $appointment = Appointment::findOrFail($id);
 
         $dtLocal = Carbon::createFromFormat('Y-m-d H:i', $data['date'].' '.$data['time'], 'Asia/Manila');
-        // Reject weekends
-        if ($dtLocal->isWeekend()) {
-            return back()->withErrors(['date' => 'Appointments are only available Monday to Friday.'])->withInput();
-        }
         $dt = $dtLocal->copy()->setTimezone('UTC');
         $hhmm = $dtLocal->format('H:i');
         if ($hhmm < '08:00' || $hhmm > '17:00') {
@@ -213,17 +210,32 @@ class AppointmentController extends Controller
                 ->withInput();
         }
 
-        $conflict = Appointment::query()
+        // Respect capacity per slot from availability window
+        $window = AvailabilityWindow::forDate($data['date']);
+        if (!$window) {
+            $window = AvailabilityWindow::create([
+                'date' => $data['date'],
+                'start_time' => '08:00',
+                'end_time' => '17:00',
+                'slot_interval_minutes' => 30,
+                'capacity_per_slot' => 10,
+                'is_active' => true,
+            ]);
+        }
+        $capacity = (int)($window->capacity_per_slot);
+
+        $countInSlot = Appointment::query()
             ->where('appointment_at', $dt)
             ->where('status', 'scheduled')
             ->where('id', '!=', $appointment->id)
-            ->exists();
-        if ($conflict) {
-            return back()->withErrors(['time' => 'Selected time slot is already taken. Please choose another time.'])
+            ->count();
+        if ($countInSlot >= $capacity) {
+            return back()->withErrors(['time' => 'Selected time slot is full. Please choose another time.'])
                 ->withInput();
         }
 
         $appointment->appointment_at = $dt;
+        $appointment->availability_window_id = $window?->id;
         if (!empty($data['remarks'])) {
             $appointment->remarks = $data['remarks'];
         }
@@ -239,5 +251,50 @@ class AppointmentController extends Controller
 
         return redirect()->route('admin.appointments.show', $appointment->id)
             ->with('success', 'Appointment rescheduled successfully.');
+    }
+
+    public function availability(Request $request)
+    {
+        $data = $request->validate([
+            'date' => ['required', 'date'],
+        ]);
+
+        $date = $data['date'];
+        $window = AvailabilityWindow::forDate($date);
+        $capacity = (int)($window?->capacity_per_slot ?? 10);
+
+        $dayLocalStart = Carbon::createFromFormat('Y-m-d H:i', $date.' 00:00', 'Asia/Manila');
+        $dayLocalEnd = Carbon::createFromFormat('Y-m-d H:i', $date.' 23:59', 'Asia/Manila');
+        $startUtc = $dayLocalStart->copy()->setTimezone('UTC');
+        $endUtc = $dayLocalEnd->copy()->setTimezone('UTC');
+
+        $appointments = Appointment::query()
+            ->whereBetween('appointment_at', [$startUtc, $endUtc])
+            ->where('status', 'scheduled')
+            ->get();
+
+        $counts = $appointments
+            ->map(function ($appt) {
+                return optional($appt->appointment_at)->copy()->setTimezone('Asia/Manila')->format('H:i');
+            })
+            ->countBy()
+            ->toArray();
+
+        $occupied = collect($counts)
+            ->filter(function ($c) use ($capacity) { return $c >= $capacity; })
+            ->keys()
+            ->values();
+
+        $remaining = collect($counts)
+            ->map(function ($c) use ($capacity) { return max($capacity - (int)$c, 0); })
+            ->toArray();
+
+        return response()->json([
+            'counts' => $counts,
+            'capacity' => $capacity,
+            'totalScheduled' => $appointments->count(),
+            'occupied' => $occupied,
+            'remainingPerSlot' => $remaining,
+        ]);
     }
 }

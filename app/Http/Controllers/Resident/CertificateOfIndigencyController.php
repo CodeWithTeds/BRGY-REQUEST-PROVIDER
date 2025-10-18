@@ -15,6 +15,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Resources\IndigencyCertificateDetailResource;
+use App\Models\AvailabilityWindow;
 
 class CertificateOfIndigencyController extends Controller
 {
@@ -221,13 +222,25 @@ class CertificateOfIndigencyController extends Controller
                 ->withInput();
         }
 
-        // Prevent double-booking: reject if slot already taken
-        $conflict = Appointment::query()
+        // Capacity-based booking from configured availability window
+        $window = AvailabilityWindow::forDate($data['date']);
+        if (!$window) {
+            $window = AvailabilityWindow::create([
+                'date' => $data['date'],
+                'start_time' => '08:00',
+                'end_time' => '17:00',
+                'slot_interval_minutes' => 30,
+                'capacity_per_slot' => 10,
+                'is_active' => true,
+            ]);
+        }
+        $capacity = (int)($window->capacity_per_slot);
+        $count = Appointment::query()
             ->where('appointment_at', $dt)
             ->where('status', 'scheduled')
-            ->exists();
-        if ($conflict) {
-            return back()->withErrors(['time' => 'Selected time slot is already taken. Please choose another time.'])
+            ->count();
+        if ($count >= $capacity) {
+            return back()->withErrors(['time' => 'Selected time slot is full. Please choose another time.'])
                 ->withInput();
         }
 
@@ -235,6 +248,7 @@ class CertificateOfIndigencyController extends Controller
         $indigency->appointments()->create([
             'appointment_at' => $dt,
             'status' => 'scheduled',
+            'availability_window_id' => $window->id,
         ]);
 
         return redirect()->route('resident.certificate-of-indigency.create')
@@ -248,22 +262,42 @@ class CertificateOfIndigencyController extends Controller
         ]);
 
         $date = $request->input('date');
+        $window = AvailabilityWindow::forDate($date);
+        $capacity = (int)($window?->capacity_per_slot ?? 10);
+
         $dayLocalStart = Carbon::createFromFormat('Y-m-d H:i', $date.' 00:00', 'Asia/Manila');
         $dayLocalEnd = Carbon::createFromFormat('Y-m-d H:i', $date.' 23:59', 'Asia/Manila');
         $startUtc = $dayLocalStart->copy()->setTimezone('UTC');
         $endUtc = $dayLocalEnd->copy()->setTimezone('UTC');
 
-        $occupied = Appointment::query()
+        $appointments = Appointment::query()
             ->whereBetween('appointment_at', [$startUtc, $endUtc])
             ->where('status', 'scheduled')
-            ->get()
+            ->get();
+
+        $counts = $appointments
             ->map(function ($appt) {
                 return optional($appt->appointment_at)->copy()->setTimezone('Asia/Manila')->format('H:i');
             })
-            ->unique()
+            ->countBy()
+            ->toArray();
+
+        $occupied = collect($counts)
+            ->filter(function ($c) use ($capacity) { return $c >= $capacity; })
+            ->keys()
             ->values();
 
-        return response()->json(['occupied' => $occupied]);
+        $remaining = collect($counts)
+            ->map(function ($c) use ($capacity) { return max($capacity - (int)$c, 0); })
+            ->toArray();
+
+        return response()->json([
+            'counts' => $counts,
+            'capacity' => $capacity,
+            'totalScheduled' => $appointments->count(),
+            'occupied' => $occupied,
+            'remainingPerSlot' => $remaining,
+        ]);
     }
 
     /**

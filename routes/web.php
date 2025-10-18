@@ -103,6 +103,10 @@ Route::prefix('resident')->middleware(['auth'])->group(function () {
     Route::get('/psgc/provinces/{code}/cities', [BarangayPermitController::class, 'citiesByProvince'])->name('psgc.cities.by-province');
     Route::get('/psgc/regions/{code}/cities', [BarangayPermitController::class, 'citiesByRegion'])->name('psgc.cities.by-region');
     Route::get('/psgc/cities/{code}/barangays', [BarangayPermitController::class, 'barangaysByCity'])->name('psgc.barangays.by-city');
+
+    Route::get('/availability', function () {
+        return Inertia::render('Resident/Availability');
+    })->name('resident.availability');
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -220,6 +224,8 @@ Route::prefix('admin')->group(function () {
         Route::post('appointments/{id}/reschedule', [App\Http\Controllers\Admin\AppointmentController::class, 'reschedule'])
             ->whereNumber('id')
             ->name('admin.appointments.reschedule');
+        Route::get('appointments/availability', [App\Http\Controllers\Admin\AppointmentController::class, 'availability'])
+            ->name('admin.appointments.availability');
     });
 });
 
