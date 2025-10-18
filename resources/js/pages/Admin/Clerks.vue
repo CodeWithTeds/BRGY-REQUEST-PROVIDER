@@ -111,6 +111,7 @@ function gotoPage(p: number) { page.value = p; applyFilters(p); }
           <table class="min-w-full divide-y divide-[#2c4454]/10">
             <thead>
               <tr class="bg-secondary/10">
+                <th class="px-6 py-3 text-left text-xs font-medium text-secondary">ID</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-secondary">Name</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-secondary">Email</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-secondary">Contact</th>
@@ -121,6 +122,7 @@ function gotoPage(p: number) { page.value = p; applyFilters(p); }
             </thead>
             <tbody class="divide-y divide-[#2c4454]/10">
               <tr v-for="c in props.clerks" :key="c.id">
+                <td class="px-6 py-3 whitespace-nowrap text-xs text-secondary">#{{ c.id }}</td>
                 <td class="px-6 py-3">
                   <template v-if="editingId === c.id">
                     <input v-model="editForm.name" type="text" class="w-full rounded border border-[#2c4454]/20 px-2 py-1 text-sm" />

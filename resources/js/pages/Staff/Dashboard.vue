@@ -147,13 +147,9 @@ const cards = computed(() => [
           </div>
           <p class="mt-2 text-xs text-emerald-100">Batch approve ready items</p>
         </Link>
-        <Link href="/staff/activity-log" class="rounded-xl bg-secondary text-white p-4 hover:bg-secondary/90 transition">
-          <div class="flex items-center gap-2">
-            <ScrollText class="h-4 w-4" />
-            <span class="text-sm font-semibold">Activity Log</span>
-          </div>
-          <p class="mt-2 text-xs text-white/80">See recent actions</p>
-        </Link>
+        
+        // Removed Activity Log quick action card
+        
         <Link :href="route('profile.edit')" class="rounded-xl bg-white p-4 ring-1 ring-black/5 hover:bg-secondary/10 transition">
     <div class="flex items-center gap-2 text-main">
       <LayoutGrid class="h-4 w-4" />

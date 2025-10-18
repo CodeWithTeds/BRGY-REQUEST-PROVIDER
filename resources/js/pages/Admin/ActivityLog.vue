@@ -3,8 +3,9 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { ScrollText, Search, Info } from 'lucide-vue-next';
+import { ScrollText, Search, Info, Hash, User, FileText, Calendar, ListFilter } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 
 interface LogItem {
@@ -35,18 +36,54 @@ const permitId = ref(props.filters?.permit_id ? String(props.filters?.permit_id)
 const dateFrom = ref(props.filters?.date_from || '');
 const dateTo = ref(props.filters?.date_to || '');
 const revertingId = ref<number | null>(null);
+const isLoading = ref(false);
+const showFilters = ref(true);
+
+function resetFilters() {
+  id.value = '';
+  action.value = '';
+  subjectType.value = '';
+  clerkId.value = '';
+  permitId.value = '';
+  dateFrom.value = '';
+  dateTo.value = '';
+  submitFilters();
+}
+
+function buildParams() {
+  return {
+    id: id.value || undefined,
+    action: action.value || undefined,
+    subject_type: subjectType.value || undefined,
+    clerk_id: clerkId.value || undefined,
+    permit_id: permitId.value || undefined,
+    date_from: dateFrom.value || undefined,
+    date_to: dateTo.value || undefined,
+  } as Record<string, string | number | undefined>;
+}
 
 function submitFilters() {
-  const base = route('admin.activity-log');
-  const params = new URLSearchParams();
-  if (id.value) params.set('id', id.value);
-  if (action.value) params.set('action', action.value);
-  if (subjectType.value) params.set('subject_type', subjectType.value);
-  if (clerkId.value) params.set('clerk_id', clerkId.value);
-  if (permitId.value) params.set('permit_id', permitId.value);
-  if (dateFrom.value) params.set('date_from', dateFrom.value);
-  if (dateTo.value) params.set('date_to', dateTo.value);
-  window.location.href = `${base}?${params.toString()}`;
+  const params = buildParams();
+  isLoading.value = true;
+  router.get(route('admin.activity-log'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['logs', 'filters'],
+    onFinish: () => { isLoading.value = false; },
+  });
+}
+
+function goToPage(page: number) {
+  const params = { ...buildParams(), page } as Record<string, string | number | undefined>;
+  isLoading.value = true;
+  router.get(route('admin.activity-log'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['logs', 'filters'],
+    onFinish: () => { isLoading.value = false; },
+  });
 }
 
 function subjectRoute(item: LogItem): string | null {
@@ -104,22 +141,84 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div class="flex flex-wrap items-center gap-2 mb-4">
-            <div class="flex items-center gap-2">
-              <Input v-model="id" placeholder="Filter by ID…" class="h-9 w-32" />
-              <Input v-model="action" placeholder="Filter by action…" class="h-9 w-40" />
-              <Input v-model="subjectType" placeholder="Filter by subject type…" class="h-9 w-56" />
-              <Input v-model="clerkId" placeholder="Filter by clerk ID…" class="h-9 w-40" />
-              <Input v-model="permitId" placeholder="Filter by permit ID…" class="h-9 w-40" />
-              <Input v-model="dateFrom" type="date" placeholder="From" class="h-9 w-40" />
-              <Input v-model="dateTo" type="date" placeholder="To" class="h-9 w-40" />
+          <div class="mb-4 rounded-xl bg-white ring-1 ring-black/5 shadow-sm">
+            <div class="flex items-center justify-between gap-2 p-3">
+              <div class="flex items-center gap-2 text-sm text-neutral-700">
+                <ListFilter class="h-4 w-4 text-secondary" />
+                <span class="font-medium">Filters</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <Button variant="ghost" size="sm" @click="showFilters = !showFilters">
+                  {{ showFilters ? 'Hide' : 'Show' }}
+                </Button>
+              </div>
             </div>
-            <Button variant="secondary" size="sm" @click="submitFilters">
-              <Search class="mr-2 h-4 w-4" /> Apply
-            </Button>
+
+            <div v-show="showFilters" class="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 border-t border-neutral-100">
+              <div>
+                <Label class="text-xs text-neutral-600">ID</Label>
+                <div class="relative">
+                  <Hash class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                  <Input v-model="id" placeholder="e.g. 123" class="h-9 w-full pl-9" @keydown.enter="submitFilters" />
+                </div>
+              </div>
+
+              <div>
+                <Label class="text-xs text-neutral-600">Action</Label>
+                <div class="relative">
+                  <ListFilter class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                  <Input v-model="action" placeholder="e.g. status_updated" class="h-9 w-full pl-9" @keydown.enter="submitFilters" />
+                </div>
+              </div>
+
+              <div>
+                <Label class="text-xs text-neutral-600">Subject Type</Label>
+                <div class="relative">
+                  <ScrollText class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                  <Input v-model="subjectType" placeholder="e.g. App\\Models\\BarangayPermit" class="h-9 w-full pl-9" @keydown.enter="submitFilters" />
+                </div>
+              </div>
+
+              <div>
+                <Label class="text-xs text-neutral-600">Clerk ID</Label>
+                <div class="relative">
+                  <User class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                  <Input v-model="clerkId" placeholder="e.g. 45" class="h-9 w-full pl-9" @keydown.enter="submitFilters" />
+                </div>
+              </div>
+
+              <div>
+                <Label class="text-xs text-neutral-600">Permit ID</Label>
+                <div class="relative">
+                  <FileText class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                  <Input v-model="permitId" placeholder="e.g. 789" class="h-9 w-full pl-9" @keydown.enter="submitFilters" />
+                </div>
+              </div>
+
+              <div>
+                <Label class="text-xs text-neutral-600">Date Range</Label>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="relative">
+                    <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                    <Input v-model="dateFrom" type="date" placeholder="From" class="h-9 w-full pl-9" />
+                  </div>
+                  <div class="relative">
+                    <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                    <Input v-model="dateTo" type="date" placeholder="To" class="h-9 w-full pl-9" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 flex items-center justify-end gap-2 border-t border-neutral-100">
+              <Button variant="outline" size="sm" @click="resetFilters">Reset</Button>
+              <Button variant="secondary" size="sm" :disabled="isLoading" @click="submitFilters">
+                <Search class="mr-2 h-4 w-4" /> {{ isLoading ? 'Applying…' : 'Apply' }}
+              </Button>
+            </div>
           </div>
 
-          <div class="overflow-hidden rounded-xl ring-1 ring-black/5 bg-white">
+          <div class="overflow-x-auto rounded-xl ring-1 ring-black/5 bg-white">
             <table class="min-w-full text-sm">
               <thead class="bg-neutral-50/80 text-neutral-600">
                 <tr>
@@ -138,7 +237,7 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
                   <td class="px-4 py-3">
                     <span
                       class="inline-flex items-center rounded-full bg-secondary/10 px-2 py-0.5 text-xs font-medium text-secondary">{{
-                      item.action }}</span>
+                        item.action }}</span>
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-2">
@@ -157,10 +256,12 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
                   </td>
                   <td class="px-4 py-3 text-neutral-700">{{ item.description || '—' }}</td>
                   <td class="px-4 py-3">
-                    <Button v-if="item.action === 'status_updated'" size="sm" variant="outline"
+                    <Button v-if="item.action === 'status_updated' && !(item.metadata && item.metadata.reverted)" size="sm" variant="outline"
                       :disabled="revertingId === item.id" @click="revert(item)">
                       {{ revertingId === item.id ? 'Reverting…' : 'Revert' }}
                     </Button>
+                    <span v-else-if="item.action === 'status_updated' && (item.metadata && item.metadata.reverted)"
+                      class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Reverted</span>
                   </td>
                   <td class="px-4 py-3">
                     <details class="text-neutral-700">
@@ -184,6 +285,13 @@ const userName = computed(() => page.props.auth?.user?.name || 'Admin');
           <div class="mt-4 flex items-center justify-between text-xs text-neutral-600">
             <div>
               Page {{ props.logs.current_page }} of {{ props.logs.last_page }} • {{ props.logs.total }} total
+            </div>
+            <div class="flex items-center gap-2">
+              <Button size="sm" variant="outline" :disabled="props.logs.current_page <= 1 || isLoading"
+                @click="goToPage(props.logs.current_page - 1)">Prev</Button>
+              <Button size="sm" variant="outline"
+                :disabled="props.logs.current_page >= props.logs.last_page || isLoading"
+                @click="goToPage(props.logs.current_page + 1)">Next</Button>
             </div>
           </div>
         </CardContent>

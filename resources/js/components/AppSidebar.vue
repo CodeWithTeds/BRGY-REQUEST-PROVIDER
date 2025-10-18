@@ -106,11 +106,9 @@ const staffNavItems: NavItem[] = [
         href: '/staff/indigency-certificates',
         icon: IdCard,
     },
-    {
-        title: 'Activity Log',
-        href: '/staff/activity-log',
-        icon: ScrollText,
-    },
+    
+    // Removed Activity Log entry from staff sidebar
+    
     {
         title: 'Profile Settings',
         href: '/settings/profile',

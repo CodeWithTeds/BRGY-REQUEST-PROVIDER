@@ -108,6 +108,14 @@ class ActivityLogController extends Controller
         $model->setAttribute('status', $from);
         $model->save();
 
+        // Mark the original status update log as reverted so UI can hide the action
+        $activityLog->metadata = array_merge($meta, [
+            'reverted' => true,
+            'reverted_at' => now()->toDateTimeString(),
+        ]);
+        $activityLog->description = 'Status update reverted';
+        $activityLog->save();
+
         \App\Services\ActivityLogger::log('status_reverted', $model, [
             'from' => $current,
             'to' => $from,
