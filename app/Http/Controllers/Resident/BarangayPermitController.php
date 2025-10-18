@@ -51,6 +51,13 @@ class BarangayPermitController extends Controller
             ]);
         }
 
+        // If latest permit is pre-approved, show the pending page with status tracker
+        if ($latest && $latest->status === 'pre-approved') {
+            return Inertia::render('Resident/BarangayPermit/Pending', [
+                'permit' => $latest,
+            ]);
+        }
+
         $ap = Auth::user()->applicantProfile;
         $apData = $ap ? [
             'first_name' => $ap->first_name,

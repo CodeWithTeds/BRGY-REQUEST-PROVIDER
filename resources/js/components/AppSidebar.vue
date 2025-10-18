@@ -72,11 +72,6 @@ const adminNavItems: NavItem[] = [
         href: '/admin/activity-log',
         icon: ScrollText,
     },
-    {
-        title: 'Profile Settings',
-        href: '/settings/profile',
-        icon: UserCheck,
-    },
 ];
 
 // Staff/Clerk sidebar items
@@ -108,29 +103,19 @@ const staffNavItems: NavItem[] = [
     },
     
     // Removed Activity Log entry from staff sidebar
-    
-    {
-        title: 'Profile Settings',
-        href: '/settings/profile',
-        icon: UserCheck,
-    },
 ];
 
 // Footer external links removed per request
 
-const isAdmin = computed(() => {
-    const path = window.location.pathname;
-    return path.startsWith('/admin') || path.includes('/admin/');
-});
-
-const isStaff = computed(() => {
-    const path = window.location.pathname;
-    return path.startsWith('/staff') || path.includes('/staff/');
-});
+const page = usePage();
+const userRole = computed(() => (page.props as any).auth?.user?.role ?? 'resident');
 
 const navItems = computed(() => {
-    return isAdmin.value ? adminNavItems : isStaff.value ? staffNavItems : mainNavItems;
+    if (userRole.value === 'admin') return adminNavItems;
+    if (userRole.value === 'staff' || userRole.value === 'clerk') return staffNavItems;
+    return mainNavItems;
 });
+
 </script>
 
 <template>

@@ -148,15 +148,6 @@ const cards = computed(() => [
           <p class="mt-2 text-xs text-emerald-100">Batch approve ready items</p>
         </Link>
         
-        // Removed Activity Log quick action card
-        
-        <Link :href="route('profile.edit')" class="rounded-xl bg-white p-4 ring-1 ring-black/5 hover:bg-secondary/10 transition">
-    <div class="flex items-center gap-2 text-main">
-      <LayoutGrid class="h-4 w-4" />
-      <span class="text-sm font-semibold">Profile settings</span>
-    </div>
-    <p class="mt-2 text-xs text-secondary">Update your account</p>
-  </Link>
       </section>
       <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="rounded-xl bg-white p-4 ring-1 ring-black/5">
@@ -193,14 +184,7 @@ const cards = computed(() => [
             </div>
           </div>
         </div>
-        <div class="rounded-xl bg-neutral-900 text-white p-4">
-          <h4 class="text-sm font-semibold">Tips</h4>
-          <p class="mt-2 text-sm text-neutral-300">Use batch approve and filters to speed up processing.</p>
-          <Link href="#" class="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20">
-            <ClipboardList class="h-3.5 w-3.5" />
-            Learn batch actions
-          </Link>
-        </div>
+        
       </section>
     </div>
   </AppLayout>

@@ -4,27 +4,27 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: '/settings/profile',
-    },
-    {
-        title: 'Personal Information',
-        href: '/settings/personal-information',
-    },
-    {
-        title: 'Password',
-        href: '/settings/password',
-    },
-    {
-        title: 'Appearance',
-        href: '/settings/appearance',
-    },
-];
+import { computed } from 'vue';
 
 const page = usePage();
+const role = computed(() => ((page.props as any).auth?.user?.role) ?? 'resident');
+
+const sidebarNavItems = computed<NavItem[]>(() => {
+    const base: NavItem[] = [
+        { title: 'Profile', href: '/settings/profile' },
+        { title: 'Password', href: '/settings/password' },
+        { title: 'Appearance', href: '/settings/appearance' },
+    ];
+    const isResident = role.value !== 'admin' && role.value !== 'staff' && role.value !== 'clerk';
+    return isResident
+        ? [
+            { title: 'Profile', href: '/settings/profile' },
+            { title: 'Personal Information', href: '/settings/personal-information' },
+            { title: 'Password', href: '/settings/password' },
+            { title: 'Appearance', href: '/settings/appearance' },
+        ]
+        : base;
+});
 
 const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.location).pathname : '';
 </script>
