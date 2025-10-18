@@ -95,6 +95,24 @@ class AppointmentController extends Controller
             'no_show' => Appointment::where('status', 'no_show')->count(),
         ];
 
+        // Calendar: busy dates for the selected (or current) year
+        $calendarYear = $request->integer('calendar_year') ?: Carbon::now('Asia/Manila')->year;
+        $startLocal = Carbon::create($calendarYear, 1, 1, 0, 0, 0, 'Asia/Manila');
+        $endLocal = $startLocal->copy()->endOfYear();
+
+        $busyDates = Appointment::query()
+            ->whereBetween('appointment_at', [
+                $startLocal->copy()->setTimezone('UTC'),
+                $endLocal->copy()->setTimezone('UTC'),
+            ])
+            ->where('status', 'scheduled')
+            ->get(['appointment_at'])
+            ->map(function (Appointment $a) {
+                return optional($a->appointment_at)->copy()->setTimezone('Asia/Manila')->toDateString();
+            })
+            ->unique()
+            ->values();
+
         return Inertia::render('Admin/Appointments', [
             'items' => $items,
             'stats' => $stats,
@@ -119,6 +137,10 @@ class AppointmentController extends Controller
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
                 'q' => $q,
+            ],
+            'calendar' => [
+                'busyDates' => $busyDates,
+                'year' => $calendarYear,
             ],
         ]);
     }

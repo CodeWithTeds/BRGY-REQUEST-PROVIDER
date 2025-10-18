@@ -5,6 +5,7 @@ import type { BreadcrumbItem } from '@/types';
 import { ref, computed } from 'vue';
 import { CalendarDays, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-vue-next';
 import Toastify from 'toastify-js';
+import OccupiedCalendar from '@/components/OccupiedCalendar.vue';
 
 interface AppointmentItem {
   id: number;
@@ -44,12 +45,18 @@ interface QueryProp {
   q?: string | null;
 }
 
+interface CalendarProp {
+  busyDates: string[];
+  year: number;
+}
+
 const props = defineProps<{
   items: AppointmentItem[];
   stats: Stats;
   pagination: Pagination;
   filters: FiltersProp;
   query: QueryProp;
+  calendar: CalendarProp;
 }>();
 
 const basePath = computed(() => `/admin/appointments`);
@@ -148,6 +155,7 @@ const breadcrumbs: BreadcrumbItem[] = [
   { title: 'Admin', href: '/admin/dashboard' },
   { title: 'Appointments', href: basePath.value },
 ];
+const calendarFullscreen = ref(false);
 </script>
 
 <template>
@@ -157,12 +165,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     <template #header>
       <div class="flex items-center justify-between">
         <div class="text-sm text-[#2c4454]">All Appointments: <span class="font-semibold">{{ props.stats.total }}</span></div>
-        <div class="flex items-center gap-4">
-          <Link :href="basePath" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] text-sm rounded-md hover:bg-gray-50">
-            <CalendarDays class="h-4 w-4" />
-            <span>Calendar</span>
-          </Link>
-        </div>
       </div>
       <div class="mt-2 text-lg font-semibold text-[#2c4454]">Appointment Management</div>
       <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -189,114 +191,140 @@ const breadcrumbs: BreadcrumbItem[] = [
       <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6 space-y-6">
-              <!-- Filters -->
-              <div class="rounded-lg border border-[#2c4454]/20 p-4">
-                <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
-                  <div>
-                    <label class="block text-xs text-[#2c4454] opacity-70">Status</label>
-                    <select v-model="status" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2">
-                      <option value="">All</option>
-                      <option v-for="s in props.filters.statusOptions" :key="s" :value="s">{{ s }}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-xs text-[#2c4454] opacity-70">Type</label>
-                    <select v-model="type" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2">
-                      <option value="">All</option>
-                      <option v-for="t in props.filters.typeOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-xs text-[#2c4454] opacity-70">Date from</label>
-                    <input v-model="dateFrom" type="date" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
-                  </div>
-                  <div>
-                    <label class="block text-xs text-[#2c4454] opacity-70">Date to</label>
-                    <input v-model="dateTo" type="date" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
-                  </div>
-                  <div class="md:col-span-2">
-                    <label class="block text-xs text-[#2c4454] opacity-70">Search</label>
-                    <div class="mt-1 flex items-center gap-2">
-                      <div class="relative w-full">
-                        <Search class="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[#2c4454] opacity-60" />
-                        <input v-model="q" type="text" placeholder="Search by applicant or ID" class="w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 pl-8 pr-2" />
+            <div class="p-6">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Main column -->
+                <div class="lg:col-span-9 space-y-6">
+                  <!-- Filters -->
+                  <div class="rounded-lg border border-[#2c4454]/20 p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                      <div>
+                        <label class="block text-xs text-[#2c4454] opacity-70">Status</label>
+                        <select v-model="status" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2">
+                          <option value="">All</option>
+                          <option v-for="s in props.filters.statusOptions" :key="s" :value="s">{{ s }}</option>
+                        </select>
                       </div>
-                      <button @click="applyFilters()" class="px-3 py-2 bg-[#2c4454] text-white rounded-md text-sm hover:opacity-90">Apply</button>
-                      <button @click="clearFilters()" class="px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">Clear</button>
+                      <div>
+                        <label class="block text-xs text-[#2c4454] opacity-70">Type</label>
+                        <select v-model="type" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2">
+                          <option value="">All</option>
+                          <option v-for="t in props.filters.typeOptions" :key="t.value" :value="t.value">{{ t.label }}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="block text-xs text-[#2c4454] opacity-70">Date from</label>
+                        <input v-model="dateFrom" type="date" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
+                      </div>
+                      <div>
+                        <label class="block text-xs text-[#2c4454] opacity-70">Date to</label>
+                        <input v-model="dateTo" type="date" class="mt-1 w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 px-2" />
+                      </div>
+                      <div class="md:col-span-2">
+                        <label class="block text-xs text-[#2c4454] opacity-70">Search</label>
+                        <div class="mt-1 flex items-center gap-2">
+                          <div class="relative w-full">
+                            <Search class="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[#2c4454] opacity-60" />
+                            <input v-model="q" type="text" placeholder="Search by applicant or ID" class="w-full rounded-md border border-[#2c4454]/20 text-sm text-[#2c4454] py-2 pl-8 pr-2" />
+                          </div>
+                          <button @click="applyFilters()" class="px-3 py-2 bg-[#2c4454] text-white rounded-md text-sm hover:opacity-90">Apply</button>
+                          <button @click="clearFilters()" class="px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">Clear</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Table -->
+                  <div class="rounded-lg border border-[#2c4454]/20 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">ID</th>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Applicant</th>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Type</th>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Appointment</th>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Status</th>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                        <tr v-for="item in props.items" :key="item.id" class="hover:bg-gray-50">
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">#{{ item.id }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ item.applicant_name || '—' }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">
+                            <template v-if="item.appointable_id && appointableHref(item)">
+                              <Link :href="appointableHref(item)" class="text-[#2c4454] hover:underline">{{ item.type }} #{{ item.appointable_id }}</Link>
+                            </template>
+                            <template v-else>
+                              {{ item.type }}
+                            </template>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ formatDate(item.appointment_at) }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(item.status)">
+                              <span class="capitalize">{{ item.status.replace('_', ' ') }}</span>
+                            </span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                              <Link :href="`${basePath}/${item.id}`" class="text-[#2c4454] hover:opacity-80" title="View Appointment">
+                                <Eye class="h-5 w-5" />
+                              </Link>
+                              <Link v-if="item.appointable_id && appointableHref(item)" :href="appointableHref(item)" class="text-[#2c4454] hover:opacity-80" title="Open Record">
+                                <CalendarDays class="h-5 w-5" />
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Pagination -->
+                  <div class="mt-4 flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-sm text-[#2c4454]">
+                      <label>Rows per page</label>
+                      <span class="font-medium">{{ props.pagination.per_page }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button :disabled="props.pagination.current_page <= 1" @click="applyFilters(props.pagination.current_page - 1)" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50 disabled:opacity-50">
+                        <ChevronLeft class="h-4 w-4" />
+                        Prev
+                      </button>
+                      <div class="text-sm text-[#2c4454]">Page <span class="font-semibold">{{ props.pagination.current_page }}</span> of <span class="font-semibold">{{ props.pagination.last_page }}</span></div>
+                      <button :disabled="props.pagination.current_page >= props.pagination.last_page" @click="applyFilters(props.pagination.current_page + 1)" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50 disabled:opacity-50">
+                        Next
+                        <ChevronRight class="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Table -->
-              <div class="rounded-lg border border-[#2c4454]/20 overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">ID</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Applicant</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Type</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Appointment</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Status</th>
-                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-[#2c4454] uppercase tracking-wider opacity-70">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="item in props.items" :key="item.id" class="hover:bg-gray-50">
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">#{{ item.id }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ item.applicant_name || '—' }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">
-                        <template v-if="item.appointable_id && appointableHref(item)">
-                          <Link :href="appointableHref(item)" class="text-[#2c4454] hover:underline">{{ item.type }} #{{ item.appointable_id }}</Link>
-                        </template>
-                        <template v-else>
-                          {{ item.type }}
-                        </template>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-[#2c4454]">{{ formatDate(item.appointment_at) }}</td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1" :class="statusChip(item.status)">
-                          <span class="capitalize">{{ item.status.replace('_', ' ') }}</span>
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div class="flex space-x-2">
-                          <Link :href="`${basePath}/${item.id}`" class="text-[#2c4454] hover:opacity-80" title="View Appointment">
-                            <Eye class="h-5 w-5" />
-                          </Link>
-                          <Link v-if="item.appointable_id && appointableHref(item)" :href="appointableHref(item)" class="text-[#2c4454] hover:opacity-80" title="Open Record">
-                            <CalendarDays class="h-5 w-5" />
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                <!-- Sidebar column -->
+                <aside class="lg:col-span-3">
+                  <div class="rounded-lg border border-[#2c4454]/20 p-4 sticky lg:top-6 space-y-3">
+                    <div class="flex items-center justify-end">
+                      <button @click="calendarFullscreen = true" class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-[#2c4454]/20 text-[#2c4454] text-xs rounded-md hover:bg-gray-50">
+                        Full Screen
+                      </button>
+                    </div>
+                    <OccupiedCalendar :busy-dates="props.calendar?.busyDates || []" :year="props.calendar?.year || new Date().getFullYear()" />
+                  </div>
+                </aside>
               </div>
-
-              <!-- Pagination -->
-              <div class="mt-4 flex items-center justify-between">
-                <div class="flex items-center gap-2 text-sm text-[#2c4454]">
-                  <label>Rows per page</label>
-                  <span class="font-medium">{{ props.pagination.per_page }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button :disabled="props.pagination.current_page <= 1" @click="applyFilters(props.pagination.current_page - 1)" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50 disabled:opacity-50">
-                    <ChevronLeft class="h-4 w-4" />
-                    Prev
-                  </button>
-                  <div class="text-sm text-[#2c4454]">Page <span class="font-semibold">{{ props.pagination.current_page }}</span> of <span class="font-semibold">{{ props.pagination.last_page }}</span></div>
-                  <button :disabled="props.pagination.current_page >= props.pagination.last_page" @click="applyFilters(props.pagination.current_page + 1)" class="inline-flex items-center gap-2 rounded-md border border-[#2c4454]/20 bg-white px-3 py-2 text-sm text-[#2c4454] hover:bg-gray-50 disabled:opacity-50">
-                    Next
-                    <ChevronRight class="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
+      </div>
+    </div>
+    <!-- Fullscreen Calendar Overlay -->
+    <div v-if="calendarFullscreen" class="fixed inset-0 z-50 bg-white">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[#2c4454]/20">
+        <div class="text-lg font-semibold text-[#2c4454]">Appointments Calendar – {{ props.calendar?.year || new Date().getFullYear() }}</div>
+        <button @click="calendarFullscreen = false" class="px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">Close</button>
+      </div>
+      <div class="p-4 max-w-7xl mx-auto">
+        <OccupiedCalendar :busy-dates="props.calendar?.busyDates || []" :year="props.calendar?.year || new Date().getFullYear()" />
       </div>
     </div>
   </AppLayout>
