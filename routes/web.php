@@ -233,6 +233,8 @@ Route::prefix('admin')->group(function () {
         // Admin Appointments Management
         Route::get('appointments', [App\Http\Controllers\Admin\AppointmentController::class, 'index'])
             ->name('admin.appointments');
+        Route::get('appointments/availability', [App\Http\Controllers\Admin\AppointmentController::class, 'availability'])
+            ->name('admin.appointments.availability');
         Route::get('appointments/{id}', [App\Http\Controllers\Admin\AppointmentController::class, 'show'])
             ->whereNumber('id')
             ->name('admin.appointments.show');
