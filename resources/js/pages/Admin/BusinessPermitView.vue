@@ -260,7 +260,7 @@ const statusChip = (s: string) => {
                       </template>
                       <template v-else-if="props.permit.status === 'pre-approved'">
                         <p class="text-sm text-[#2c4454] opacity-80">This permit is pre-approved by staff, awaiting admin approval.</p>
-                        <div class="mt-2 grid grid-cols-2 gap-2">
+                        <div v-if="props.canApprove" class="mt-2 grid grid-cols-2 gap-2">
                           <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Approve</button>
                           <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
                         </div>
@@ -298,7 +298,7 @@ const statusChip = (s: string) => {
   </AppLayout>
 </template>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 .bp-theme {
   font-family: 'Space Grotesk', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }

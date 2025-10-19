@@ -33,9 +33,13 @@
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" integrity="sha512-V8lwX9U8YAA3Z2l8QavKkUqx8b3FShMPhj4jC9u1ikYk3SvgHkFT07JtvtzcU/yjkGfcmk6x7YBTIfr0jGfx6w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
         @routes
-        @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
+        @vite('resources/js/app.ts')
         @inertiaHead
     </head>
     <body class="">

@@ -302,7 +302,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 </template>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 
 .bp-theme {
   font-family: 'Space Grotesk', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
