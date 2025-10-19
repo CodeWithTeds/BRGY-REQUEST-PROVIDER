@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import type { BreadcrumbItem } from '@/types';
-import { Eye, Trash2, Settings, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { Eye, Trash2, Settings, ChevronLeft, ChevronRight, FileText } from 'lucide-vue-next';
 import PermitStatsCards from '@/components/Admin/PermitStatsCards.vue';
 import { ref, computed } from 'vue';
 import Toastify from 'toastify-js';
@@ -262,6 +262,9 @@ const breadcrumbs: BreadcrumbItem[] = [
                         <div class="flex space-x-2">
                           <a :href="`${basePath}/${item.id}`" class="text-[#2c4454] hover:opacity-80" title="View">
                             <Eye class="h-5 w-5" />
+                          </a>
+                          <a v-if="item.status === 'approved'" :href="`${basePath}/${item.id}/pdf`" :download="`certificate-of-residency-${item.id}.pdf`" class="text-[#2c4454] hover:opacity-80" title="Download PDF">
+                            <FileText class="h-5 w-5" />
                           </a>
                           <button v-if="props.canDelete ?? true" class="text-red-600 hover:opacity-80" title="Delete" @click="deleteResidency(item.id)">
                             <Trash2 class="h-5 w-5" />

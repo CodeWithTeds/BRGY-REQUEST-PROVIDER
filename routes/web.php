@@ -5,7 +5,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Resident\BarangayPermitController;
 use App\Http\Controllers\Resident\BarangayClearanceController;
 use App\Http\Controllers\Resident\CertificateOfResidencyController;
- use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -171,6 +171,11 @@ Route::prefix('admin')->group(function () {
 
         Route::get('barangay-clearances/{id}/documents/{docId}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'viewDocument'])
             ->name('admin.barangay-clearances.documents.view');
+        
+        // Stream approved clearance PDF inline (admin)
+        Route::get('barangay-clearances/{id}/pdf', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'viewPdf'])
+            ->whereNumber('id')
+            ->name('admin.barangay-clearances.pdf');
             
         Route::post('barangay-clearances/{id}/status', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'updateStatus'])
             ->name('admin.barangay-clearances.update-status');
@@ -185,6 +190,10 @@ Route::prefix('admin')->group(function () {
         // View supporting document file inline in browser
         Route::get('residency-certificates/{id}/documents/{docId}', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'viewDocument'])
             ->name('admin.residency-certificates.documents.view');
+        // Admin: Download approved residency certificate as PDF
+        Route::get('residency-certificates/{id}/pdf', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'downloadPdf'])
+            ->whereNumber('id')
+            ->name('admin.residency-certificates.pdf');
         // Update status and remarks
         Route::post('residency-certificates/{id}/status', [App\Http\Controllers\Admin\ResidencyCertificateController::class, 'updateStatus'])
             ->name('admin.residency-certificates.update-status');
@@ -198,6 +207,10 @@ Route::prefix('admin')->group(function () {
             ->name('admin.indigency-certificates.destroy');
         Route::get('indigency-certificates/{id}/documents/{docId}', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'viewDocument'])
             ->name('admin.indigency-certificates.documents.view');
+        // New: Stream approved certificate PDF inline (admin)
+        Route::get('indigency-certificates/{id}/pdf', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'viewPdf'])
+            ->whereNumber('id')
+            ->name('admin.indigency-certificates.pdf');
         Route::post('indigency-certificates/{id}/status', [App\Http\Controllers\Admin\IndigencyCertificateController::class, 'updateStatus'])
             ->name('admin.indigency-certificates.update-status');
 
@@ -229,12 +242,10 @@ Route::prefix('admin')->group(function () {
         Route::post('appointments/{id}/reschedule', [App\Http\Controllers\Admin\AppointmentController::class, 'reschedule'])
             ->whereNumber('id')
             ->name('admin.appointments.reschedule');
-        Route::get('appointments/availability', [App\Http\Controllers\Admin\AppointmentController::class, 'availability'])
-            ->name('admin.appointments.availability');
     });
 });
 
-
+require __DIR__ . '/settings.php';
 
 Route::prefix('staff')->middleware(['auth', 'staff'])->group(function () {
     Route::get('dashboard', [App\Http\Controllers\Staff\DashboardController::class, 'index'])
@@ -270,8 +281,6 @@ Route::prefix('staff')->middleware(['auth', 'staff'])->group(function () {
     Route::get('residency-certificates/{id}/documents/{docId}', [App\Http\Controllers\Staff\ResidencyCertificateController::class, 'viewDocument'])
         ->name('staff.residency-certificates.documents.view');
 
-
-
     // Staff Indigency Certificates
     Route::get('indigency-certificates', [App\Http\Controllers\Staff\IndigencyCertificateController::class, 'index'])
         ->name('staff.indigency-certificates');
@@ -283,5 +292,4 @@ Route::prefix('staff')->middleware(['auth', 'staff'])->group(function () {
         ->name('staff.indigency-certificates.documents.view');
 });
 
-require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

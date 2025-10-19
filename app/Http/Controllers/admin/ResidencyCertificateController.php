@@ -12,6 +12,7 @@ use App\Http\Resources\ResidencyCertificateDetailResource;
 use App\Traits\DocumentStreaming;
 use App\Http\Requests\AdminListRequest;
 use App\Services\AdminListService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ResidencyCertificateController extends Controller
 {
@@ -92,5 +93,24 @@ class ResidencyCertificateController extends Controller
     {
         CertificateOfResidency::findOrFail($id);
         return $this->streamSupportingDocument((int) $id, (int) $docId, 'certificate_of_residency_id');
+    }
+
+    public function downloadPdf(int $id)
+    {
+        $certificate = $this->repo->getWithAllRelations($id);
+
+        if ($certificate->status !== 'approved') {
+            return redirect()->route('admin.residency-certificates.show', $id)
+                ->with('error', 'PDF is available only after approval.');
+        }
+
+        $data = (new ResidencyCertificateDetailResource($certificate))->toArray(request());
+        $viewData = [
+            'certificate' => $data,
+            'logoPath' => public_path('images/brg.png'),
+        ];
+
+        $pdf = Pdf::setPaper('A4')->loadView('pdf.certificate_of_residency', $viewData);
+        return $pdf->download('certificate-of-residency-' . $certificate->id . '.pdf');
     }
 }

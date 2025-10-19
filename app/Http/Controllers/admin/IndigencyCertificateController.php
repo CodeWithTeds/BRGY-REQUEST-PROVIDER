@@ -9,6 +9,7 @@ use App\Repositories\CertificateOfIndigencyRepository;
 use App\Traits\DocumentStreaming;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class IndigencyCertificateController extends Controller
 {
@@ -36,7 +37,7 @@ class IndigencyCertificateController extends Controller
             'filters' => $request->only(['name', 'status', 'date_from', 'date_to']),
             'pagination' => $result['pagination'],
             'routeGroup' => 'admin',
-            'canDelete' => true,
+            'canDelete' => false,
         ]);
     }
 
@@ -82,5 +83,27 @@ class IndigencyCertificateController extends Controller
     public function viewDocument(int $id, int $docId)
     {
         return $this->streamSupportingDocument($id, $docId, 'certificate_of_indigency_id');
+    }
+
+    /**
+     * Stream approved indigency certificate PDF inline for admin viewing.
+     */
+    public function viewPdf(Request $request, int $id)
+    {
+        $certificate = $this->repository->getWithAllRelations($id);
+
+        if ($certificate->status !== 'approved') {
+            return redirect()->route('admin.indigency-certificates.show', $id)
+                ->with('error', 'PDF is available only for approved certificates.');
+        }
+
+        $data = (new IndigencyCertificateDetailResource($certificate))->toArray($request);
+        $viewData = [
+            'certificate' => $data,
+            'logoPath' => public_path('images/brg.png'),
+        ];
+
+        $pdf = Pdf::setPaper('A4')->loadView('pdf.certificate_of_indigency', $viewData);
+        return $pdf->stream('certificate-of-indigency-' . $certificate->id . '.pdf', ['Attachment' => false]);
     }
 }

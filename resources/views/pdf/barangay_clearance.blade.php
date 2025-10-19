@@ -3,147 +3,104 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Barangay Clearance – Letter</title>
+    <title>Barangay Clearance</title>
     <style>
-        /* Page setup */
-        @page { size: A4; margin: 18mm; }
-        body { font-family: DejaVu Sans, Arial, Helvetica, sans-serif; color: #2C4854; }
+        @page { size: A4; margin: 16mm; }
+        body { font-family: DejaVu Sans, Arial, Helvetica, sans-serif; color: #111; }
 
-        /* Letter canvas */
-        .letter { width: 100%; }
+        .page { border: 3px solid #000; padding: 14mm; }
 
-        /* Curved header line */
-        .curve { height: 36px; width: 100%; background: #0a4b78; border-bottom-left-radius: 36px; border-bottom-right-radius: 36px; }
+        /* Header */
+        .header { text-align: center; margin-bottom: 8mm; }
+        .header-top { font-size: 12px; line-height: 1.4; }
+        .barangay-name { font-size: 24px; font-weight: 700; color: #0a4b78; margin-top: 2mm; }
+        .rule { height: 1px; background: #000; margin: 6mm 0 4mm; }
 
-        /* Header content */
-        .header-content { margin-top: 16px; display: table; width: 100%; }
-        .header-left { display: table-cell; vertical-align: middle; }
-        .seal { display: inline-block; height: 54px; width: auto; margin-right: 10px; }
-        .company-name { font-size: 18px; font-weight: 700; color: #0a4b78; }
-        .company-tagline { font-size: 12px; color: #126d99; }
+        .seal { display: inline-block; height: 54px; width: auto; position: relative; top: -6px; margin-right: 6px; }
+
+        /* Document titles */
+        .office { text-align: center; font-weight: 700; margin-top: 1mm; }
+        .doc-title { text-align: center; font-size: 18px; font-weight: 800; margin: 2mm 0 6mm; }
 
         /* Body */
-        .content { margin-top: 18px; }
-        .to-label { font-size: 12px; opacity: 0.7; }
-        .to-name { font-size: 16px; font-weight: 700; color: #0a4b78; }
-        .to-sub { font-size: 12px; color: #126d99; }
-        .to-address { font-size: 12px; opacity: 0.85; }
+        .to-whom { font-weight: 700; margin-bottom: 3mm; }
+        .paragraph { font-size: 13px; line-height: 1.65; text-align: justify; margin: 0 0 4mm; }
 
-        .date-label { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-        .date-value { font-size: 14px; font-weight: 600; }
+        /* Signature */
+        .signature { margin-top: 10mm; display: block; }
+        .signature .name { font-weight: 700; }
+        .signature .title { font-size: 12px; opacity: 0.8; }
+        .sig-line { margin-top: 12mm; border-bottom: 1px dashed #444; width: 220px; }
+        .sig-block { text-align: right; }
 
-        .greeting { font-weight: 600; margin-top: 12px; }
-        .paragraph { margin-top: 10px; font-size: 13px; line-height: 1.6; color: #2C4854; }
-
-        /* Details table */
-        .details { margin-top: 14px; width: 100%; border-collapse: collapse; }
-        .details td { padding: 6px 8px; border: 1px solid #d1d5db; font-size: 12px; }
-        .details .label { opacity: 0.7; }
-        .details .value { font-weight: 600; }
-
-        /* From/signature */
-        .from { margin-top: 24px; }
-        .from-name { font-weight: 700; color: #126d99; }
-        .from-title { font-size: 12px; opacity: 0.8; }
-        .signature-line { margin-top: 18px; font-size: 12px; opacity: 0.6; }
-
-        /* Footer */
-        .footer { margin-top: 12px; }
-        .footer-bar { height: 24px; width: 100%; background: #0a4b78; }
-        .footer-content { font-size: 11px; color: #fff; margin-top: 6px; display: table; width: 100%; }
-        .footer-content > div { display: table-cell; width: 33%; }
+        /* Footer meta */
+        .meta { margin-top: 14mm; font-size: 12px; }
+        .meta td { padding: 2mm 4mm 0 0; }
     </style>
-    <!-- Ensure image path is local filesystem for DomPDF -->
 </head>
 <body>
-    <div class="letter">
-        <!-- Single curved header line -->
-        <div class="curve"></div>
+@php
+    $primary = ($clearance['addresses'] ?? []) ? $clearance['addresses'][0] : null;
+    $barangay = $primary['barangay'] ?? '—';
+    $city = $primary['city'] ?? '—';
+    $province = $primary['province'] ?? '—';
+    $fullName = $clearance['full_name'] ?? '—';
+    $dob = $clearance['applicant_profile']['date_of_birth'] ?? null;
+    $age = $dob ? \Carbon\Carbon::parse($dob)->age : '—';
+    $gender = strtolower($clearance['gender'] ?? '');
+    $pronoun = $gender === 'male' ? 'he' : ($gender === 'female' ? 'she' : 'he/she');
+    $issueDate = $clearance['issue_date'] ?? ($clearance['application_date'] ?? null);
+    $issuedDay = $issueDate ? \Carbon\Carbon::parse($issueDate)->format('d') : now()->format('d');
+    $issuedMonth = $issueDate ? \Carbon\Carbon::parse($issueDate)->format('F') : now()->format('F');
+    $issuedYear = $issueDate ? \Carbon\Carbon::parse($issueDate)->format('Y') : now()->format('Y');
+    $orNumber = $clearance['clearance_number'] ?? '____________________';
+@endphp
 
-        <!-- Header content -->
-        <div class="header-content">
-            <div class="header-left">
-                @if (!empty($logoPath))
-                    <img src="{{ $logoPath }}" alt="Barangay Seal" class="seal" />
-                @endif
-                <span class="company-name">Barangay Office</span><br/>
-                <span class="company-tagline">Barangay Clearance Confirmation</span>
-            </div>
+<div class="page">
+    <div class="header">
+        @if (!empty($logoPath))
+            <img src="{{ $logoPath }}" alt="Barangay Seal" class="seal" />
+        @endif
+        <div class="header-top">
+            Republic of the Philippines<br/>
+            MUNICIPALITY OF TIBIAO, ANTIQUE
         </div>
 
-        <!-- Body -->
-        @php 
-            $primary = ($clearance['addresses'] ?? []) ? $clearance['addresses'][0] : null; 
-            $addressText = '';
-            if ($primary) {
-                $parts = [];
-                if (!empty($primary['line'])) { $parts[] = $primary['line']; }
-                if (!empty($primary['barangay'])) { $parts[] = $primary['barangay']; }
-                if (!empty($primary['city'])) { $parts[] = $primary['city']; }
-                if (!empty($primary['province'])) { $parts[] = $primary['province']; }
-                $addressText = implode(', ', $parts);
-            }
-        @endphp
-        <div class="content">
-            <div class="to-label">To</div>
-            <div class="to-name">{{ $clearance['full_name'] ?? '—' }}</div>
-            <div class="to-sub">Applicant</div>
-            @if (!empty($addressText))
-            <div class="to-address">{{ $addressText }}</div>
-            @endif
-
-            <div class="date-label">Date</div>
-            <div class="date-value">{{ $clearance['application_date'] ?? now()->format('m/d/Y') }}</div>
-
-            <div class="greeting">Dear Sir/Madam,</div>
-            <p class="paragraph">
-                This letter confirms the approval of your Barangay Clearance application.
-                Please keep a printed copy of this clearance for your records and present it upon request
-                at your barangay office. Details are provided below.
-            </p>
-
-            <table class="details">
-                <tr>
-                    <td class="label">Clearance ID</td>
-                    <td class="value">#{{ $clearance['id'] ?? '—' }}</td>
-                    <td class="label">Barangay</td>
-                    <td class="value">{{ $primary['barangay'] ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">City/Municipality</td>
-                    <td class="value">{{ $primary['city'] ?? '—' }}</td>
-                    <td class="label">Province</td>
-                    <td class="value">{{ $primary['province'] ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Issue Date</td>
-                    <td class="value">{{ $clearance['issue_date'] ?? ($clearance['application_date'] ?? '—') }}</td>
-                    <td class="label">Expiry Date</td>
-                    <td class="value">{{ $clearance['expiry_date'] ?? '—' }}</td>
-                </tr>
-            </table>
-
-            <p class="paragraph">
-                If any information is incorrect, please contact your barangay office to update your records.
-                Thank you for your cooperation.
-            </p>
-
-            <div class="from">
-                <div class="from-name">Barangay Captain</div>
-                <div class="from-title">Office of the Barangay</div>
-                <div class="signature-line">Signature</div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <div class="footer-bar"></div>
-            <div class="footer-content">
-                <div>+63 700 00 000</div>
-                <div>www.barangay.gov</div>
-                <div>{{ $primary['city'] ?? 'Metro Manila' }}, Philippines</div>
-            </div>
-        </div>
+        <div class="rule"></div>
     </div>
-    </body>
-    </html>
+
+    <div class="office">OFFICE OF THE BARANGAY CAPTAIN</div>
+    <div class="doc-title">BARANGAY CLEARANCE</div>
+
+    <div class="to-whom">TO WHOM IT MAY CONCERN:</div>
+
+    <p class="paragraph">
+        This is to certify that <strong>{{ $fullName }}</strong>, <strong>{{ $age }}</strong> years old,
+        and a resident of Barangay {{ $barangay }}, {{ $city }}, {{ $province }}, is known to be of good moral character
+        and a law-abiding citizen in the community.
+    </p>
+    <p class="paragraph">
+        To certify further, that {{ $pronoun }} has no derogatory and/or criminal records filed in this barangay.
+    </p>
+    <p class="paragraph">
+        <strong>ISSUED</strong> this <strong>{{ $issuedDay }}</strong> day of <strong>{{ $issuedMonth }}</strong>,
+        <strong>{{ $issuedYear }}</strong> at Barangay {{ $barangay }}, {{ $city }}, {{ $province }}, upon request of the interested party
+        for whatever legal purposes it may serve.
+    </p>
+
+    <div class="signature sig-block">
+        <div class="sig-line"></div>
+        <div class="name">Barangay Captain</div>
+        <div class="title">Barangay {{ $barangay }}</div>
+    </div>
+
+    <table class="meta">
+        <tr>
+            <td>O.R. No.: {{ $orNumber }}</td>
+            <td>Date Issued: {{ $issueDate ?? '____________________' }}</td>
+            <td>Doc. Stamp: Paid</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import PermitStatsCards from '@/components/Admin/PermitStatsCards.vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
-import { Eye, Trash2, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { Eye, Trash2, ChevronLeft, ChevronRight, FileText } from 'lucide-vue-next'
 
 interface IndigencyItem {
   id: number
@@ -186,6 +186,10 @@ function deleteItem(id: number) {
                           <Eye class="h-4 w-4" />
                           <span>View</span>
                         </Link>
+                        <a v-if="item.status === 'approved'" :href="`${basePath}/${item.id}/pdf`" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-3 py-2 bg-white border border-[#2c4454]/20 text-[#2c4454] rounded-md text-sm hover:bg-gray-50">
+                          <FileText class="h-4 w-4" />
+                          <span>PDF</span>
+                        </a>
                         <button v-if="props.canDelete" @click="deleteItem(item.id)" class="inline-flex items-center gap-1 px-3 py-2 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm hover:bg-red-100">
                           <Trash2 class="h-4 w-4" />
                           <span>Delete</span>

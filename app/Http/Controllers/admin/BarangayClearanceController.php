@@ -13,6 +13,7 @@ use App\Services\AdminListService;
 use App\Http\Resources\BarangayClearanceResource;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BarangayClearanceController extends Controller
 {
@@ -57,6 +58,25 @@ class BarangayClearanceController extends Controller
     {
         BarangayClearance::findOrFail($id);
         return $this->streamSupportingDocument((int) $id, (int) $docId, 'barangay_clearance_id');
+    }
+
+    public function viewPdf($id)
+    {
+        $clearance = $this->clearanceRepo->getWithAllRelations((int) $id);
+
+        if ($clearance->status !== 'approved') {
+            return redirect()->route('admin.barangay-clearances.show', $id)
+                ->with('error', 'PDF is available only after approval.');
+        }
+
+        $data = (new BarangayClearanceDetailResource($clearance))->toArray(request());
+        $viewData = [
+            'clearance' => $data,
+            'logoPath' => public_path('images/brg.png'),
+        ];
+
+        $pdf = Pdf::setPaper('A4')->loadView('pdf.barangay_clearance', $viewData);
+        return $pdf->stream('barangay-clearance-' . $clearance->id . '.pdf');
     }
 
     public function updateStatus(Request $request, $id)
