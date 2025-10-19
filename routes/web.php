@@ -143,6 +143,11 @@ Route::prefix('admin')->group(function () {
         // View supporting document file inline in browser
         Route::get('business-permits/{id}/documents/{docId}', [App\Http\Controllers\Admin\BusinessPermitController::class, 'viewDocument'])
             ->name('admin.business-permits.documents.view');
+
+        // Download approved permit as PDF (admin)
+        Route::get('business-permits/{id}/pdf', [App\Http\Controllers\Admin\BusinessPermitController::class, 'downloadPdf'])
+            ->whereNumber('id')
+            ->name('admin.business-permits.pdf');
             
         // Update status and remarks
         Route::post('business-permits/{id}/status', [App\Http\Controllers\Admin\BusinessPermitController::class, 'updateStatus'])
