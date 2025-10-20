@@ -149,6 +149,40 @@ function goBack() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+// Client-side validations and helpers
+const MAX_FILE_BYTES = 200000
+const localErrors = ref<Record<string, string>>({})
+const errorFor = (key: string) => localErrors.value[key] || (form.errors as Record<string, string>)[key]
+function setLocalError(key: string, msg: string) { localErrors.value[key] = msg }
+function clearLocalError(key: string) { delete localErrors.value[key] }
+function handleFileChange(key: string, file: File | null, assign: (f: File | null) => void) {
+  if (!file) { assign(null); clearLocalError(key); return }
+  if (file.size > MAX_FILE_BYTES) { assign(null); setLocalError(key, 'File must be 200000 bytes or smaller') } else { assign(file); clearLocalError(key) }
+}
+function sanitizeName(value: string) { return value.replace(/\d+/g, '') }
+function enforceDigits(value: string, max: number) { return value.replace(/\D/g, '').slice(0, max) }
+function onNameInput(key: 'first_name'|'middle_name'|'last_name', e: Event) {
+  const target = e.target as HTMLInputElement
+  ;(form as any)[key] = sanitizeName(target.value)
+}
+function preventDigitKeydown(e: KeyboardEvent) { if (/\d/.test(e.key)) e.preventDefault() }
+function onContactInput(e: Event) { const t = e.target as HTMLInputElement; form.contact_number = enforceDigits(t.value, 11) }
+function onZipInput(e: Event) { const t = e.target as HTMLInputElement; form.zip_code = enforceDigits(t.value, 4) }
+
+// Filter errors to those relevant to the current step
+const visibleErrorKeys = computed(() => {
+  const stepKeys: string[] = []
+  if (currentStep.value === 0) {
+    stepKeys.push('first_name','middle_name','last_name','date_of_birth','place_of_birth','civil_status','gender','citizenship','contact_number','email','purpose')
+  } else if (currentStep.value === 1) {
+    stepKeys.push('address_type','region_code','province_code','city_code','barangay_code','house_no','street','purok','zip_code')
+  } else if (currentStep.value === 2) {
+    stepKeys.push('document_type','document','valid_id_document')
+  }
+  const errs = form.errors as Record<string, string>
+  return stepKeys.filter(k => !!errs[k])
+})
+
 function submit() {
     form.clearErrors()
     // Attach additional Valid ID file via transform
@@ -233,9 +267,9 @@ function submit() {
                                     </div>
                                 </div>
                             </div>
-                            <div v-if="Object.keys(form.errors).length > 0" class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
-                                Please check the form for errors and try again.
-                            </div>
+                            <div v-if="visibleErrorKeys.length > 0 || errorFor('error')" class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
+    {{ errorFor('error') || 'Please check the form for errors and try again.' }}
+</div>
 
                             <!-- Personal Information -->
                             <div v-if="currentStep === 0" class="space-y-4">
@@ -243,32 +277,32 @@ function submit() {
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <Label for="first_name">First Name</Label>
-                                        <Input id="first_name" v-model="form.first_name" type="text" :error="form.errors.first_name" />
-                                        <div v-if="form.errors.first_name" class="text-sm text-red-600">{{ form.errors.first_name }}</div>
+                                        <Input id="first_name" v-model="form.first_name" type="text" :error="errorFor('first_name')" @input="onNameInput('first_name', $event)" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('first_name')" class="text-sm text-red-600">{{ errorFor('first_name') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="middle_name">Middle Name</Label>
-                                        <Input id="middle_name" v-model="form.middle_name" type="text" :error="form.errors.middle_name" />
-                                        <div v-if="form.errors.middle_name" class="text-sm text-red-600">{{ form.errors.middle_name }}</div>
+                                        <Input id="middle_name" v-model="form.middle_name" type="text" :error="errorFor('middle_name')" @input="onNameInput('middle_name', $event)" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('middle_name')" class="text-sm text-red-600">{{ errorFor('middle_name') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="last_name">Last Name</Label>
-                                        <Input id="last_name" v-model="form.last_name" type="text" :error="form.errors.last_name" />
-                                        <div v-if="form.errors.last_name" class="text-sm text-red-600">{{ form.errors.last_name }}</div>
+                                        <Input id="last_name" v-model="form.last_name" type="text" :error="errorFor('last_name')" @input="onNameInput('last_name', $event)" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('last_name')" class="text-sm text-red-600">{{ errorFor('last_name') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="date_of_birth">Birth Date</Label>
-                                        <Input id="date_of_birth" v-model="form.date_of_birth" type="date" :error="form.errors.date_of_birth" />
-                                        <div v-if="form.errors.date_of_birth" class="text-sm text-red-600">{{ form.errors.date_of_birth }}</div>
+                                        <Input id="date_of_birth" v-model="form.date_of_birth" type="date" :error="errorFor('date_of_birth')" />
+                                        <div v-if="errorFor('date_of_birth')" class="text-sm text-red-600">{{ errorFor('date_of_birth') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="place_of_birth">Place of Birth</Label>
-                                        <Input id="place_of_birth" v-model="form.place_of_birth" type="text" :error="form.errors.place_of_birth" />
-                                        <div v-if="form.errors.place_of_birth" class="text-sm text-red-600">{{ form.errors.place_of_birth }}</div>
+                                        <Input id="place_of_birth" v-model="form.place_of_birth" type="text" :error="errorFor('place_of_birth')" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('place_of_birth')" class="text-sm text-red-600">{{ errorFor('place_of_birth') }}</div>
                                     </div>
 
                                     <div>
@@ -284,7 +318,7 @@ function submit() {
                                                 <SelectItem value="separated">Separated</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <div v-if="form.errors.civil_status" class="text-sm text-red-600">{{ form.errors.civil_status }}</div>
+                                        <div v-if="errorFor('civil_status')" class="text-sm text-red-600">{{ errorFor('civil_status') }}</div>
                                     </div>
 
                                     <div>
@@ -299,31 +333,31 @@ function submit() {
                                                 <SelectItem value="other">Other</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <div v-if="form.errors.gender" class="text-sm text-red-600">{{ form.errors.gender }}</div>
+                                        <div v-if="errorFor('gender')" class="text-sm text-red-600">{{ errorFor('gender') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="citizenship">Citizenship</Label>
-                                        <Input id="citizenship" v-model="form.citizenship" type="text" :error="form.errors.citizenship" />
-                                        <div v-if="form.errors.citizenship" class="text-sm text-red-600">{{ form.errors.citizenship }}</div>
+                                        <Input id="citizenship" v-model="form.citizenship" type="text" :error="errorFor('citizenship')" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('citizenship')" class="text-sm text-red-600">{{ errorFor('citizenship') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="contact_number">Contact Number</Label>
-                                        <Input id="contact_number" v-model="form.contact_number" type="tel" :error="form.errors.contact_number" />
-                                        <div v-if="form.errors.contact_number" class="text-sm text-red-600">{{ form.errors.contact_number }}</div>
+                                        <Input id="contact_number" v-model="form.contact_number" type="text" inputmode="numeric" maxlength="11" @input="onContactInput" :error="errorFor('contact_number')" />
+                                        <div v-if="errorFor('contact_number')" class="text-sm text-red-600">{{ errorFor('contact_number') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="email">Email Address</Label>
-                                        <Input id="email" v-model="form.email" type="email" :error="form.errors.email" />
-                                        <div v-if="form.errors.email" class="text-sm text-red-600">{{ form.errors.email }}</div>
+                                        <Input id="email" v-model="form.email" type="email" :error="errorFor('email')" />
+                                        <div v-if="errorFor('email')" class="text-sm text-red-600">{{ errorFor('email') }}</div>
                                     </div>
 
                                     <div class="sm:col-span-2">
                                         <Label for="purpose">Purpose of Clearance</Label>
-                                        <Input id="purpose" v-model="form.purpose" type="text" :error="form.errors.purpose" />
-                                        <div v-if="form.errors.purpose" class="text-sm text-red-600">{{ form.errors.purpose }}</div>
+                                        <Input id="purpose" v-model="form.purpose" type="text" :error="errorFor('purpose')" />
+                                        <div v-if="errorFor('purpose')" class="text-sm text-red-600">{{ errorFor('purpose') }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -355,36 +389,36 @@ function submit() {
                                             v-model:cityCode="form.city_code"
                                             v-model:barangayCode="form.barangay_code"
                                         />
-                                        <div v-if="form.errors.region_code" class="text-sm text-red-600">{{ form.errors.region_code }}</div>
-                                        <div v-if="form.errors.province_code" class="text-sm text-red-600">{{ form.errors.province_code }}</div>
-                                        <div v-if="form.errors.city_code" class="text-sm text-red-600">{{ form.errors.city_code }}</div>
-                                        <div v-if="form.errors.barangay_code" class="text-sm text-red-600">{{ form.errors.barangay_code }}</div>
+                                        <div v-if="errorFor('region_code')" class="text-sm text-red-600">{{ errorFor('region_code') }}</div>
+                                        <div v-if="errorFor('province_code')" class="text-sm text-red-600">{{ errorFor('province_code') }}</div>
+                                        <div v-if="errorFor('city_code')" class="text-sm text-red-600">{{ errorFor('city_code') }}</div>
+                                        <div v-if="errorFor('barangay_code')" class="text-sm text-red-600">{{ errorFor('barangay_code') }}</div>
                                     </div>
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
                                         <Label for="house_no">House No.</Label>
-                                        <Input id="house_no" v-model="form.house_no" type="text" :error="form.errors.house_no" />
-                                        <div v-if="form.errors.house_no" class="text-sm text-red-600">{{ form.errors.house_no }}</div>
+                                        <Input id="house_no" v-model="form.house_no" type="text" :error="errorFor('house_no')" />
+                                        <div v-if="errorFor('house_no')" class="text-sm text-red-600">{{ errorFor('house_no') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="street">Street</Label>
-                                        <Input id="street" v-model="form.street" type="text" :error="form.errors.street" />
-                                        <div v-if="form.errors.street" class="text-sm text-red-600">{{ form.errors.street }}</div>
+                                        <Input id="street" v-model="form.street" type="text" :error="errorFor('street')" />
+                                        <div v-if="errorFor('street')" class="text-sm text-red-600">{{ errorFor('street') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="purok">Purok</Label>
-                                        <Input id="purok" v-model="form.purok" type="text" :error="form.errors.purok" />
-                                        <div v-if="form.errors.purok" class="text-sm text-red-600">{{ form.errors.purok }}</div>
+                                        <Input id="purok" v-model="form.purok" type="text" :error="errorFor('purok')" />
+                                        <div v-if="errorFor('purok')" class="text-sm text-red-600">{{ errorFor('purok') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="zip_code">Zip Code</Label>
-                                        <Input id="zip_code" v-model="form.zip_code" type="text" :error="form.errors.zip_code" />
-                                        <div v-if="form.errors.zip_code" class="text-sm text-red-600">{{ form.errors.zip_code }}</div>
+                                        <Input id="zip_code" v-model="form.zip_code" type="text" inputmode="numeric" maxlength="4" @input="onZipInput" :error="errorFor('zip_code')" />
+                                        <div v-if="errorFor('zip_code')" class="text-sm text-red-600">{{ errorFor('zip_code') }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -413,18 +447,18 @@ function submit() {
                                         <Input
                                             id="document_file"
                                             type="file"
-                                            @change="form.document = $event.target.files?.[0] || null"
-                                            :error="form.errors.document"
+                                            @change="handleFileChange('document', $event.target.files?.[0] || null, (f) => form.document = f)"
+                                            :error="errorFor('document')"
                                             accept=".jpg,.jpeg,.png,.pdf"
                                         />
-                                        <div v-if="form.errors.document" class="text-sm text-red-600">{{ form.errors.document }}</div>
+                                        <div v-if="errorFor('document')" class="text-sm text-red-600">{{ errorFor('document') }}</div>
                                     </div>
 
                                     <!-- Valid ID Upload -->
                                     <div>
                                         <Label for="valid_id_document">Valid ID</Label>
-                                        <Input id="valid_id_document" type="file" @change="validIdDocument = $event.target.files?.[0] || null" :error="extraErrors['valid_id_document']" accept=".jpg,.jpeg,.png,.pdf" />
-                                        <div v-if="extraErrors['valid_id_document']" class="text-sm text-red-600">{{ extraErrors['valid_id_document'] }}</div>
+                                        <Input id="valid_id_document" type="file" @change="handleFileChange('valid_id_document', $event.target.files?.[0] || null, (f) => validIdDocument = f)" :error="errorFor('valid_id_document')" accept=".jpg,.jpeg,.png,.pdf" />
+                                        <div v-if="errorFor('valid_id_document')" class="text-sm text-red-600">{{ errorFor('valid_id_document') }}</div>
                                     </div>
                                 </div>
                             </div>

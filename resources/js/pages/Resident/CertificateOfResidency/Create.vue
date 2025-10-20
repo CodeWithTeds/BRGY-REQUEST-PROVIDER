@@ -172,6 +172,26 @@ function goBack() {
     currentStep.value = Math.max(currentStep.value - 1, 0)
     window.scrollTo({ top: 0, behavior: 'smooth' })
 }
+
+// Client-side validations and helpers
+const MAX_FILE_BYTES = 200000
+const localErrors = ref<Record<string, string>>({})
+const errorFor = (key: string) => localErrors.value[key] || (form.errors as Record<string, string>)[key]
+function setLocalError(key: string, msg: string) { localErrors.value[key] = msg }
+function clearLocalError(key: string) { delete localErrors.value[key] }
+function handleFileChange(key: string, file: File | null, assign: (f: File | null) => void) {
+  if (!file) { assign(null); clearLocalError(key); return }
+  if (file.size > MAX_FILE_BYTES) { assign(null); setLocalError(key, 'File must be 200000 bytes or smaller') } else { assign(file); clearLocalError(key) }
+}
+function sanitizeName(value: string) { return value.replace(/\d+/g, '') }
+function enforceDigits(value: string, max: number) { return value.replace(/\D/g, '').slice(0, max) }
+function onNameInput(key: 'first_name'|'middle_name'|'last_name'|'suffix', e: Event) {
+  const target = e.target as HTMLInputElement
+  ;(form as any)[key] = sanitizeName(target.value)
+}
+function preventDigitKeydown(e: KeyboardEvent) { if (/\d/.test(e.key)) e.preventDefault() }
+function onContactInput(e: Event) { const t = e.target as HTMLInputElement; form.contact_number = enforceDigits(t.value, 11) }
+function onZipInput(e: Event) { const t = e.target as HTMLInputElement; form.zip_code = enforceDigits(t.value, 4) }
 </script>
 
 <template>
@@ -212,21 +232,23 @@ function goBack() {
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <Label for="first_name">First Name</Label>
-                                        <Input id="first_name" v-model="form.first_name" type="text" :error="form.errors.first_name" />
-                                        <div v-if="form.errors.first_name" class="text-sm text-red-600">{{ form.errors.first_name }}</div>
+                                        <Input id="first_name" v-model="form.first_name" type="text" :error="errorFor('first_name')" @input="onNameInput('first_name', $event)" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('first_name')" class="text-sm text-red-600">{{ errorFor('first_name') }}</div>
                                     </div>
                                     <div>
                                         <Label for="middle_name">Middle Name</Label>
-                                        <Input id="middle_name" v-model="form.middle_name" type="text" />
+                                        <Input id="middle_name" v-model="form.middle_name" type="text" :error="errorFor('middle_name')" @input="onNameInput('middle_name', $event)" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('middle_name')" class="text-sm text-red-600">{{ errorFor('middle_name') }}</div>
                                     </div>
                                     <div>
                                         <Label for="last_name">Last Name</Label>
-                                        <Input id="last_name" v-model="form.last_name" type="text" :error="form.errors.last_name" />
-                                        <div v-if="form.errors.last_name" class="text-sm text-red-600">{{ form.errors.last_name }}</div>
+                                        <Input id="last_name" v-model="form.last_name" type="text" :error="errorFor('last_name')" @input="onNameInput('last_name', $event)" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('last_name')" class="text-sm text-red-600">{{ errorFor('last_name') }}</div>
                                     </div>
                                     <div>
                                         <Label for="suffix">Suffix</Label>
-                                        <Input id="suffix" v-model="form.suffix" type="text" />
+                                        <Input id="suffix" v-model="form.suffix" type="text" :error="errorFor('suffix')" @input="onNameInput('suffix', $event)" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('suffix')" class="text-sm text-red-600">{{ errorFor('suffix') }}</div>
                                     </div>
                                     <div>
                                         <Label for="date_of_birth">Date of Birth</Label>
@@ -235,8 +257,8 @@ function goBack() {
                                     </div>
                                     <div>
                                         <Label for="place_of_birth">Place of Birth</Label>
-                                        <Input id="place_of_birth" v-model="form.place_of_birth" type="text" :error="form.errors.place_of_birth" />
-                                        <div v-if="form.errors.place_of_birth" class="text-sm text-red-600">{{ form.errors.place_of_birth }}</div>
+                                        <Input id="place_of_birth" v-model="form.place_of_birth" type="text" :error="errorFor('place_of_birth')" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('place_of_birth')" class="text-sm text-red-600">{{ errorFor('place_of_birth') }}</div>
                                     </div>
                                     <div>
                                         <Label for="civil_status">Civil Status</Label>
@@ -267,13 +289,13 @@ function goBack() {
                                     </div>
                                     <div>
                                         <Label for="citizenship">Citizenship</Label>
-                                        <Input id="citizenship" v-model="form.citizenship" type="text" :error="form.errors.citizenship" />
-                                        <div v-if="form.errors.citizenship" class="text-sm text-red-600">{{ form.errors.citizenship }}</div>
+                                        <Input id="citizenship" v-model="form.citizenship" type="text" :error="errorFor('citizenship')" @keydown="preventDigitKeydown" />
+                                        <div v-if="errorFor('citizenship')" class="text-sm text-red-600">{{ errorFor('citizenship') }}</div>
                                     </div>
                                     <div>
                                         <Label for="contact_number">Contact Number</Label>
-                                        <Input id="contact_number" v-model="form.contact_number" type="text" :error="form.errors.contact_number" />
-                                        <div v-if="form.errors.contact_number" class="text-sm text-red-600">{{ form.errors.contact_number }}</div>
+                                        <Input id="contact_number" v-model="form.contact_number" type="text" inputmode="numeric" maxlength="11" @input="onContactInput" :error="errorFor('contact_number')" />
+                                        <div v-if="errorFor('contact_number')" class="text-sm text-red-600">{{ errorFor('contact_number') }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -318,8 +340,8 @@ function goBack() {
                             </div>
                             <div v-if="currentStep === 1">
                                 <Label for="zip_code">Zip Code</Label>
-                                <Input id="zip_code" v-model="form.zip_code" type="text" :error="form.errors.zip_code" />
-                                <div v-if="form.errors.zip_code" class="text-sm text-red-600">{{ form.errors.zip_code }}</div>
+                                <Input id="zip_code" v-model="form.zip_code" type="text" inputmode="numeric" maxlength="4" @input="onZipInput" :error="errorFor('zip_code')" />
+                                <div v-if="errorFor('zip_code')" class="text-sm text-red-600">{{ errorFor('zip_code') }}</div>
                             </div>
 
                             <!-- Step 3: Purpose and Supporting Documents -->
@@ -338,28 +360,28 @@ function goBack() {
 
                                     <div>
                                         <Label for="valid_government_id">Valid Government-Issued ID</Label>
-                                        <Input id="valid_government_id" type="file" @change="validGovernmentId = $event.target.files?.[0] || null" :error="extraErrors['valid_government_id_document']" accept=".jpg,.jpeg,.png,.pdf" />
-                                        <div v-if="extraErrors['valid_government_id_document']" class="text-sm text-red-600">{{ extraErrors['valid_government_id_document'] }}</div>
-                                        <div class="mt-2 text-xs text-muted-foreground">Examples: PhilID (National ID), Voter’s ID, Driver’s License, Passport, Postal ID, SSS/GSIS ID, PRC ID</div>
+<Input id="valid_government_id" type="file" @change="handleFileChange('valid_government_id_document', ($event.target as HTMLInputElement).files?.[0] || null, f => validGovernmentId = f)" :error="errorFor('valid_government_id_document')" accept=".jpg,.jpeg,.png,.pdf" />
+<div v-if="errorFor('valid_government_id_document')" class="text-sm text-red-600">{{ errorFor('valid_government_id_document') }}</div>
+<div class="mt-2 text-xs text-muted-foreground">Examples: PhilID (National ID), Voter’s ID, Driver’s License, Passport, Postal ID, SSS/GSIS ID, PRC ID</div>
                                     </div>
 
                                     <div>
                                         <Label for="proof_of_residence">Proof that you live in the barangay</Label>
-                                        <Input id="proof_of_residence" type="file" @change="proofOfResidenceDocument = $event.target.files?.[0] || null" :error="extraErrors['proof_of_residence_document']" accept=".jpg,.jpeg,.png,.pdf" />
-                                        <div v-if="extraErrors['proof_of_residence_document']" class="text-sm text-red-600">{{ extraErrors['proof_of_residence_document'] }}</div>
-                                        <div class="mt-2 text-xs text-muted-foreground">Examples: Utility bill, barangay certificate, or similar proof.</div>
+<Input id="proof_of_residence" type="file" @change="handleFileChange('proof_of_residence_document', ($event.target as HTMLInputElement).files?.[0] || null, f => proofOfResidenceDocument = f)" :error="errorFor('proof_of_residence_document')" accept=".jpg,.jpeg,.png,.pdf" />
+<div v-if="errorFor('proof_of_residence_document')" class="text-sm text-red-600">{{ errorFor('proof_of_residence_document') }}</div>
+<div class="mt-2 text-xs text-muted-foreground">Examples: Utility bill, barangay certificate, or similar proof.</div>
                                     </div>
 
                                     <div>
                                         <Label for="lease_contract">Lease/rental agreement (if renting)</Label>
-                                        <Input id="lease_contract" type="file" @change="leaseContractDocument = $event.target.files?.[0] || null" :error="extraErrors['lease_contract_document']" accept=".jpg,.jpeg,.png,.pdf" />
-                                        <div v-if="extraErrors['lease_contract_document']" class="text-sm text-red-600">{{ extraErrors['lease_contract_document'] }}</div>
+<Input id="lease_contract" type="file" @change="handleFileChange('lease_contract_document', ($event.target as HTMLInputElement).files?.[0] || null, f => leaseContractDocument = f)" :error="errorFor('lease_contract_document')" accept=".jpg,.jpeg,.png,.pdf" />
+<div v-if="errorFor('lease_contract_document')" class="text-sm text-red-600">{{ errorFor('lease_contract_document') }}</div>
                                     </div>
 
                                     <div>
                                         <Label for="authorization_letter">Authorization letter from the homeowner (if staying with relatives or friends)</Label>
-                                        <Input id="authorization_letter" type="file" @change="authorizationLetterDocument = $event.target.files?.[0] || null" :error="extraErrors['authorization_letter_document']" accept=".jpg,.jpeg,.png,.pdf" />
-                                        <div v-if="extraErrors['authorization_letter_document']" class="text-sm text-red-600">{{ extraErrors['authorization_letter_document'] }}</div>
+<Input id="authorization_letter" type="file" @change="handleFileChange('authorization_letter_document', ($event.target as HTMLInputElement).files?.[0] || null, f => authorizationLetterDocument = f)" :error="errorFor('authorization_letter_document')" accept=".jpg,.jpeg,.png,.pdf" />
+<div v-if="errorFor('authorization_letter_document')" class="text-sm text-red-600">{{ errorFor('authorization_letter_document') }}</div>
                                     </div>
                                 </div>
                             </div>
