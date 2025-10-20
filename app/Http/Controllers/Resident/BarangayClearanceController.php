@@ -55,6 +55,7 @@ class BarangayClearanceController extends Controller
                     'clearance_number' => $latest->clearance_number,
                     // Use null-safe chaining to avoid calling methods on null
                     'appointment_at' => $latestAppointment?->appointment_at?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
+                    'appointment_status' => $latestAppointment?->status,
                 ],
                 'rescheduleAllowed' => $appointmentsCount < 2,
             ]);
@@ -161,6 +162,7 @@ class BarangayClearanceController extends Controller
                 'application_date' => $latest->application_date,
                 // Use null-safe chaining to avoid calling methods on null
                 'appointment_at' => $latestAppointment?->appointment_at?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
+                'appointment_status' => $latestAppointment?->status,
             ],
             'rescheduleAllowed' => $appointmentsCount < 2,
         ]);

@@ -14,16 +14,16 @@ class StoreBarangayPermitRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => ['required', 'string', 'max:255'],
-            'middle_name' => ['nullable', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'suffix' => ['nullable', 'string', 'max:50'],
+            'first_name' => ['required', 'string', 'max:255', 'regex:/^[^0-9]*$/'],
+            'middle_name' => ['nullable', 'string', 'max:255', 'regex:/^[^0-9]*$/'],
+            'last_name' => ['required', 'string', 'max:255', 'regex:/^[^0-9]*$/'],
+            'suffix' => ['nullable', 'string', 'max:50', 'regex:/^[^0-9]*$/'],
             'date_of_birth' => ['required', 'date'],
             'place_of_birth' => ['nullable', 'string', 'max:255'],
             'civil_status' => ['required', 'string', 'in:single,married,widowed,separated'],
             'gender' => ['required', 'string', 'in:male,female,other'],
             'citizenship' => ['nullable', 'string', 'max:255'],
-            'contact_number' => ['required', 'string', 'max:20'],
+            'contact_number' => ['required', 'string', 'regex:/^\d{11}$/'],
 
             // Address fields using app-level PSGC tables
             'address_type' => ['required', 'in:permanent,present'],
@@ -34,7 +34,7 @@ class StoreBarangayPermitRequest extends FormRequest
             'city_code' => ['nullable', 'exists:cities,code'],
             'province_code' => ['nullable', 'exists:provinces,code'],
             'region_code' => ['nullable', 'exists:regions,code'],
-            'zip_code' => ['nullable', 'string', 'max:10'],
+            'zip_code' => ['nullable', 'string', 'regex:/^\d{4}$/'],
 
             // Document upload
             'document_type' => ['required', 'string', 'max:100'],

@@ -359,29 +359,32 @@ function onZipInput(e: Event) { const t = e.target as HTMLInputElement; form.zip
                                     <p class="text-sm text-muted-foreground">Attach any documents that help verify your residency. These are optional unless specifically requested.</p>
 
                                     <div>
-                                        <Label for="valid_government_id">Valid Government-Issued ID</Label>
-<Input id="valid_government_id" type="file" @change="handleFileChange('valid_government_id_document', ($event.target as HTMLInputElement).files?.[0] || null, f => validGovernmentId = f)" :error="errorFor('valid_government_id_document')" accept=".jpg,.jpeg,.png,.pdf" />
-<div v-if="errorFor('valid_government_id_document')" class="text-sm text-red-600">{{ errorFor('valid_government_id_document') }}</div>
-<div class="mt-2 text-xs text-muted-foreground">Examples: PhilID (National ID), Voter’s ID, Driver’s License, Passport, Postal ID, SSS/GSIS ID, PRC ID</div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-medium text-blue-600">Optional</span>
+                                            <Label for="valid_government_id">Valid Government-Issued ID</Label>
+                                        </div>
+                                        <Input id="valid_government_id" type="file" @change="handleFileChange('valid_government_id_document', ($event.target as HTMLInputElement).files?.[0] || null, f => validGovernmentId = f)" :error="errorFor('valid_government_id_document')" accept=".jpg,.jpeg,.png,.pdf" />
+                                        <div v-if="errorFor('valid_government_id_document')" class="text-sm text-red-600">{{ errorFor('valid_government_id_document') }}</div>
+                                        <div class="mt-2 text-xs text-muted-foreground">Examples: PhilID (National ID), Voter’s ID, Driver’s License, Passport, Postal ID, SSS/GSIS ID, PRC ID</div>
                                     </div>
 
                                     <div>
-                                        <Label for="proof_of_residence">Proof that you live in the barangay</Label>
-<Input id="proof_of_residence" type="file" @change="handleFileChange('proof_of_residence_document', ($event.target as HTMLInputElement).files?.[0] || null, f => proofOfResidenceDocument = f)" :error="errorFor('proof_of_residence_document')" accept=".jpg,.jpeg,.png,.pdf" />
-<div v-if="errorFor('proof_of_residence_document')" class="text-sm text-red-600">{{ errorFor('proof_of_residence_document') }}</div>
-<div class="mt-2 text-xs text-muted-foreground">Examples: Utility bill, barangay certificate, or similar proof.</div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-medium text-blue-600">Optional</span>
+                                            <Label for="proof_of_residence">Proof that you live in the barangay</Label>
+                                        </div>
+                                        <Input id="proof_of_residence" type="file" @change="handleFileChange('proof_of_residence_document', ($event.target as HTMLInputElement).files?.[0] || null, f => proofOfResidenceDocument = f)" :error="errorFor('proof_of_residence_document')" accept=".jpg,.jpeg,.png,.pdf" />
+                                        <div v-if="errorFor('proof_of_residence_document')" class="text-sm text-red-600">{{ errorFor('proof_of_residence_document') }}</div>
+                                        <div class="mt-2 text-xs text-muted-foreground">Examples: Utility bill, barangay certificate, or similar proof.</div>
                                     </div>
 
                                     <div>
-                                        <Label for="lease_contract">Lease/rental agreement (if renting)</Label>
-<Input id="lease_contract" type="file" @change="handleFileChange('lease_contract_document', ($event.target as HTMLInputElement).files?.[0] || null, f => leaseContractDocument = f)" :error="errorFor('lease_contract_document')" accept=".jpg,.jpeg,.png,.pdf" />
-<div v-if="errorFor('lease_contract_document')" class="text-sm text-red-600">{{ errorFor('lease_contract_document') }}</div>
-                                    </div>
-
-                                    <div>
-                                        <Label for="authorization_letter">Authorization letter from the homeowner (if staying with relatives or friends)</Label>
-<Input id="authorization_letter" type="file" @change="handleFileChange('authorization_letter_document', ($event.target as HTMLInputElement).files?.[0] || null, f => authorizationLetterDocument = f)" :error="errorFor('authorization_letter_document')" accept=".jpg,.jpeg,.png,.pdf" />
-<div v-if="errorFor('authorization_letter_document')" class="text-sm text-red-600">{{ errorFor('authorization_letter_document') }}</div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-medium text-blue-600">Optional</span>
+                                            <Label for="authorization_letter">Authorization letter from the homeowner (if staying with relatives or friends)</Label>
+                                        </div>
+                                        <Input id="authorization_letter" type="file" @change="handleFileChange('authorization_letter_document', ($event.target as HTMLInputElement).files?.[0] || null, f => authorizationLetterDocument = f)" :error="errorFor('authorization_letter_document')" accept=".jpg,.jpeg,.png,.pdf" />
+                                        <div v-if="errorFor('authorization_letter_document')" class="text-sm text-red-600">{{ errorFor('authorization_letter_document') }}</div>
                                     </div>
                                 </div>
                             </div>

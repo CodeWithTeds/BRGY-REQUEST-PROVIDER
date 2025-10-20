@@ -47,6 +47,7 @@ class CertificateOfIndigencyController extends Controller
                     'remarks' => $latest->remarks,
                     'application_date' => $latest->application_date,
                     'appointment_at' => $latestAppointment?->appointment_at?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
+                    'appointment_status' => $latestAppointment?->status,
                 ],
                 'rescheduleAllowed' => $appointmentsCount < 2,
             ]);
@@ -177,6 +178,7 @@ class CertificateOfIndigencyController extends Controller
                 'status' => $latest->status,
                 'application_date' => $latest->application_date,
                 'appointment_at' => $latestAppointment ? optional($latestAppointment->appointment_at)->copy()->setTimezone('Asia/Manila')->toIso8601String() : null,
+                'appointment_status' => $latestAppointment?->status,
             ],
             'rescheduleAllowed' => $appointmentsCount < 2,
         ]);

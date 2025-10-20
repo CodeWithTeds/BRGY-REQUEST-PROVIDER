@@ -4,7 +4,7 @@ import { Link } from '@inertiajs/vue3'
 import { Calendar } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-const props = defineProps<{ indigency: { id?: number; status: string; remarks?: string; application_date?: string; appointment_at?: string | null }, rescheduleAllowed?: boolean }>()
+const props = defineProps<{ indigency: { id?: number; status: string; remarks?: string; application_date?: string; appointment_at?: string | null; appointment_status?: string | null }, rescheduleAllowed?: boolean }>()
 
 const referenceNo = computed(() => (props.indigency.id ? `COI-${props.indigency.id}` : '—'))
 const appointmentDisplay = computed(() => {
@@ -13,6 +13,13 @@ const appointmentDisplay = computed(() => {
     const d = new Date(props.indigency.appointment_at as string)
     return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short', hour12: true })
   } catch { return props.indigency.appointment_at as string }
+})
+
+const appointmentStatusLabel = computed(() => {
+  const s = props.indigency.appointment_status as string | undefined | null
+  if (!s) return null
+  const map: Record<string, string> = { scheduled: 'Scheduled', completed: 'Completed', cancelled: 'Cancelled', no_show: 'No-show' }
+  return map[s] || s
 })
 
 const details = computed(() => [
@@ -49,7 +56,7 @@ const requirements = [
         <li>Office hours are Monday–Friday, 8:00 AM–5:00 PM. Confirm availability with your barangay office.</li>
         <li>Processing and printing may take up to 2–3 business days depending on queue.</li>
       </ul>
-      <div class="mt-4 flex items-center gap-2">
+      <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-2">
         <Link v-if="props.rescheduleAllowed !== false" :href="route('resident.certificate-of-indigency.schedule')" class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
           {{ appointmentDisplay ? 'Reschedule Appointment' : 'Schedule Appointment' }}
         </Link>
@@ -57,7 +64,10 @@ const requirements = [
           Download PDF
         </a>
       </div>
-      <div v-if="appointmentDisplay" class="mt-2 text-sm text-[#2C4854]/80">Current appointment: <span class="font-medium">{{ appointmentDisplay }}</span></div>
+      <div v-if="appointmentDisplay || appointmentStatusLabel" class="mt-2 text-sm text-[#2C4854] sm:ml-2 sm:mt-0 w-full text-left flex flex-wrap items-start sm:items-center gap-3">
+        <div v-if="appointmentDisplay" class="opacity-80">Current: <span class="font-medium">{{ appointmentDisplay }}</span></div>
+        <div v-if="appointmentStatusLabel" class="opacity-80">Status: <span class="font-medium">{{ appointmentStatusLabel }}</span></div>
+      </div>
     </template>
   </StatusMessageBase>
 </template>

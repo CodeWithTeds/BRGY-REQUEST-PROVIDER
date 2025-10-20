@@ -47,6 +47,7 @@ class BarangayPermitController extends Controller
                     'application_date' => $latest->application_date,
                     // Prefer appointments table; fallback to legacy column. Display in Asia/Manila. Use null-safe chaining.
                     'appointment_at' => ($latestAppointment?->appointment_at ?? $latest->appointment_at)?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
+                    'appointment_status' => $latestAppointment?->status,
                 ],
                 'rescheduleAllowed' => $appointmentsCount < 2,
             ]);
@@ -102,6 +103,7 @@ class BarangayPermitController extends Controller
                 'application_date' => $latest->application_date,
                 // Prefer the appointments table; fallback to legacy column for compatibility. Display in Asia/Manila. Use null-safe chaining.
                 'appointment_at' => ($latestAppointment?->appointment_at ?? $latest->appointment_at)?->copy()?->setTimezone('Asia/Manila')?->toIso8601String(),
+                'appointment_status' => $latestAppointment?->status,
             ],
             'rescheduleAllowed' => $appointmentsCount < 2,
         ]);

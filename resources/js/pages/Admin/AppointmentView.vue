@@ -101,6 +101,7 @@ const finalStatusText = computed(() => {
   if (currentStatus.value === 'no_show') return 'This appointment is already marked as No-show.'
   return ''
 })
+const canMarkScheduled = computed(() => currentStatus.value !== 'scheduled')
 
 function toast(msg: string, type: 'success' | 'error' | 'info' = 'info') {
   Toastify({ text: msg, duration: 2500, gravity: 'top', position: 'right', backgroundColor: type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#334155' }).showToast();
@@ -179,7 +180,7 @@ function submitStatus() {
                       <p class="text-xs text-[#2c4454] opacity-70">{{ finalStatusText }}</p>
                     </div>
                     <div v-else class="mt-3 grid grid-cols-2 gap-2">
-                      <button class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'scheduled'; submitStatus()">Mark Scheduled</button>
+                      <button v-if="canMarkScheduled" class="px-3 py-2 rounded-md bg-indigo-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'scheduled'; submitStatus()">Mark Scheduled</button>
                       <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'completed'; submitStatus()">Mark Completed</button>
                       <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'cancelled'; submitStatus()">Mark Cancelled</button>
                       <button class="px-3 py-2 rounded-md bg-yellow-600 text-white text-sm hover:opacity-90" :disabled="statusUpdating" @click="statusForm.status = 'no_show'; submitStatus()">Mark No-show</button>

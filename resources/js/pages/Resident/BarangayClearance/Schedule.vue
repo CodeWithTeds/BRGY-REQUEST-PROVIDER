@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { computed, ref, watch } from 'vue'
 
-const props = defineProps<{ clearance: { id: number; status: string; application_date?: string | null; appointment_at?: string | null }, rescheduleAllowed?: boolean }>()
+const props = defineProps<{ clearance: { id: number; status: string; application_date?: string | null; appointment_at?: string | null; appointment_status?: string | null }, rescheduleAllowed?: boolean }>()
 
 const form = useForm({
   clearance_id: props.clearance.id,
@@ -142,6 +142,10 @@ const breadcrumbs = [
                 <div v-if="appointmentDisplay">
                   <div class="text-xs opacity-70">Current Appointment</div>
                   <div class="text-sm">{{ appointmentDisplay }}</div>
+                </div>
+                <div v-if="props.clearance.appointment_status">
+                  <div class="text-xs opacity-70">Appointment Status</div>
+                  <div class="text-sm capitalize">{{ (props.clearance.appointment_status as string).replace('_', ' ') }}</div>
                 </div>
               </div>
             </div>
