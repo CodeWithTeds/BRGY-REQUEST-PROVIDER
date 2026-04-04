@@ -3,116 +3,53 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\BarangayClearanceRepository;
-use App\Models\BarangayClearance;
-use App\Http\Resources\BarangayClearanceDetailResource;
-use App\Traits\DocumentStreaming;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\UpdateDocumentStatusRequest;
 use App\Http\Requests\AdminListRequest;
-use App\Services\AdminListService;
-use App\Http\Resources\BarangayClearanceResource;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
+use App\Services\BarangayClearanceService;
+use App\Traits\DocumentStreaming;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Inertia\Inertia;
 
 class BarangayClearanceController extends Controller
 {
     use DocumentStreaming;
-    public function __construct(
-        protected BarangayClearanceRepository $clearanceRepo,
-        protected AdminListService $listService,
-    ) {
-    }
+
+    public function __construct(protected BarangayClearanceService $service) {}
 
     public function index(AdminListRequest $request)
     {
-        $result = $this->listService->getList(
-            $request,
-            $this->clearanceRepo,
-            BarangayClearance::class,
-            fn($c) => (new BarangayClearanceResource($c))->toArray($request)
-        );
-
-        return Inertia::render('Admin/BarangayClearances', [
-            'clearances' => $result['items'],
-            'stats' => $result['stats'],
-            'filters' => $result['filters'],
-            'pagination' => $result['pagination'],
-        ]);
+        $result = $this->service->indexData($request);
+        return Inertia::render('Admin/BarangayClearances', [...$result, 'routeGroup' => 'admin']);
     }
 
-    public function show(Request $request, $id)
+    public function show(AdminListRequest $request, int $id)
     {
-        $clearance = $this->clearanceRepo->getWithAllRelations($id);
-
-        // Unwrap resource to a plain array so Vue gets direct fields
-        $data = (new BarangayClearanceDetailResource($clearance))->toArray($request);
-        return Inertia::render('Admin/BarangayClearanceView', [
-            'clearance' => $data,
-            'routeGroup' => 'admin',
-            'canApprove' => true,
-        ]);
+        $data = $this->service->detail($id, $request);
+        return Inertia::render('Admin/BarangayClearanceView', ['clearance' => $data, 'routeGroup' => 'admin', 'canApprove' => true]);
     }
 
-    public function viewDocument($id, $docId)
+    public function viewDocument(int $id, int $docId)
     {
-        BarangayClearance::findOrFail($id);
-        return $this->streamSupportingDocument((int) $id, (int) $docId, 'barangay_clearance_id');
+        return $this->streamSupportingDocument($id, $docId, 'barangay_clearance_id');
     }
 
-    public function viewPdf($id)
+    public function viewPdf(int $id)
     {
-        $clearance = $this->clearanceRepo->getWithAllRelations((int) $id);
-
-        if ($clearance->status !== 'approved') {
-            return redirect()->route('admin.barangay-clearances.show', $id)
-                ->with('error', 'PDF is available only after approval.');
-        }
-
-        $data = (new BarangayClearanceDetailResource($clearance))->toArray(request());
-        $viewData = [
-            'clearance' => $data,
-            'logoPath' => public_path('images/brg.png'),
-        ];
-
-        $pdf = Pdf::setPaper('A4')->loadView('pdf.barangay_clearance', $viewData);
-        return $pdf->stream('barangay-clearance-' . $clearance->id . '.pdf');
+        $data = $this->service->detail($id, request());
+        abort_unless($data['status'] === 'approved', 302, redirect()->route('admin.barangay-clearances.show', $id)->with('error', 'PDF is available only after approval.'));
+        return Pdf::setPaper('A4')->loadView('pdf.barangay_clearance', ['clearance' => $data, 'logoPath' => public_path('images/brg.png')])->stream("barangay-clearance-{$id}.pdf");
     }
 
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(UpdateDocumentStatusRequest $request, int $id)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,processing,approved,rejected',
-            'remarks' => 'nullable|string',
-        ]);
-
-        // Use repository to ensure approval metadata is populated (issue/expiry dates, number)
-        $this->clearanceRepo->updateStatus((int)$id, (string)$validated['status'], $validated['remarks'] ?? null);
-
-        return redirect()->route('admin.barangay-clearances.show', $id)
-            ->with('success', 'Clearance status updated.');
+        $v = $request->validated();
+        $this->service->updateStatus($id, $v['status'], $v['remarks'] ?? null);
+        return redirect()->route('admin.barangay-clearances.show', $id)->with('success', 'Clearance status updated.');
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
-        $clearance = BarangayClearance::with(['supportingDocument', 'address'])->findOrFail($id);
-
-        $doc = $clearance->supportingDocument;
-        if ($doc) {
-            $path = $doc->file_path;
-            if ($path && Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
-            }
-            $doc->delete();
-        }
-
-        if (method_exists($clearance, 'address') && $clearance->address) {
-            $clearance->address()->delete();
-        }
-
-        $clearance->delete();
-
-        return redirect()->route('admin.barangay-clearances')
-            ->with('success', 'Barangay Clearance deleted.');
+        $this->service->destroy($id);
+        return redirect()->route('admin.barangay-clearances')->with('success', 'Barangay Clearance deleted.');
     }
 }

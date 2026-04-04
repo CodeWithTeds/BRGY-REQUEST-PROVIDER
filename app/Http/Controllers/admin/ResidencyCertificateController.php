@@ -3,114 +3,53 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\CertificateOfResidencyRepository;
-use App\Models\CertificateOfResidency;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use App\Http\Resources\ResidencyCertificateResource;
-use App\Http\Resources\ResidencyCertificateDetailResource;
-use App\Traits\DocumentStreaming;
+use App\Http\Requests\Admin\UpdateDocumentStatusRequest;
 use App\Http\Requests\AdminListRequest;
-use App\Services\AdminListService;
+use App\Services\ResidencyService;
+use App\Traits\DocumentStreaming;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Inertia\Inertia;
 
 class ResidencyCertificateController extends Controller
 {
     use DocumentStreaming;
-    public function __construct(
-        protected CertificateOfResidencyRepository $repo,
-        protected AdminListService $listService,
-    ) {
-    }
+
+    public function __construct(protected ResidencyService $service) {}
 
     public function index(AdminListRequest $request)
     {
-        $result = $this->listService->getList(
-            $request,
-            $this->repo,
-            CertificateOfResidency::class,
-            fn($item) => (new ResidencyCertificateResource($item))->toArray($request)
-        );
-
-        return Inertia::render('Admin/ResidencyCertificates', [
-            'residencies' => $result['items'],
-            'stats' => $result['stats'],
-            'filters' => $result['filters'],
-            'pagination' => $result['pagination'],
-            'routeGroup' => 'admin',
-            'canDelete' => true,
-        ]);
+        $result = $this->service->indexData($request);
+        return Inertia::render('Admin/ResidencyCertificates', [...$result, 'routeGroup' => 'admin', 'canDelete' => true]);
     }
 
     public function show(int $id)
     {
-        $residency = $this->repo->getWithAllRelations($id);
-        $data = (new ResidencyCertificateDetailResource($residency))->toArray(request());
-
-        return Inertia::render('Admin/ResidencyCertificateView', [
-            'certificate' => $data,
-            'routeGroup' => 'admin',
-            'canApprove' => true,
-        ]);
+        $data = $this->service->detail($id);
+        return Inertia::render('Admin/ResidencyCertificateView', ['certificate' => $data, 'routeGroup' => 'admin', 'canApprove' => true]);
     }
 
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(UpdateDocumentStatusRequest $request, int $id)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,processing,approved,rejected',
-            'remarks' => 'nullable|string',
-        ]);
-
-        $residency = CertificateOfResidency::findOrFail($id);
-        $residency->status = $validated['status'];
-        // remarks will be saved if column exists; otherwise ignored by fillable
-        if (array_key_exists('remarks', $validated)) {
-            try {
-                $residency->remarks = $validated['remarks'];
-            } catch (\Throwable $e) {
-                // ignore if column not present
-            }
-        }
-        $residency->save();
-
-        return redirect()->route('admin.residency-certificates.show', $id)
-            ->with('success', 'Residency certificate status updated.');
+        $v = $request->validated();
+        $this->service->updateStatus($id, $v['status'], $v['remarks'] ?? null);
+        return redirect()->route('admin.residency-certificates.show', $id)->with('success', 'Residency certificate status updated.');
     }
 
-    /**
-     * Remove the specified residency certificate from storage.
-     */
-    public function destroy($id)
+    public function destroy(int $id)
     {
-        $residency = CertificateOfResidency::findOrFail($id);
-        $residency->delete();
-
-        return redirect()->route('admin.residency-certificates')
-            ->with('success', 'Residency certificate deleted.');
+        $this->service->destroy($id);
+        return redirect()->route('admin.residency-certificates')->with('success', 'Residency certificate deleted.');
     }
 
-    public function viewDocument($id, $docId)
+    public function viewDocument(int $id, int $docId)
     {
-        CertificateOfResidency::findOrFail($id);
-        return $this->streamSupportingDocument((int) $id, (int) $docId, 'certificate_of_residency_id');
+        return $this->streamSupportingDocument($id, $docId, 'certificate_of_residency_id');
     }
 
     public function downloadPdf(int $id)
     {
-        $certificate = $this->repo->getWithAllRelations($id);
-
-        if ($certificate->status !== 'approved') {
-            return redirect()->route('admin.residency-certificates.show', $id)
-                ->with('error', 'PDF is available only after approval.');
-        }
-
-        $data = (new ResidencyCertificateDetailResource($certificate))->toArray(request());
-        $viewData = [
-            'certificate' => $data,
-            'logoPath' => public_path('images/brg.png'),
-        ];
-
-        $pdf = Pdf::setPaper('A4')->loadView('pdf.certificate_of_residency', $viewData);
-        return $pdf->download('certificate-of-residency-' . $certificate->id . '.pdf');
+        $data = $this->service->detail($id);
+        abort_unless($data['status'] === 'approved', 302);
+        return Pdf::setPaper('A4')->loadView('pdf.certificate_of_residency', ['certificate' => $data, 'logoPath' => public_path('images/brg.png')])->download("certificate-of-residency-{$id}.pdf");
     }
 }
