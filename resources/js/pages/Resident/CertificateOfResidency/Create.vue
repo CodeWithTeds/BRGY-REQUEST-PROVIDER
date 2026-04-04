@@ -56,7 +56,36 @@ function submit() {
             proofOfResidenceDocument.value = null
             leaseContractDocument.value = null
             authorizationLetterDocument.value = null
+            Toastify({
+              text: 'Application submitted successfully!',
+              duration: 3500,
+              gravity: 'top',
+              position: 'right',
+              backgroundColor: '#16a34a',
+              close: true,
+            }).showToast()
         },
+        onError: (errors) => {
+            // Route to the first step that has errors
+            const stepOrder = [0, 1, 2]
+            for (const s of stepOrder) {
+              const keys = stepFieldKeys(s)
+              if (keys.some(k => !!(errors as Record<string, string>)[k])) {
+                currentStep.value = s
+                break
+              }
+            }
+            const firstMsg = Object.values(errors as Record<string, string>)[0] || 'Please correct the highlighted fields.'
+            console.error('Residency form submit errors:', errors)
+            Toastify({
+              text: firstMsg,
+              duration: 3500,
+              gravity: 'top',
+              position: 'right',
+              backgroundColor: '#dc2626',
+              close: true,
+            }).showToast()
+        }
     })
 }
 
@@ -129,14 +158,37 @@ const isLastStep = computed(() => currentStep.value === steps.length - 1)
 
 function requiredFieldsForStep(step: number): string[] {
     if (step === 0) {
-        return ['first_name','last_name','date_of_birth','place_of_birth','civil_status','citizenship','contact_number']
+        // Align with backend-required personal info
+        return ['first_name','last_name','date_of_birth','civil_status','gender','contact_number']
     }
     if (step === 1) {
-        return ['address_type','region_code','province_code','city_code','barangay_code','house_no','street','zip_code']
+        // Align with backend-required address fields
+        return ['address_type','region_code','province_code','city_code','barangay_code','zip_code']
     }
-    // Step 2 requires purpose only; documents are optional
     return ['purpose']
 }
+
+// Map of form fields per wizard step (for routing to first error)
+function stepFieldKeys(step: number): string[] {
+  if (step === 0) {
+    return ['first_name','middle_name','last_name','suffix','date_of_birth','place_of_birth','civil_status','gender','citizenship','contact_number']
+  } else if (step === 1) {
+    return ['address_type','region_code','province_code','city_code','barangay_code','house_no','street','purok','zip_code']
+  }
+  return ['purpose','valid_government_id_document','proof_of_residence_document','lease_contract_document','authorization_letter_document']
+}
+
+// Filter errors to those relevant to the current step
+const visibleErrorKeys = computed(() => {
+  const errs = { ...(form.errors as Record<string, string>), ...localErrors.value }
+  return stepFieldKeys(currentStep.value).filter(k => !!errs[k])
+})
+
+// Show a concise summary of the first few errors at the top
+const firstThreeErrors = computed(() => {
+  const errs = { ...(form.errors as Record<string, string>), ...localErrors.value }
+  return Object.values(errs).slice(0, 3)
+})
 
 const canProceed = computed(() => {
     const required = requiredFieldsForStep(currentStep.value)
@@ -147,13 +199,12 @@ const canProceed = computed(() => {
 })
 
 function markMissingErrors(fields: string[]) {
-    const errs = form.errors as Record<string, string>
     fields.forEach((f) => {
         const value = (form as any)[f]
         if (value === undefined || value === null || value === '') {
-            errs[f] = 'This field is required'
+            setLocalError(f, 'This field is required')
         } else {
-            delete errs[f]
+            clearLocalError(f)
         }
     })
 }
@@ -174,14 +225,14 @@ function goBack() {
 }
 
 // Client-side validations and helpers
-const MAX_FILE_BYTES = 200000
+const MAX_FILE_BYTES = 5 * 1024 * 1024 // 5MB to match backend
 const localErrors = ref<Record<string, string>>({})
 const errorFor = (key: string) => localErrors.value[key] || (form.errors as Record<string, string>)[key]
 function setLocalError(key: string, msg: string) { localErrors.value[key] = msg }
 function clearLocalError(key: string) { delete localErrors.value[key] }
 function handleFileChange(key: string, file: File | null, assign: (f: File | null) => void) {
   if (!file) { assign(null); clearLocalError(key); return }
-  if (file.size > MAX_FILE_BYTES) { assign(null); setLocalError(key, 'File must be 200000 bytes or smaller') } else { assign(file); clearLocalError(key) }
+  if (file.size > MAX_FILE_BYTES) { assign(null); setLocalError(key, 'File must be 5MB or smaller') } else { assign(file); clearLocalError(key) }
 }
 function sanitizeName(value: string) { return value.replace(/\d+/g, '') }
 function enforceDigits(value: string, max: number) { return value.replace(/\D/g, '').slice(0, max) }
@@ -224,7 +275,14 @@ function onZipInput(e: Event) { const t = e.target as HTMLInputElement; form.zip
                                 </div>
                             </div>
 
-                            <div v-if="Object.keys(form.errors).length > 0" class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50">Please check the form for errors and try again.</div>
+<!-- Replace generic error banner with summary + debug -->
+<div v-if="Object.keys(form.errors).length > 0" class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50">
+  {{ firstThreeErrors.join(' • ') || 'Please check the form for errors and try again.' }}
+</div>
+<div v-if="Object.keys(form.errors).length > 0" class="p-2 mb-4 rounded bg-yellow-50 text-xs text-yellow-900">
+  <strong>Debug:</strong>
+  <pre class="overflow-auto max-h-40">{{ JSON.stringify(form.errors, null, 2) }}</pre>
+</div>
 
                             <!-- Step 1: Personal Information -->
                             <div v-if="currentStep === 0" class="space-y-4">

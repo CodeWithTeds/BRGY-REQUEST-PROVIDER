@@ -77,7 +77,7 @@ const isFirstStep = computed(() => currentStep.value === 0)
 const isLastStep = computed(() => currentStep.value === steps.length - 1)
 function requiredFieldsForStep(step: number): string[] {
     if (step === 2) {
-        return ['valid_government_id_document']
+        return ['purpose', 'valid_government_id_document']
     }
     return []
 }
@@ -89,18 +89,26 @@ const canProceed = computed(() => {
     })
 })
 
+// Map of form fields per wizard step to help error routing
+function stepFieldKeys(step: number): string[] {
+  if (step === 0) {
+    return ['first_name','middle_name','last_name','suffix','date_of_birth','place_of_birth','civil_status','gender','citizenship','contact_number']
+  } else if (step === 1) {
+    return ['address_type','region_code','province_code','city_code','barangay_code','house_no','street','purok','zip_code']
+  }
+  return ['purpose','valid_government_id_document','proof_of_income_document']
+}
+
 // Filter errors to those relevant to the current step
 const visibleErrorKeys = computed(() => {
-    const stepKeys: string[] = []
-    if (currentStep.value === 0) {
-        stepKeys.push('first_name','middle_name','last_name','suffix','date_of_birth','place_of_birth','civil_status','gender','citizenship','contact_number')
-    } else if (currentStep.value === 1) {
-        stepKeys.push('address_type','region_code','province_code','city_code','barangay_code','house_no','street','purok','zip_code')
-    } else if (currentStep.value === 2) {
-        stepKeys.push('purpose','valid_government_id_document','proof_of_income_document')
-    }
-    const errs = form.errors as Record<string, string>
-    return stepKeys.filter(k => !!errs[k])
+  const errs = form.errors as Record<string, string>
+  return stepFieldKeys(currentStep.value).filter(k => !!errs[k])
+})
+
+// Show a concise summary of the first few errors at the top
+const firstThreeErrors = computed(() => {
+  const errs = form.errors as Record<string, string>
+  return Object.values(errs).slice(0, 3)
 })
 function markMissingErrors(fields: string[]) {
     const errs = form.errors as Record<string, string>
@@ -136,14 +144,14 @@ function goBack() {
 }
 
 // Client-side validations and helpers
-const MAX_FILE_BYTES = 200000
+const MAX_FILE_BYTES = 5 * 1024 * 1024
 const localErrors = ref<Record<string, string>>({})
 const errorFor = (key: string) => localErrors.value[key] || (form.errors as Record<string, string>)[key]
 function setLocalError(key: string, msg: string) { localErrors.value[key] = msg }
 function clearLocalError(key: string) { delete localErrors.value[key] }
 function handleFileChange(key: string, file: File | null, assign: (f: File | null) => void) {
   if (!file) { assign(null); clearLocalError(key); return }
-  if (file.size > MAX_FILE_BYTES) { assign(null); setLocalError(key, 'File must be 200000 bytes or smaller') } else { assign(file); clearLocalError(key) }
+  if (file.size > MAX_FILE_BYTES) { assign(null); setLocalError(key, 'File must be 5MB or smaller') } else { assign(file); clearLocalError(key) }
 }
 function sanitizeName(value: string) { return value.replace(/\d+/g, '') }
 function enforceDigits(value: string, max: number) { return value.replace(/\D/g, '').slice(0, max) }
@@ -183,6 +191,26 @@ function submit() {
             // Navigate back to create route; controller will show Pending if applicable
             router.get(route('resident.certificate-of-indigency.create'))
         },
+        onError: (errors) => {
+            // Automatically jump to the first step that has errors
+            const stepOrder = [0, 1, 2]
+            for (const s of stepOrder) {
+                const keys = stepFieldKeys(s)
+                if (keys.some(k => !!(errors as Record<string, string>)[k])) {
+                    currentStep.value = s
+                    break
+                }
+            }
+            const firstMsg = Object.values(errors as Record<string, string>)[0] || 'Please correct the highlighted fields.'
+            Toastify({
+                text: firstMsg,
+                duration: 3500,
+                gravity: 'top',
+                position: 'right',
+                backgroundColor: '#dc2626',
+                close: true,
+            }).showToast()
+        },
         onFinish: () => {
             if (!form.hasErrors) {
                 form.reset('purpose', 'valid_government_id_document', 'proof_of_income_document')
@@ -208,7 +236,7 @@ function submit() {
                         <CardContent class="space-y-6">
                             <div v-if="visibleErrorKeys.length > 0 || extraErrors['error']"
                                 class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
-                                {{ extraErrors['error'] || 'Please check the form for errors and try again.' }}
+                                {{ extraErrors['error'] || firstThreeErrors.join(' • ') || 'Please check the form for errors and try again.' }}
                             </div>
 
                             <!-- Wizard state moved to script setup -->

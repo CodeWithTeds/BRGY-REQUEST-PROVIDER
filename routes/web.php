@@ -148,7 +148,7 @@ Route::prefix('admin')->group(function () {
         Route::get('business-permits/{id}/pdf', [App\Http\Controllers\Admin\BusinessPermitController::class, 'downloadPdf'])
             ->whereNumber('id')
             ->name('admin.business-permits.pdf');
-            
+
         // Update status and remarks
         Route::post('business-permits/{id}/status', [App\Http\Controllers\Admin\BusinessPermitController::class, 'updateStatus'])
             ->name('admin.business-permits.update-status');
@@ -171,12 +171,12 @@ Route::prefix('admin')->group(function () {
 
         Route::get('barangay-clearances/{id}/documents/{docId}', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'viewDocument'])
             ->name('admin.barangay-clearances.documents.view');
-        
+
         // Stream approved clearance PDF inline (admin)
         Route::get('barangay-clearances/{id}/pdf', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'viewPdf'])
             ->whereNumber('id')
             ->name('admin.barangay-clearances.pdf');
-            
+
         Route::post('barangay-clearances/{id}/status', [App\Http\Controllers\Admin\BarangayClearanceController::class, 'updateStatus'])
             ->name('admin.barangay-clearances.update-status');
 

@@ -36,10 +36,12 @@ class CertificateOfResidencyRequest extends FormRequest
             'region_code' => ['nullable', 'exists:regions,code'],
             'zip_code' => ['required', 'string', 'regex:/^\d{4}$/'],
 
-            // Document
+            // Documents (all optional except purpose; 5MB max)
             'purpose' => ['required', 'string', 'max:500'],
-            'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
-            'valid_id_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'valid_government_id_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'proof_of_residence_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'lease_contract_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'authorization_letter_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ];
     }
 }

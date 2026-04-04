@@ -29,7 +29,8 @@ class BusinessPermitController extends Controller
             $request,
             $this->permitRepo,
             BarangayPermit::class,
-            fn($permit) => (new BusinessPermitResource($permit))->toArray($request)
+            fn($permit) => (new BusinessPermitResource($permit))->toArray($request),
+            'business_permits_stats'
         );
 
         return Inertia::render('Admin/BusinessPermits', [
@@ -46,7 +47,7 @@ class BusinessPermitController extends Controller
         $permit = $this->permitRepo->getWithAllRelations($id);
 
         $data = (new BusinessPermitDetailResource($permit))->toArray($request);
-        $stats = $this->listService->getStats(BarangayPermit::class);
+        $stats = $this->listService->getStatsCached(BarangayPermit::class, 'business_permits_stats');
 
         return Inertia::render('Admin/BusinessPermitView', [
             'permit' => $data,

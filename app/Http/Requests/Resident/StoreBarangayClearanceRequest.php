@@ -38,6 +38,7 @@ class StoreBarangayClearanceRequest extends FormRequest
 
             // Purpose and documents
             'purpose' => ['required', 'string', 'max:500'],
+            'document_type' => ['required', 'string', 'in:certificate_of_residency,lease_contract,utility_bill'],
             'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'valid_id_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ];

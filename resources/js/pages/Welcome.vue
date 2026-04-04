@@ -18,7 +18,7 @@
                     text="BRGY Request Provider A web-based system that simplifies barangay service requests and document processing. Residents can easily submit requests online, while barangay officials can track, manage, and process applications more efficiently." />
                 <div class="mt-8">
                     <Link href="#features-section"
-                        class="group inline-flex items-center gap-3 rounded-full border-2 border-[#efeeed]/80 bg-[#efeeed] text-main transition hover:bg-transparent hover:text-[#efeeed]">
+                        class="group inline-flex items-center gap-3 rounded-full border-2 bordaer-[#efeeed]/80 bg-[#efeeed] text-main transition hover:bg-transparent hover:text-[#efeeed]">
                     <span class="px-6 py-3 text-sm font-semibold tracking-wide">LEARN MORE</span>
                     <span
                         class="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-main text-[#efeeed] group-hover:bg-[#efeeed] group-hover:text-main">

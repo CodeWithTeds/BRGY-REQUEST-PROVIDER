@@ -162,21 +162,44 @@ class BarangayPermitController extends Controller
             ]);
         }
         $capacity = (int)($window->capacity_per_slot);
-        $count = Appointment::query()
+        $existingAppt = $permit->appointments()->where('status', 'scheduled')->orderByDesc('appointment_at')->first();
+        $countQuery = Appointment::query()
             ->where('appointment_at', $dt)
-            ->where('status', 'scheduled')
-            ->count();
+            ->where('status', 'scheduled');
+        if ($existingAppt && optional($existingAppt->appointment_at)->equalTo($dt)) {
+            $countQuery->where('id', '!=', $existingAppt->id);
+        }
+        $count = $countQuery->count();
         if ($count >= $capacity) {
             return back()->withErrors(['time' => 'Selected time slot is full. Please choose another time.'])
                 ->withInput();
         }
 
-        // Create appointment record in the shared appointments table
-        $permit->appointments()->create([
-            'appointment_at' => $dt,
-            'status' => 'scheduled',
-            'availability_window_id' => $window->id,
-        ]);
+        // Ensure only one scheduled appointment per permit
+        if ($existingAppt) {
+            if (optional($existingAppt->appointment_at)->equalTo($dt)) {
+                // Same slot chosen; just update availability window
+                $existingAppt->availability_window_id = $window->id;
+                $existingAppt->save();
+            } else {
+                // Cancel previous scheduled and create a new one
+                $existingAppt->status = 'cancelled';
+                $existingAppt->save();
+
+                $permit->appointments()->create([
+                    'appointment_at' => $dt,
+                    'status' => 'scheduled',
+                    'availability_window_id' => $window->id,
+                ]);
+            }
+        } else {
+            // Create appointment record in the shared appointments table
+            $permit->appointments()->create([
+                'appointment_at' => $dt,
+                'status' => 'scheduled',
+                'availability_window_id' => $window->id,
+            ]);
+        }
 
         // Keep legacy column updated for existing front-end compatibility
         $permit->appointment_at = $dt;

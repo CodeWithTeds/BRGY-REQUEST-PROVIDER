@@ -10,6 +10,7 @@ use App\Models\SupportingDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use App\Traits\AdminListFilters;
 
 class BussinessPermitRepository extends Repository {
@@ -22,6 +23,17 @@ class BussinessPermitRepository extends Repository {
         protected ?SupportingDocument $supportingDocument = null
     ) {
         parent::__construct($barangayPermit);
+    }
+
+    protected function clearCache()
+    {
+        // Clear list view stats
+        Cache::forget('business_permits_stats');
+
+        // Clear dashboard stats
+        Cache::forget('admin_dashboard_stats_counts');
+        Cache::forget('admin_dashboard_stats_time_series');
+        Cache::forget('admin_dashboard_stats_recent');
     }
 
     protected function createPermitWithRelations(array $data, int $userId, array $models = []): BarangayPermit
@@ -52,6 +64,7 @@ class BussinessPermitRepository extends Repository {
                 }
             }
 
+            $this->clearCache();
             return $permit;
         });
     }
@@ -179,13 +192,21 @@ class BussinessPermitRepository extends Repository {
     public function adminListWithFilters(array $filters, int $page = 1, int $perPage = 10)
     {
         $query = $this->model->newQuery()
-            ->with(['applicantProfile', 'user', 'address.barangay'])
+            ->select('id', 'user_id', 'status', 'application_date', 'created_at', 'updated_at', 'remarks')
+            ->with([
+                'applicantProfile:id,barangay_permit_id,first_name,middle_name,last_name,suffix,gender,citizenship,contact_number',
+                'user:id,name',
+                'address:id,barangay_permit_id,barangay_code,house_no,street,purok',
+                'address.barangay:code,name'
+            ])
             ->latest();
 
         $this->applyNameStatusDateFilters($query, $filters, function ($q, string $name) {
             $q->whereHas('applicantProfile', function ($ap) use ($name) {
                 $ap->where(function ($sub) use ($name) {
-                    $sub->where('first_name', 'like', '%' . $name . '%')
+                    $sub->where('first_name', 'like', $name . '%') // Optimized: Starts with
+                        ->orWhere('last_name', 'like', $name . '%') // Optimized: Starts with
+                        ->orWhere('first_name', 'like', '%' . $name . '%') // Fallback
                         ->orWhere('middle_name', 'like', '%' . $name . '%')
                         ->orWhere('last_name', 'like', '%' . $name . '%')
                         ->orWhere('suffix', 'like', '%' . $name . '%')
@@ -204,14 +225,16 @@ class BussinessPermitRepository extends Repository {
     public function getWithAllRelations(int $id): BarangayPermit
     {
         return $this->model->newQuery()
+            ->select('id', 'user_id', 'status', 'application_date', 'created_at', 'updated_at', 'remarks', 'appointment_at')
             ->with([
                 'applicantProfile',
-                'user',
-                'addresses.barangay',
-                'addresses.city',
-                'addresses.province',
-                'addresses.region',
-                'supportingDocuments',
+                'user:id,name,email',
+                'addresses',
+                'addresses.barangay:code,name',
+                'addresses.city:code,name',
+                'addresses.province:code,name',
+                'addresses.region:code,name',
+                'supportingDocuments:id,barangay_permit_id,document_type,file_path,created_at',
             ])->findOrFail($id);
     }
 
@@ -231,7 +254,11 @@ class BussinessPermitRepository extends Repository {
             $data['remarks'] = $remarks;
         }
 
-        return $permit->update($data);
+        $result = $permit->update($data);
+        if ($result) {
+            $this->clearCache();
+        }
+        return $result;
     }
     
     /**
@@ -258,7 +285,11 @@ class BussinessPermitRepository extends Repository {
                 $permit->addresses()->delete();
             }
 
-            return (bool) $permit->delete();
+            $result = (bool) $permit->delete();
+            if ($result) {
+                $this->clearCache();
+            }
+            return $result;
         });
     }
 }

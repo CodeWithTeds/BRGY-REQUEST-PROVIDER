@@ -252,7 +252,11 @@ const statusChip = (s: string) => {
                   </div>
                 </template>
                 <template v-else-if="props.certificate.status === 'pre-approved'">
-                  <p class="text-sm text-[#2c4454] opacity-80">This certificate is pre-approved by staff, awaiting admin approval.</p>
+                  <div v-if="props.canApprove" class="grid grid-cols-2 gap-2">
+                    <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Approve</button>
+                    <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
+                  </div>
+                  <p v-else class="text-sm text-[#2c4454] opacity-80">No actions available for this status.</p>
                 </template>
                 <template v-else>
                   <p class="text-sm text-[#2c4454] opacity-80">No actions available for this status.</p>

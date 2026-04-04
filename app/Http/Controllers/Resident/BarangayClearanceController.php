@@ -61,6 +61,13 @@ class BarangayClearanceController extends Controller
             ]);
         }
 
+        // If latest clearance is pre-approved, show pending page with tracker
+        if ($latest && $latest->status === 'pre-approved') {
+            return Inertia::render('Resident/BarangayClearance/Pending', [
+                'clearance' => $latest,
+            ]);
+        }
+
         // Prefill from user's saved ApplicantProfile when available
         $ap = Auth::user()->applicantProfile;
         $apData = $ap ? [
@@ -222,21 +229,44 @@ class BarangayClearanceController extends Controller
             ]);
         }
         $capacity = (int)($window->capacity_per_slot);
-        $count = Appointment::query()
+        $existingAppt = $clearance->appointments()->where('status', 'scheduled')->orderByDesc('appointment_at')->first();
+        $countQuery = Appointment::query()
             ->where('appointment_at', $dt)
-            ->where('status', 'scheduled')
-            ->count();
+            ->where('status', 'scheduled');
+        if ($existingAppt && optional($existingAppt->appointment_at)->equalTo($dt)) {
+            $countQuery->where('id', '!=', $existingAppt->id);
+        }
+        $count = $countQuery->count();
         if ($count >= $capacity) {
             return back()->withErrors(['time' => 'Selected time slot is full. Please choose another time.'])
                 ->withInput();
         }
 
-        // Create appointment record in the shared appointments table
-        $clearance->appointments()->create([
-            'appointment_at' => $dt,
-            'status' => 'scheduled',
-            'availability_window_id' => $window->id,
-        ]);
+        // Ensure only one scheduled appointment per clearance
+        if ($existingAppt) {
+            if (optional($existingAppt->appointment_at)->equalTo($dt)) {
+                // Same slot chosen; just update availability window
+                $existingAppt->availability_window_id = $window->id;
+                $existingAppt->save();
+            } else {
+                // Cancel previous scheduled and create a new one
+                $existingAppt->status = 'cancelled';
+                $existingAppt->save();
+
+                $clearance->appointments()->create([
+                    'appointment_at' => $dt,
+                    'status' => 'scheduled',
+                    'availability_window_id' => $window->id,
+                ]);
+            }
+        } else {
+            // Create appointment record in the shared appointments table
+            $clearance->appointments()->create([
+                'appointment_at' => $dt,
+                'status' => 'scheduled',
+                'availability_window_id' => $window->id,
+            ]);
+        }
 
         return redirect()->route('barangay-clearance.create')
             ->with('success', 'Appointment scheduled successfully.');

@@ -299,7 +299,11 @@ const breadcrumbs = computed(() => [
                 <p class="text-sm text-[#2c4454] opacity-80">No further actions. This certificate is already approved.</p>
               </template>
               <template v-else-if="props.certificate.status === 'pre-approved'">
-                <p class="text-sm text-[#2c4454] opacity-80">This certificate is pre-approved by staff, awaiting admin approval.</p>
+                <div v-if="props.canApprove" class="grid grid-cols-2 gap-2">
+                  <button class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:opacity-90" @click="updateStatus('approved')">Mark as Approved</button>
+                  <button class="px-3 py-2 rounded-md bg-red-600 text-white text-sm hover:opacity-90" @click="updateStatus('rejected')">Reject</button>
+                </div>
+                <p v-else class="text-sm text-[#2c4454] opacity-80">This certificate is pre-approved by staff, awaiting admin approval.</p>
               </template>
               <template v-else-if="props.certificate.status === 'rejected'">
                 <p class="text-sm text-[#2c4454] opacity-80">This certificate was rejected.</p>

@@ -36,9 +36,13 @@ class CertificateOfIndigencyRequest extends FormRequest
             'region_code' => ['nullable', 'exists:regions,code'],
             'zip_code' => ['required', 'string', 'regex:/^\d{4}$/'],
 
-            // Document
+            // Documents
             'purpose' => ['required', 'string', 'max:500'],
-            'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'valid_government_id_document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'proof_of_income_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+
+            // Backward-compatible aliases (optional)
+            'document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'valid_id_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ];
     }

@@ -15,7 +15,7 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Barangay Business Permit',
+        title: 'Business Permit',
         href: route('resident.barangay-business-permit'),
         icon: Building2,
     },
