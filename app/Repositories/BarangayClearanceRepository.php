@@ -235,11 +235,8 @@ class BarangayClearanceRepository extends Repository {
         $this->applyNameStatusDateFilters($query, $filters, function ($q, string $name) {
             $q->whereHas('applicantProfile', function ($ap) use ($name) {
                 $ap->where(function ($sub) use ($name) {
-                    $sub->where('first_name', 'like', '%' . $name . '%')
-                        ->orWhere('middle_name', 'like', '%' . $name . '%')
-                        ->orWhere('last_name', 'like', '%' . $name . '%')
-                        ->orWhere('suffix', 'like', '%' . $name . '%')
-                        ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) like ?", ['%' . $name . '%']);
+                    $sub->where('first_name', 'like', $name . '%')
+                        ->orWhere('last_name', 'like', $name . '%');
                 });
             });
         });

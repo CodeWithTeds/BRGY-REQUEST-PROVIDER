@@ -53,10 +53,11 @@ class CertificateOfResidencyRepository extends Repository
         $this->applyNameStatusDateFilters($query, $filters, function ($q, string $name) {
             $q->where(function ($sub) use ($name) {
                 $sub->whereHas('user', function ($u) use ($name) {
-                    $u->where('name', 'like', '%' . $name . '%');
+                    $u->where('name', 'like', $name . '%');
                 })
                 ->orWhereHas('user.applicantProfile', function ($ap) use ($name) {
-                    $ap->whereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) like ?", ['%' . $name . '%']);
+                    $ap->where('first_name', 'like', $name . '%')
+                       ->orWhere('last_name', 'like', $name . '%');
                 });
             });
         });

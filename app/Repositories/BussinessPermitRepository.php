@@ -32,7 +32,6 @@ class BussinessPermitRepository extends Repository {
 
         // Clear dashboard stats
         Cache::forget('admin_dashboard_stats_counts');
-        Cache::forget('admin_dashboard_stats_time_series');
         Cache::forget('admin_dashboard_stats_recent');
     }
 
@@ -204,13 +203,8 @@ class BussinessPermitRepository extends Repository {
         $this->applyNameStatusDateFilters($query, $filters, function ($q, string $name) {
             $q->whereHas('applicantProfile', function ($ap) use ($name) {
                 $ap->where(function ($sub) use ($name) {
-                    $sub->where('first_name', 'like', $name . '%') // Optimized: Starts with
-                        ->orWhere('last_name', 'like', $name . '%') // Optimized: Starts with
-                        ->orWhere('first_name', 'like', '%' . $name . '%') // Fallback
-                        ->orWhere('middle_name', 'like', '%' . $name . '%')
-                        ->orWhere('last_name', 'like', '%' . $name . '%')
-                        ->orWhere('suffix', 'like', '%' . $name . '%')
-                        ->orWhereRaw("CONCAT_WS(' ', first_name, middle_name, last_name, suffix) like ?", ['%' . $name . '%']);
+                    $sub->where('first_name', 'like', $name . '%')
+                        ->orWhere('last_name', 'like', $name . '%');
                 });
             });
         });

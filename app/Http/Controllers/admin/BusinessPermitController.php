@@ -26,6 +26,8 @@ class BusinessPermitController extends Controller
     public function index(AdminListRequest $request)
     {
         $result = $this->listService->getList($request, $this->permitRepo, BarangayPermit::class, fn($p) => (new BusinessPermitResource($p))->toArray($request), 'business_permits_stats');
+        $result['permits'] = $result['items'];
+        unset($result['items']);
         return Inertia::render('Admin/BusinessPermits', [...$result, 'routeGroup' => 'admin']);
     }
 
