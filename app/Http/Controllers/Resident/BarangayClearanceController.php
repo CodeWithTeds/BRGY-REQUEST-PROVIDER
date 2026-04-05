@@ -204,7 +204,7 @@ class BarangayClearanceController extends Controller
         }
 
         // Interpret user input as Asia/Manila and convert to UTC for storage
-        $dtLocal = Carbon::createFromFormat('Y-m-d H:i', $data['date'].' '.$data['time'], 'Asia/Manila');
+        $dtLocal = Carbon::createFromFormat('Y-m-d H:i', $data['date'] . ' ' . $data['time'], 'Asia/Manila');
         // Reject weekends
         if ($dtLocal->isWeekend()) {
             return back()->withErrors(['date' => 'Appointments are only available Monday to Friday.'])->withInput();
@@ -285,8 +285,8 @@ class BarangayClearanceController extends Controller
         $window = AvailabilityWindow::forDate($date);
         $capacity = (int)($window?->capacity_per_slot ?? 10);
 
-        $dayLocalStart = Carbon::createFromFormat('Y-m-d H:i', $date.' 00:00', 'Asia/Manila');
-        $dayLocalEnd = Carbon::createFromFormat('Y-m-d H:i', $date.' 23:59', 'Asia/Manila');
+        $dayLocalStart = Carbon::createFromFormat('Y-m-d H:i', $date . ' 00:00', 'Asia/Manila');
+        $dayLocalEnd = Carbon::createFromFormat('Y-m-d H:i', $date . ' 23:59', 'Asia/Manila');
         $startUtc = $dayLocalStart->copy()->setTimezone('UTC');
         $endUtc = $dayLocalEnd->copy()->setTimezone('UTC');
 
@@ -303,12 +303,16 @@ class BarangayClearanceController extends Controller
             ->toArray();
 
         $occupied = collect($counts)
-            ->filter(function ($c) use ($capacity) { return $c >= $capacity; })
+            ->filter(function ($c) use ($capacity) {
+                return $c >= $capacity;
+            })
             ->keys()
             ->values();
 
         $remaining = collect($counts)
-            ->map(function ($c) use ($capacity) { return max($capacity - (int)$c, 0); })
+            ->map(function ($c) use ($capacity) {
+                return max($capacity - (int)$c, 0);
+            })
             ->toArray();
 
         return response()->json([
